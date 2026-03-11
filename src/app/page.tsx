@@ -82,9 +82,9 @@ export default async function HomePage() {
         <div className="section-wrapper">
           <div className="flex items-end justify-between mb-10">
             <div><div className="divider-gold mb-3"/><h2 className="section-title">Listing Properti [Jual/Sewa]</h2><p className="section-subtitle">Pilihan properti terbaik siap dihuni dan diinvestasikan</p></div>
-            <Link href="/listings?type=Sale" className="hidden md:inline-flex btn-outline text-sm">Lihat Semua →</Link>
+            <Link href="/listings" className="hidden md:inline-flex btn-outline text-sm">Lihat Semua →</Link>
           </div>
-          {saleListings.length > 0 ? (
+          {allListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {allListings.map(l => <ListingCard key={l.id} listing={l}/>)}
             </div>
