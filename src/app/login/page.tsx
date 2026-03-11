@@ -105,26 +105,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 mb-3">Role & Akses</p>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              {[
-                { role: 'Agen', icon: '👤', desc: 'Leads & Pipeline' },
-                { role: 'Admin', icon: '⚙️', desc: 'Kelola Konten' },
-                { role: 'Superadmin', icon: '👑', desc: 'Full Access' },
-              ].map(r => (
-                <div key={r.role} className="bg-gray-50 rounded-xl p-2 text-center">
-                  <div className="text-lg mb-1">{r.icon}</div>
-                  <div className="font-semibold text-primary-900">{r.role}</div>
-                  <div className="text-gray-400 text-xs">{r.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="mt-4 text-center">
             <Link href="/" className="text-sm text-gray-400 hover:text-primary-900 transition-colors">
-              ← Kembali ke Website
+              ← Kembali ke Beranda MANSION
             </Link>
           </div>
         </div>
