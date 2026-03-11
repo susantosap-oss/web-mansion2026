@@ -96,6 +96,23 @@ const DEFAULT_DISCLAIMER = [
   { icon:'💡', text:'Konsultasikan dengan agen Mansion Realty untuk rekomendasi bank & skema terbaik.' },
 ]
 
+
+const DEFAULT_BANKS = [
+  { nama:'BTN',     tipe:'konven'  as const, bunga:7.50, maxTenor:30 },
+  { nama:'BCA',     tipe:'konven'  as const, bunga:7.75, maxTenor:25 },
+  { nama:'Mandiri', tipe:'konven'  as const, bunga:7.50, maxTenor:30 },
+  { nama:'BRI',     tipe:'konven'  as const, bunga:7.25, maxTenor:30 },
+  { nama:'BSI',     tipe:'syariah' as const, bunga:8.00, maxTenor:30 },
+  { nama:'BNI Syr', tipe:'syariah' as const, bunga:8.50, maxTenor:25 },
+  { nama:'BTN KMG', tipe:'kmg'     as const, bunga:9.50, maxTenor:15 },
+]
+
+const DEFAULT_DISCLAIMER = [
+  { icon:'⚠️', text:'Hasil perhitungan bersifat estimasi. Angka final ditentukan oleh kebijakan bank.' },
+  { icon:'💵', text:'Biaya-biaya (~10%) wajib disiapkan tunai sebelum akad kredit ditandatangani.' },
+  { icon:'💡', text:'Konsultasikan dengan agen Mansion Realty untuk rekomendasi bank & skema terbaik.' },
+]
+
 export default function CalculatorPage() {
   const [tab, setTab]           = useState<Tab>('konven')
   const [BANKS, setBANKS]       = useState(DEFAULT_BANKS)
