@@ -5,11 +5,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthUser } from '@/lib/auth'
 
-interface Props { user: AuthUser }
+interface Props { user: AuthUser, stats: { listings: number, agents: number, news: number } }
 
 type Tab = 'overview' | 'news' | 'logo' | 'projects' | 'settings' | 'kpr'
 
-export default function AdminDashboardClient({ user }: Props) {
+export default function AdminDashboardClient({ user, stats }: Props) {
   const router = useRouter()
   const [tab, setTab]         = useState<Tab>('overview')
   const [saving, setSaving]   = useState(false)
@@ -62,7 +62,7 @@ export default function AdminDashboardClient({ user }: Props) {
               <span className="text-primary-900 font-bold">M</span>
             </div>
             <div>
-              <div className="font-display font-bold text-sm">Mansion Realty</div>
+              <div className="font-display font-bold text-sm">MANSION Realty</div>
               <div className="text-white/50 text-xs capitalize">{user.role}</div>
             </div>
           </Link>
@@ -120,12 +120,12 @@ export default function AdminDashboardClient({ user }: Props) {
         {/* ── OVERVIEW ── */}
         {tab === 'overview' && (
           <div>
-            <h1 className="section-title mb-6">Dashboard Admin</h1>
+            <h1 className="section-title mb-6">Dashboard MANSION Admin</h1>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { icon:'🏠', label:'Total Listing',  value:'—', color:'bg-blue-50 text-blue-700' },
-                { icon:'👤', label:'Total Agen',     value:'—', color:'bg-green-50 text-green-700' },
-                { icon:'📩', label:'Total Leads',    value:'—', color:'bg-purple-50 text-purple-700' },
+                { icon:'🏠', label:'Total Listing',  value:stats.listings, color:'bg-blue-50 text-blue-700' },
+                { icon:'👤', label:'Total Agen',     value:stats.agents, color:'bg-green-50 text-green-700' },
+                { icon:'📩', label:'Total Leads',    value:0, color:'bg-purple-50 text-purple-700' },
                 { icon:'📰', label:'Total Berita',   value:'—', color:'bg-amber-50 text-amber-700' },
               ].map(s => (
                 <div key={s.label} className={`rounded-2xl p-5 ${s.color}`}>
@@ -257,10 +257,10 @@ export default function AdminDashboardClient({ user }: Props) {
             <h1 className="section-title mb-6">⚙️ Pengaturan SEO & CTA</h1>
             <div className="card p-6 space-y-5">
               {[
-                { label: 'Judul Website (SEO)', key: 'seo_title', placeholder: 'Mansion Realty | Properti...' },
+                { label: 'Judul Website (SEO)', key: 'seo_title', placeholder: 'MANSION Realty | Properti...' },
                 { label: 'Deskripsi Meta (SEO)', key: 'seo_desc', placeholder: 'Deskripsi singkat untuk Google...' },
                 { label: 'Keywords', key: 'seo_keywords', placeholder: 'properti, rumah dijual, broker...' },
-                { label: 'Teks CTA WhatsApp', key: 'cta_wa_text', placeholder: 'Halo Mansion Realty, saya ingin konsultasi' },
+                { label: 'Teks CTA WhatsApp', key: 'cta_wa_text', placeholder: 'Halo MANSION Realty, saya ingin konsultasi' },
               ].map(field => (
                 <div key={field.key}>
                   <label className="label-field">{field.label}</label>
