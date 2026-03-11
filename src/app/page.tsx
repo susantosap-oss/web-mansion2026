@@ -13,6 +13,7 @@ const shuffleDaily = (arr: any[]) => {
   return arr; 
 };
 export const revalidate = 300
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: 'Mansion Realty | Properti Impian Anda, Investasi Terbaik Anda',
@@ -45,14 +46,13 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4 mb-14">
               <Link href="/listings" className="btn-gold px-8 py-4 text-base">🏠 Cari Properti</Link>
-              <Link href="/listings?type=Rent" className="btn-outline-white px-8 py-4 text-base">🔑 Properti Disewa</Link>
               <a href={`https://wa.me/${wa}?text=Halo%20Mansion%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary-900 transition-all text-base">
                 💬 Konsultasi Gratis
               </a>
             </div>
             <div className="flex flex-wrap gap-8">
-              {[{n:`${projects.length}+`,l:'Proyek Aktif'},{n:`${saleListings.length}+`,l:'Listing Dijual'},{n:'50+',l:'Agen'},{n:'1.000+',l:'Transaksi Sukses'}].map(s => (
+              {[{n:`${projects.length}+`,l:'Proyek Aktif'},{n:`${saleListings.length}+`,l:'Dijual'}, {n:`${rentListings.length}+`,l:'Disewa'},{n:'50+',l:'Agen'},{n:'1.000+',l:'Transaksi Sukses'}].map(s => (
                 <div key={s.l}><div className="text-3xl font-display font-bold text-gold">{s.n}</div><div className="text-sm text-white/60 mt-0.5">{s.l}</div></div>
               ))}
             </div>

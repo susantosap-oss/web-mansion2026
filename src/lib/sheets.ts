@@ -90,7 +90,7 @@ function mapListing(row: SheetRow): Listing {
   const tipe  = str(row['Status_Transaksi']) // Sale / Rent
 
   // Normalize tipe transaksi
-  const transaksi = tipe.toLowerCase().includes('jual') || tipe.toLowerCase() === 'sale'
+  const transaksi = (tipe.toLowerCase().includes('jual') || tipe.toLowerCase().includes('sale'))
     ? 'Sale' : 'Rent'
 
   // Normalize tipe properti

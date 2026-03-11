@@ -11,7 +11,7 @@ export default function Footer() {
             <h3 className="font-display font-bold text-2xl text-primary-900">Siap menemukan properti impian Anda?</h3>
             <p className="text-primary-900/70 mt-1">Konsultasikan kebutuhan properti Anda dengan agen kami.</p>
           </div>
-          <a href={`https://wa.me/${wa}?text=Halo%20Mansion%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
+          <a href={`https://wa.me/${wa}?text=Halo%20MANSION%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
             className="flex-shrink-0 px-6 py-3 bg-primary-900 text-white font-bold rounded-lg hover:bg-primary-800 transition-colors flex items-center gap-2">
             💬 Konsultasi Gratis via WhatsApp
           </a>
@@ -24,7 +24,7 @@ export default function Footer() {
               <div className="w-10 h-10 bg-gold rounded-lg flex items-center justify-center">
                 <span className="text-primary-900 font-display font-bold text-lg">M</span>
               </div>
-              <span className="text-white font-display font-bold text-xl">Mansion <span className="text-gold">Realty</span></span>
+              <span className="text-white font-display font-bold text-xl">MANSION <span className="text-gold">Realty</span></span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed">Agen properti terpercaya untuk hunian dan investasi terbaik di Indonesia.</p>
             <div className="mt-4 space-y-1 text-sm text-white/60">
@@ -49,7 +49,7 @@ export default function Footer() {
           ))}
         </div>
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
-          <p>© {year} Mansion Realty. Semua hak dilindungi.</p>
+          <p>© {year} MANSION Realty. Semua hak dilindungi.</p>
           <p>Built with ❤️ for Indonesian Property Market</p>
         </div>
       </div>
