@@ -4,9 +4,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthUser } from '@/lib/auth'
 
-interface Props { user: AuthUser }
+interface Props { user: AuthUser, stats: { listings: number } }
 
-export default function AgentDashboardClient({ user }: Props) {
+export default function AgentDashboardClient({ user, stats }: Props) {
   const router  = useRouter()
   const [tab, setTab]       = useState<'leads' | 'pipeline' | 'listings'>('leads')
   const [leads, setLeads]   = useState<any[]>([])
@@ -59,10 +59,10 @@ export default function AgentDashboardClient({ user }: Props) {
               <div className="w-8 h-8 bg-gold rounded-lg flex items-center justify-center">
                 <span className="text-primary-900 font-bold">M</span>
               </div>
-              <span className="font-display font-bold hidden sm:block">Mansion Realty</span>
+              <span className="font-display font-bold hidden sm:block">MANSION Realty</span>
             </Link>
             <span className="text-white/30 hidden sm:block">|</span>
-            <span className="text-white/70 text-sm hidden sm:block">Dashboard Agen</span>
+            <span className="text-white/70 text-sm hidden sm:block">Dashboard MANSION Agent</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
