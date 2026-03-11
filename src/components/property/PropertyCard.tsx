@@ -1,0 +1,76 @@
+import Link from 'next/link'
+import Image from 'next/image'
+import { Listing, Project } from '@/types'
+import { formatPrice, buildWALink } from '@/lib/sheets'
+
+export function ListingCard({ listing, className = '' }: { listing: Listing; className?: string }) {
+  const wa = buildWALink(listing.agentPhone, `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`)
+  return (
+    <div className={`card group property-card ${className}`}>
+      <div className="relative h-52 overflow-hidden">
+        {listing.coverImage ? (
+          <Image src={listing.coverImage} alt={listing.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/>
+        ) : (
+          <div className="w-full h-full bg-primary-100 flex items-center justify-center"><span className="text-4xl">🏠</span></div>
+        )}
+        <div className="absolute top-3 left-3 flex gap-2">
+          <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
+          {listing.featured && <span className="badge-new">⭐ Unggulan</span>}
+        </div>
+        <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2">
+          <span className="text-white text-xs font-semibold">{listing.agentName}</span>
+        </div>
+      </div>
+      <div className="p-4">
+        <p className="text-xs text-gray-400 mb-1">📍 {listing.location}, {listing.city}</p>
+        <Link href={`/listings/${listing.slug}`}>
+          <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors line-clamp-2 mb-2 leading-snug">{listing.title}</h3>
+        </Link>
+        <p className="price-display mb-3">{formatPrice(listing.price)}</p>
+        <div className="flex gap-3 text-xs text-gray-500 border-t border-gray-100 pt-3 mb-3">
+          {listing.luasTanah > 0 && <span>🏠 {listing.luasTanah}m²</span>}
+          {listing.luasBangunan > 0 && <span>📐 {listing.luasBangunan}m²</span>}
+          {listing.kamarTidur > 0 && <span>🛏 {listing.kamarTidur}</span>}
+          {listing.kamarMandi > 0 && <span>🚿 {listing.kamarMandi}</span>}
+        </div>
+        <div className="flex gap-2">
+          <Link href={`/listings/${listing.slug}`} className="flex-1 text-center py-2 text-sm font-semibold text-primary-900 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors">Detail</Link>
+          <a href={wa} target="_blank" rel="noopener noreferrer" className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#128C7E] rounded-lg hover:bg-[#0e6b5e] transition-colors">💬 WA Agen</a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function ProjectCard({ project, className = '' }: { project: Project; className?: string }) {
+  return (
+    <div className={`card group property-card ${className}`}>
+      <div className="relative h-52 overflow-hidden">
+        {project.coverImage ? (
+          <Image src={project.coverImage} alt={project.name} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/>
+        ) : (
+          <div className="w-full h-full bg-primary-900 flex items-center justify-center"><span className="text-4xl">🏗</span></div>
+        )}
+        <div className="absolute top-3 left-3">
+          <span className="badge bg-primary-900 text-white">{project.type}</span>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+          <p className="text-white/70 text-xs">Developer</p>
+          <p className="text-white font-semibold text-sm">{project.developer}</p>
+        </div>
+      </div>
+      <div className="p-4">
+        <p className="text-xs text-gray-400 mb-1">📍 {project.location}, {project.city}</p>
+        <Link href={`/projects/${project.slug}`}>
+          <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors leading-snug mb-2">{project.name}</h3>
+        </Link>
+        <p className="text-sm text-gray-500 line-clamp-2 mb-3">{project.description}</p>
+        <div className="bg-primary-50 rounded-lg p-2.5 mb-3">
+          <p className="text-xs text-gray-500">Mulai dari</p>
+          <p className="price-display text-lg">{formatPrice(project.priceMin)}</p>
+        </div>
+        <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm">Lihat Detail Proyek</Link>
+      </div>
+    </div>
+  )
+}
