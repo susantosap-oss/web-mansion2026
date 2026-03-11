@@ -2,7 +2,7 @@ export interface Project {
   id: string; slug: string; name: string; developer: string
   location: string; city: string; province: string
   priceMin: number; priceMax: number
-  type: 'Perumahan' | 'Apartemen' | 'Ruko' | 'Kavling' | 'Komersial'
+  type: 'Perumahan' | 'Apartemen' | 'Ruko' | 'Kavling' | 'Gudang' | 'Komersial'
   status: 'Aktif' | 'Sold Out' | 'Coming Soon'
   description: string; coverImage: string; images: string[]
   specs: { luasTanah?: string; luasBangunan?: string; kamarTidur?: number; kamarMandi?: number; carport?: number; listrikDaya?: string; airBersih?: string }

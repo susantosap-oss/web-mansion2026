@@ -23,7 +23,7 @@ export default async function ListingsPage({ searchParams }: { searchParams: { t
               {label}
             </Link>
           ))}
-          {['Rumah','Apartemen','Ruko','Kavling'].map(pt => (
+          {['Rumah','Apartemen','Ruko','Kavling','Gudang'].map(pt => (
             <Link key={pt} href={`/listings${type?`?type=${type}&`:'?'}propertyType=${pt}`}
               className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${propertyType===pt?'bg-gold text-primary-900 border-gold':'border-gray-200 text-gray-600 hover:border-gold bg-white'}`}>
               {pt}

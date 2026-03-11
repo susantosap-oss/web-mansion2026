@@ -3,6 +3,15 @@ import Link from 'next/link'
 import { getProjects, getListings, getNews } from '@/lib/sheets'
 import { ProjectCard, ListingCard } from '@/components/property/PropertyCard'
 
+const shuffleDaily = (arr: any[]) => { 
+  const seed = new Date().getFullYear() * 1000 + (new Date().getMonth() + 1) * 100 + new Date().getDate(); 
+  let m = arr.length, t, i; 
+  while (m) { 
+    i = Math.floor(Math.abs(Math.sin(seed + m)) * m--); 
+    t = arr[m]; arr[m] = arr[i]; arr[i] = t; 
+  } 
+  return arr; 
+};
 export const revalidate = 300
 
 export const metadata: Metadata = {
@@ -12,10 +21,10 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const [projects, saleListings, rentListings, news] = await Promise.all([
-    getProjects(), getListings({ type: 'Sale' }), getListings({ type: 'Rent' }), getNews(3),
-  ])
-  const wa = process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'
-
+    getProjects(), getListings({ type: "Sale" }), getListings({ type: "Rent" }), getNews(3),
+  ]);
+  const allListings = shuffleDaily([...saleListings, ...rentListings]).slice(0, 3);
+  const wa = process.env.NEXT_PUBLIC_WA_OFFICE || "6281234567890"
   return (
     <>
       {/* Hero */}
@@ -36,6 +45,7 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap gap-4 mb-14">
               <Link href="/listings" className="btn-gold px-8 py-4 text-base">🏠 Cari Properti</Link>
+              <Link href="/listings?type=Rent" className="btn-outline-white px-8 py-4 text-base">🔑 Properti Disewa</Link>
               <a href={`https://wa.me/${wa}?text=Halo%20Mansion%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary-900 transition-all text-base">
                 💬 Konsultasi Gratis
@@ -67,16 +77,16 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Properti Dijual */}
+      {/* Listing Properti [Jual/Sewa] */}
       <section className="py-20 bg-gray-50">
         <div className="section-wrapper">
           <div className="flex items-end justify-between mb-10">
-            <div><div className="divider-gold mb-3"/><h2 className="section-title">Properti Dijual</h2><p className="section-subtitle">Pilihan properti terbaik siap dihuni dan diinvestasikan</p></div>
+            <div><div className="divider-gold mb-3"/><h2 className="section-title">Listing Properti [Jual/Sewa]</h2><p className="section-subtitle">Pilihan properti terbaik siap dihuni dan diinvestasikan</p></div>
             <Link href="/listings?type=Sale" className="hidden md:inline-flex btn-outline text-sm">Lihat Semua →</Link>
           </div>
           {saleListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {saleListings.slice(0,6).map(l => <ListingCard key={l.id} listing={l}/>)}
+              {allListings.map(l => <ListingCard key={l.id} listing={l}/>)}
             </div>
           ) : (
             <div className="text-center py-16 text-gray-400"><div className="text-5xl mb-4">🏠</div><p>Data listing dari CRM Mansion akan tampil di sini.</p></div>

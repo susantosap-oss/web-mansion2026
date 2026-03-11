@@ -99,6 +99,7 @@ function mapListing(row: SheetRow): Listing {
     'rumah': 'Rumah', 'house': 'Rumah',
     'apartemen': 'Apartemen', 'apartment': 'Apartemen',
     'ruko': 'Ruko', 'shophouse': 'Ruko',
+    'gudang': 'Gudang', 'warehouse': 'Gudang',
     'kavling': 'Kavling', 'tanah': 'Kavling', 'land': 'Kavling',
     'gedung': 'Gedung', 'building': 'Gedung',
     'gudang': 'Gudang', 'warehouse': 'Gudang',
