@@ -1,4 +1,5 @@
 'use client'
+import LogoBadge from '@/components/ui/LogoBadge'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -50,9 +51,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 bg-gold rounded-xl flex items-center justify-center">
-              <span className="text-primary-900 font-display font-bold text-2xl">M</span>
-            </div>
+            <LogoBadge size="lg" dark={true} />
             <div className="text-left">
               <div className="text-white font-display font-bold text-2xl">Mansion</div>
               <div className="text-gold font-display text-2xl -mt-1">Realty</div>

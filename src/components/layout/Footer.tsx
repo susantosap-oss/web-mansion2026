@@ -1,3 +1,4 @@
+import LogoBadge from '@/components/ui/LogoBadge'
 import Link from 'next/link'
 
 export default function Footer() {
@@ -21,9 +22,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gold rounded-lg flex items-center justify-center">
-                <span className="text-primary-900 font-display font-bold text-lg">M</span>
-              </div>
+              <LogoBadge size="md" dark={true} />
               <span className="text-white font-display font-bold text-xl">MANSION <span className="text-gold">Realty</span></span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed">Agen properti terpercaya untuk hunian dan investasi terbaik di Indonesia.</p>

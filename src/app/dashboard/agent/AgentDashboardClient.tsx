@@ -1,4 +1,5 @@
 'use client'
+import LogoBadge from '@/components/ui/LogoBadge'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -56,9 +57,7 @@ export default function AgentDashboardClient({ user, stats }: Props) {
         <div className="section-wrapper py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gold rounded-lg flex items-center justify-center">
-                <span className="text-primary-900 font-bold">M</span>
-              </div>
+              <LogoBadge size="sm" dark={true} />
               <span className="font-display font-bold hidden sm:block">MANSION Realty</span>
             </Link>
             <span className="text-white/30 hidden sm:block">|</span>

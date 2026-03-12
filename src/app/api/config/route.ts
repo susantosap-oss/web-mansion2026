@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL || ''
 const GAS_SECRET = process.env.GAS_API_SECRET || 'mansion2026'
 
-// In-memory fallback kalau GAS belum support saveConfig
 const localConfig = new Map<string, string>()
 
 export async function GET(request: Request) {
@@ -16,13 +15,14 @@ export async function GET(request: Request) {
   try {
     const url = new URL(GAS_URL)
     url.searchParams.set('action', 'getConfig')
-    url.searchParams.set('key', key)
+    url.searchParams.set('key',    key)
     url.searchParams.set('secret', GAS_SECRET)
-    const res  = await fetch(url.toString(), { cache: 'no-store', signal: AbortSignal.timeout(5000) })
+    const res  = await fetch(url.toString(), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
     const json = await res.json()
-    if (json.success && json.value) {
-      localConfig.set(key, json.value)
-      return NextResponse.json({ success: true, value: json.value, source: 'gas' })
+    if (json.success) {
+      const value = json.value ?? (json.data ? json.data[key] : null) ?? null
+      if (value) localConfig.set(key, String(value))
+      return NextResponse.json({ success: true, value, source: 'gas' })
     }
     return NextResponse.json({ success: true, value: null })
   } catch {
@@ -31,33 +31,48 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { key, value } = await request.json()
-  if (!key) return NextResponse.json({ success: false, error: 'key required' }, { status: 400 })
+  const body = await request.json()
+  const { key, value } = body
 
-  // Simpan ke memory dulu
-  localConfig.set(key, value)
+  if (!key)   return NextResponse.json({ success: false, error: 'key required' }, { status: 400 })
+  if (!value) return NextResponse.json({ success: false, error: 'value required' }, { status: 400 })
 
-  // Coba ke GAS
+  // Simpan ke memory
+  localConfig.set(String(key), String(value))
+
+  // Kirim ke GAS via GET — params di-encode otomatis oleh URLSearchParams
   let gasSaved = false
+  let gasMsg   = ''
   try {
     const url = new URL(GAS_URL)
     url.searchParams.set('action', 'saveConfig')
     url.searchParams.set('secret', GAS_SECRET)
+    url.searchParams.set('key',    String(key))
+    url.searchParams.set('value',  String(value))   // URLSearchParams auto-encode
+
+    console.log('[config POST] calling GAS:', url.toString().slice(0, 100))
+
     const res  = await fetch(url.toString(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value, secret: GAS_SECRET }),
-      signal: AbortSignal.timeout(5000),
+      method: 'GET',
+      signal: AbortSignal.timeout(10000),
     })
-    const json = await res.json()
-    gasSaved   = json.success
-  } catch {}
+    const text = await res.text()
+    console.log('[config POST] GAS response:', text.slice(0, 200))
+
+    const json = JSON.parse(text)
+    gasSaved   = json.success === true
+    gasMsg     = json.message || json.error || ''
+  } catch (e: any) {
+    console.error('[config POST] GAS error:', e.message)
+    gasMsg = e.message
+  }
 
   return NextResponse.json({
     success: true,
     gasSaved,
+    gasMsg,
     message: gasSaved
-      ? '✅ Tersimpan ke Google Sheet'
-      : '✅ Tersimpan sementara (tambahkan saveConfig di GAS untuk permanen)',
+      ? '✅ Tersimpan ke Google Sheet!'
+      : `✅ Tersimpan sementara (GAS: ${gasMsg})`,
   })
 }

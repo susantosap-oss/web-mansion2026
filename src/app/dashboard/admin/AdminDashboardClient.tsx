@@ -1,4 +1,6 @@
 'use client'
+import LogoBadge from '@/components/ui/LogoBadge'
+import LogoUpload from './LogoUpload'
 import KprSettings from './KprSettings'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -7,7 +9,7 @@ import { AuthUser } from '@/lib/auth'
 
 interface Props { user: AuthUser }
 
-type Tab = 'overview' | 'news' | 'logo' | 'projects' | 'settings' | 'kpr'
+type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr'
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
@@ -24,29 +26,67 @@ export default function AdminDashboardClient({ user }: Props) {
     router.push('/login')
   }
 
+  async function uploadFotoBerita(file: File): Promise<string> {
+    const formData = new FormData()
+    formData.append('file',          file)
+    formData.append('upload_preset', 'crm_unsigned')
+    formData.append('folder',        'mansion-realty/news')
+    const res  = await fetch('https://api.cloudinary.com/v1_1/dqiqatpac/image/upload', {
+      method: 'POST',
+      body:   formData,
+    })
+    const json = await res.json()
+    if (json.secure_url) return json.secure_url
+    throw new Error(json.error?.message || 'Upload gagal')
+  }
+
+  async function handleFotoBerita(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setSuccess('❌ File harus gambar'); return }
+    if (file.size > 5 * 1024 * 1024)    { setSuccess('❌ Maks 5MB'); return }
+    setSaving(true)
+    try {
+      const url = await uploadFotoBerita(file)
+      setNewsForm(p => ({ ...p, foto_url: url }))
+      setSuccess('✅ Foto berhasil diupload!')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (e: any) {
+      setSuccess('❌ Upload foto gagal: ' + e.message)
+    } finally { setSaving(false) }
+  }
+
   async function submitNews(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      const GAS_URL = process.env.NEXT_PUBLIC_GAS_API_URL || ''
-      const url = new URL(GAS_URL)
-      url.searchParams.set('action', 'saveNews')
-      url.searchParams.set('secret', 'mansion2026')
-      await fetch(url.toString(), {
-        method: 'POST',
+      const res  = await fetch('/api/news', {
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...newsForm, secret: 'mansion2026' }),
+        body:    JSON.stringify({
+          Judul:     newsForm.judul,
+          Kategori:  newsForm.kategori,
+          Ringkasan: newsForm.ringkasan,
+          Konten:    newsForm.konten,
+          foto_url:  newsForm.foto_url,
+        }),
       })
-      setSuccess('✅ Berita berhasil disimpan ke Google Sheet!')
-      setNewsForm({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
-    } catch { setSuccess('❌ Gagal menyimpan') }
-    finally { setSaving(false); setTimeout(() => setSuccess(''), 4000) }
+      const json = await res.json()
+      if (json.success) {
+        setSuccess('✅ Berita berhasil disimpan ke Google Sheet!')
+        setNewsForm({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
+      } else {
+        setSuccess('❌ Gagal: ' + (json.error || json.message || 'Unknown error'))
+      }
+    } catch (e: any) {
+      setSuccess('❌ Gagal menyimpan: ' + e.message)
+    }
+    finally { setSaving(false); setTimeout(() => setSuccess(''), 5000) }
   }
 
   const menuItems: Array<{ id: Tab; icon: string; label: string; roles: string[] }> = [
     { id: 'overview',  icon: '📊', label: 'Overview',        roles: ['admin','superadmin'] },
     { id: 'news',      icon: '📰', label: 'Input Berita',    roles: ['admin','superadmin'] },
-    { id: 'projects',  icon: '🏗',  label: 'Input Proyek',    roles: ['admin','superadmin'] },
     { id: 'logo',      icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
     { id: 'kpr',       icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
     { id: 'settings',  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
@@ -58,9 +98,7 @@ export default function AdminDashboardClient({ user }: Props) {
       <div className="w-64 bg-primary-900 text-white flex flex-col fixed h-full z-40 hidden md:flex">
         <div className="p-6 border-b border-white/10">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gold rounded-lg flex items-center justify-center">
-              <span className="text-primary-900 font-bold">M</span>
-            </div>
+            <LogoBadge size="sm" dark={true} />
             <div>
               <div className="font-display font-bold text-sm">Mansion Realty</div>
               <div className="text-white/50 text-xs capitalize">{user.role}</div>
@@ -159,7 +197,23 @@ export default function AdminDashboardClient({ user }: Props) {
                 </div>
                 <div>
                   <label className="label-field">URL Foto Cover</label>
-                  <input className="input-field" placeholder="https://..." value={newsForm.foto_url} onChange={e => setNewsForm(p => ({...p, foto_url: e.target.value}))}/>
+                  {/* Upload dari lokal */}
+                  <div className="flex gap-2 items-center">
+                    <label className="flex-1 cursor-pointer border-2 border-dashed border-gray-200 hover:border-primary-400 rounded-xl p-3 text-center text-sm text-gray-400 hover:text-primary-700 transition-colors">
+                      {newsForm.foto_url
+                        ? <span className="text-green-600 font-semibold">✅ Foto terpilih</span>
+                        : <span>📁 Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
+                      }
+                      <input type="file" accept="image/*" className="hidden" onChange={handleFotoBerita} disabled={saving}/>
+                    </label>
+                    {newsForm.foto_url && (
+                      <button type="button" onClick={() => setNewsForm(p => ({...p, foto_url: ''}))}
+                        className="text-red-400 hover:text-red-600 text-xs px-2">✕ Hapus</button>
+                    )}
+                  </div>
+                  {newsForm.foto_url && (
+                    <img src={newsForm.foto_url} alt="preview" className="mt-2 h-32 w-auto rounded-xl object-cover border border-gray-200"/>
+                  )}
                 </div>
                 <button type="submit" disabled={saving} className="btn-primary py-3 px-8 disabled:opacity-50">
                   {saving ? '⏳ Menyimpan...' : '💾 Simpan ke Google Sheet'}
@@ -169,63 +223,13 @@ export default function AdminDashboardClient({ user }: Props) {
           </div>
         )}
 
-        {/* ── GANTI LOGO (KEMBALI KE ORIGINAL) ── */}
+
+        {/* ── GANTI LOGO ── */}
         {tab === 'logo' && (
-          <div>
-            <h1 className="section-title mb-6">🖼 Ganti Logo</h1>
-            <div className="card p-6">
-              <div className="mb-6">
-                <p className="text-sm text-gray-500 mb-4">Logo saat ini (default):</p>
-                <div className="w-16 h-16 bg-gold rounded-xl flex items-center justify-center">
-                  <span className="text-primary-900 font-display font-bold text-3xl">M</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="label-field">URL Logo Baru</label>
-                  <input className="input-field" placeholder="https://res.cloudinary.com/..." value={logoUrl} onChange={e => setLogoUrl(e.target.value)}/>
-                  <p className="text-xs text-gray-400 mt-1">Upload foto ke Cloudinary lalu paste URL-nya di sini</p>
-                </div>
-                {logoUrl && (
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700 mb-2">Preview:</p>
-                    <img src={logoUrl} alt="Logo preview" className="h-16 w-auto rounded-lg border border-gray-200"/>
-                  </div>
-                )}
-                <div className="p-4 bg-blue-50 rounded-xl text-sm text-blue-700">
-                  💡 Simpan URL logo ke sheet <strong>CONFIG</strong> dengan KEY = <code>logo_url</code>.
-                </div>
-                <button className="btn-primary" onClick={() => setSuccess('✅ URL Logo berhasil disimpan!')}>
-                  💾 Simpan Logo
-                </button>
-              </div>
-            </div>
-          </div>
+          <div><LogoUpload /></div>
         )}
 
-        {/* ── INPUT PROYEK (KEMBALI KE ORIGINAL) ── */}
-        {tab === 'projects' && (
-          <div>
-            <h1 className="section-title mb-6">🏗 Input Proyek Baru</h1>
-            <div className="card p-6">
-              <p className="text-gray-500 text-sm mb-6">
-                Input proyek baru langsung di Google Sheet CRM Mansion tab <strong>PROJECTS</strong>.
-              </p>
-              <a href={`https://docs.google.com/spreadsheets/d/${process.env.NEXT_PUBLIC_SPREADSHEET_ID || ''}/edit#gid=0`}
-                 target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex">
-                📊 Buka Google Sheet PROJECTS
-              </a>
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl text-sm">
-                <p className="font-semibold text-gray-700 mb-2">Kolom yang perlu diisi:</p>
-                <div className="grid grid-cols-2 gap-1 text-gray-500 text-xs font-mono">
-                  {['Nama_Proyek','Developer','Kota','Harga_Min','Harga_Max'].map(k => (
-                    <span key={k} className="bg-white px-2 py-1 rounded border border-gray-200">{k}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}

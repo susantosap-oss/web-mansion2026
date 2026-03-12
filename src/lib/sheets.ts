@@ -293,19 +293,21 @@ export async function getAgentById(id: string): Promise<Agent | null> {
 }
 
 function mapNews(row: SheetRow): News {
-  const id    = str(row['ID'])
-  const judul = str(row['Judul'] || row['JUDUL'] || '')
+  const judul = str(row['Judul'] || '')
+  const ts    = str(row['Timestamp'] || '')
+  // Buat slug dari judul + timestamp
+  const slug  = makeSlug(judul, ts.replace(/\D/g,'').slice(0,8) || String(Date.now()))
   return {
-    id,
-    slug:       makeSlug(judul, id),
+    id:         ts,
+    slug,
     title:      judul,
-    summary:    str(row['Ringkasan'] || row['Summary'] || ''),
-    content:    str(row['Konten'] || row['Content'] || ''),
+    summary:    str(row['Ringkasan'] || ''),
+    content:    str(row['Konten'] || ''),
     category:   str(row['Kategori'] || 'Berita Properti'),
-    coverImage: str(row['Foto_URL'] || row['Foto_1_URL'] || ''),
-    author:     str(row['Author'] || row['Penulis'] || 'Admin'),
-    createdAt:  str(row['Created_At'] || row['Tanggal_Input'] || ''),
-    updatedAt:  str(row['Updated_At'] || ''),
+    coverImage: str(row['Foto URL'] || row['Foto_URL'] || ''),
+    author:     'Mansion Realty',
+    createdAt:  ts,
+    updatedAt:  ts,
   }
 }
 

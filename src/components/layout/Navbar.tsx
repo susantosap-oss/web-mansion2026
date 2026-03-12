@@ -1,4 +1,5 @@
 'use client'
+import LogoBadge from '@/components/ui/LogoBadge'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -15,6 +16,16 @@ const navLinks = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
+
+  const [logoUrl, setLogoUrl] = useState<string>('')
+
+  useEffect(() => {
+    // Fetch logo dari CONFIG
+    fetch('/api/config?key=logo_url')
+      .then(r => r.json())
+      .then(d => { if (d.value && d.value.startsWith('http')) setLogoUrl(d.value) })
+      .catch(() => {})
+  }, [])
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname   = usePathname()
   const { total }  = useFavourite()
@@ -32,9 +43,7 @@ export default function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-gold rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-            <span className="text-primary-900 font-display font-bold text-lg">M</span>
-          </div>
+          <LogoBadge size="md" dark={true} />
           <div className="hidden sm:block">
             <span className="text-white font-display font-bold text-xl">MANSION</span>
             <span className="text-gold font-display text-xl ml-1">Realty</span>
