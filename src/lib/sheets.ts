@@ -1,7 +1,7 @@
 import { Project, Listing, Agent, News, SheetRow } from '@/types'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL!
-const GAS_SECRET = process.env.GAS_API_SECRET || 'mansion2026'
+const GAS_SECRET = process.env.GAS_API_SECRET || ''
 
 // ── In-Memory Cache ───────────────────────────────────────
 interface CacheEntry<T> { data: T; expiresAt: number }
@@ -99,7 +99,6 @@ function mapListing(row: SheetRow): Listing {
     'rumah': 'Rumah', 'house': 'Rumah',
     'apartemen': 'Apartemen', 'apartment': 'Apartemen',
     'ruko': 'Ruko', 'shophouse': 'Ruko',
-    'gudang': 'Gudang', 'warehouse': 'Gudang',
     'kavling': 'Kavling', 'tanah': 'Kavling', 'land': 'Kavling',
     'gedung': 'Gedung', 'building': 'Gedung',
     'gudang': 'Gudang', 'warehouse': 'Gudang',
@@ -134,15 +133,14 @@ function mapListing(row: SheetRow): Listing {
       return raw.startsWith('[') ? '' : raw
     })(),
     agentName:     (() => {
-      // Coba dari kolom Agen_Nama dulu
+      // Prioritas: _agentName dari join, lalu Agen_Nama dari kolom
+      const fromJoin = str(row['_agentName'])
+      if (fromJoin) return fromJoin
       const fromCol = str(row['Agen_Nama'])
       if (fromCol && !fromCol.startsWith('[') && !fromCol.includes('cloudinary') && !fromCol.includes('crm-broker')) {
         return fromCol
       }
-      // Fallback: lookup dari agentMap by Agen_ID
-      const agId  = str(row['Agen_ID']).startsWith('[') ? '' : str(row['Agen_ID'])
-      const agRow = agId ? agentMap.get(agId) : null
-      return agRow ? str(agRow['Nama']) : ''
+      return ''
     })(),
     agentPhone:    str(row['_agentPhone'] || ''), // diisi dari join dengan AGENTS
     agentPhoto:    str(row['_agentPhoto'] || ''),
@@ -222,13 +220,18 @@ export async function getListings(filter?: {
     agents.forEach(a => agentMap.set(str(a['ID']), a))
 
     let listings = rows
-      .filter(r => String(r['Tampilkan_di_Web']).toUpperCase() !== 'FALSE')
+      .filter(r => {
+        const v = r['Tampilkan_di_Web']
+        // Tampilkan kecuali eksplisit FALSE — row tanpa nilai = tetap tampil
+        return v !== false && String(v).toUpperCase() !== 'FALSE'
+      })
       .map(row => {
         // Join data agen
         const agent = agentMap.get(str(row['Agen_ID']))
         if (agent) {
           row['_agentPhone'] = str(agent['WhatsApp'] || agent['WA'] || agent['No_WA'] || agent['Telepon'] || '')
           row['_agentPhoto'] = str(agent['Foto_URL'] || agent['Foto'] || agent['Photo'] || '')
+          row['_agentName']  = str(agent['Nama'] || '')
         }
         return mapListing(row)
       })
@@ -294,20 +297,25 @@ export async function getAgentById(id: string): Promise<Agent | null> {
 
 function mapNews(row: SheetRow): News {
   const judul = str(row['Judul'] || '')
-  const ts    = str(row['Timestamp'] || '')
+  const ts    = str(row['Timestamp'] || row['Created_At'] || '')
   // Buat slug dari judul + timestamp
   const slug  = makeSlug(judul, ts.replace(/\D/g,'').slice(0,8) || String(Date.now()))
+  const validCategories = ['Berita Properti','Tips & Trik','Regulasi','KPR & Pembiayaan','Investasi'] as const
+  const rawCat = str(row['Kategori'] || 'Berita Properti')
+  const category = (validCategories.includes(rawCat as typeof validCategories[number])
+    ? rawCat : 'Berita Properti') as News['category']
   return {
-    id:         ts,
+    id:          ts,
     slug,
-    title:      judul,
-    summary:    str(row['Ringkasan'] || ''),
-    content:    str(row['Konten'] || ''),
-    category:   str(row['Kategori'] || 'Berita Properti'),
-    coverImage: str(row['Foto URL'] || row['Foto_URL'] || ''),
-    author:     'Mansion Realty',
-    createdAt:  ts,
-    updatedAt:  ts,
+    title:       judul,
+    summary:     str(row['Ringkasan'] || ''),
+    content:     str(row['Konten'] || ''),
+    category,
+    coverImage:  str(row['Foto URL'] || row['Foto_URL'] || row['foto_url'] || ''),
+    author:      str(row['Penulis'] || 'Mansion Realty'),
+    publishedAt: ts,
+    tags:        str(row['Tags'] || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+    viewCount:   num(row['Views_Count'] || 0),
   }
 }
 
@@ -316,7 +324,7 @@ export async function getNews(limit?: number): Promise<News[]> {
     const rows = await fetchFromGAS<SheetRow[]>('getNews', 600)
     const news = rows
       .map(mapNews)
-      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .sort((a, b) => new Date(b.publishedAt || b.id).getTime() - new Date(a.publishedAt || a.id).getTime())
     return limit ? news.slice(0, limit) : news
   } catch (e) {
     console.error('[getNews]', e)

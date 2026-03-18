@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Listing } from '@/types'
@@ -11,13 +12,47 @@ interface Props {
 }
 
 export default function ListingDetailClient({ listing, waLink, waKantor }: Props) {
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName]         = useState('')
+  const [phone, setPhone]       = useState('')
+  const [sending, setSending]   = useState(false)
+  const [sent, setSent]         = useState(false)
+
+  const targetWa = listing.agentPhone ? waLink : waKantor
+
   const handleCopyLink = () => {
     const url = typeof window !== 'undefined' ? window.location.href : ''
     navigator?.clipboard?.writeText(url)
       .then(() => alert('Link berhasil disalin!'))
   }
 
-  const targetWa = listing.agentPhone ? waLink : waKantor
+  const handleContact = async () => {
+    if (!name.trim() || !phone.trim()) return
+    setSending(true)
+    // Simpan lead ke GSheet sebagai SSoT CRM
+    try {
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:         name.trim(),
+          phone:        phone.trim(),
+          listingId:    listing.id,
+          listingTitle: listing.title,
+          agentId:      listing.agentId,
+          message:      `Tertarik properti: ${listing.title} — ${formatPrice(listing.price)}`,
+          source:       'WhatsApp',
+          tipeProperti: listing.propertyType,
+          jenis:        listing.type === 'Sale' ? 'Secondary' : 'Sewa',
+          minatTipe:    listing.type === 'Sale' ? 'Beli' : 'Sewa',
+          lokasi:       [listing.location, listing.city].filter(Boolean).join(', '),
+        }),
+      })
+    } catch { /* tetap lanjut ke WA meski lead gagal disimpan */ }
+    setSending(false)
+    setSent(true)
+    window.open(targetWa, '_blank')
+  }
 
   return (
     <div className="sticky top-24 space-y-4">
@@ -49,13 +84,52 @@ export default function ListingDetailClient({ listing, waLink, waKantor }: Props
           </div>
         </div>
 
-        {/* WA Button */}
-        <a href={targetWa} target="_blank" rel="noopener noreferrer"
-           className="btn-wa w-full justify-center py-3 mb-3">
-          💬 Chat WhatsApp Agen
-        </a>
+        {/* Lead capture form — muncul sebelum buka WA */}
+        {!sent ? (
+          !showForm ? (
+            <button onClick={() => setShowForm(true)}
+              className="btn-wa w-full justify-center py-3 mb-3">
+              💬 Chat WhatsApp Agen
+            </button>
+          ) : (
+            <div className="space-y-2.5 mb-3">
+              <p className="text-xs text-gray-500 font-medium">Masukkan data Anda agar agen bisa follow-up:</p>
+              <input
+                className="input-field text-sm py-2"
+                placeholder="Nama Lengkap *"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                autoFocus
+              />
+              <input
+                className="input-field text-sm py-2"
+                placeholder="No. WhatsApp *"
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+              <button
+                onClick={handleContact}
+                disabled={sending || !name.trim() || !phone.trim()}
+                className="btn-wa w-full justify-center py-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                {sending ? 'Menyimpan...' : '💬 Lanjut ke WhatsApp'}
+              </button>
+              <button onClick={() => setShowForm(false)}
+                className="w-full text-center text-xs text-gray-400 hover:text-gray-600 py-1">
+                Batal
+              </button>
+            </div>
+          )
+        ) : (
+          <div className="text-center py-2 mb-3">
+            <p className="text-sm text-green-600 font-semibold">✅ Data tersimpan!</p>
+            <button onClick={() => window.open(targetWa, '_blank')}
+              className="btn-wa w-full justify-center py-3 mt-2">
+              💬 Buka WhatsApp Lagi
+            </button>
+          </div>
+        )}
 
-        {/* Lihat semua agen */}
         <Link href="/agents"
           className="block text-center text-xs text-gray-400 hover:text-primary-900 transition-colors">
           Lihat semua agen →
@@ -77,7 +151,7 @@ export default function ListingDetailClient({ listing, waLink, waKantor }: Props
         </Link>
       </div>
 
-      {/* Share — Copy Link only */}
+      {/* Share */}
       <div className="card p-5">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Bagikan</p>
         <button onClick={handleCopyLink}

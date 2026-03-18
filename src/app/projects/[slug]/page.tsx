@@ -1,17 +1,30 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getProjects, formatPrice } from '@/lib/sheets'
+import { getProjects, getAgents, formatPrice } from '@/lib/sheets'
 import BackButton from '@/components/ui/BackButton'
+import ProjectDetailClient from './ProjectDetailClient'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
 
 export default async function ProjectDetailPage({ params }: Props) {
   const slug     = decodeURIComponent(params.slug)
-  const projects = await getProjects()
+  const [projects, allAgents] = await Promise.all([getProjects(), getAgents()])
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()
+
+  // Sort agen by konversi, ambil top 5 aktif
+  const agents = [...allAgents]
+    .filter(a => a.verified)
+    .sort((a, b) => {
+      const rA = a.totalListings > 0 ? a.totalDeals / a.totalListings : 0
+      const rB = b.totalListings > 0 ? b.totalDeals / b.totalListings : 0
+      return rB - rA
+    })
+    .slice(0, 5)
+
+  const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`
 
   return (
     <div className="pt-24 pb-16 bg-white min-h-screen">
@@ -92,36 +105,9 @@ export default async function ProjectDetailPage({ params }: Props) {
             )}
           </div>
 
-          {/* Kanan: Sidebar */}
+          {/* Kanan: Sidebar dengan agent picker + lead capture */}
           <div>
-            <div className="sticky top-24 space-y-4">
-
-              {/* Hubungi Agen */}
-              <div className="card p-5">
-                <h3 className="font-bold text-primary-900 mb-2">Hubungi Agen</h3>
-                <p className="text-xs text-gray-400 mb-4">
-                  Tim agen kami siap membantu informasi proyek ini
-                </p>
-                {/* Link ke halaman agen — sorted by conversion rate */}
-                <Link href="/agents?sort=conversion"
-                  className="btn-wa w-full justify-center py-3 mb-3">
-                  👤 Lihat Agen Tersedia
-                </Link>
-                <p className="text-xs text-center text-gray-400">
-                  Pilih agen dengan konversi terbaik
-                </p>
-              </div>
-
-              {/* KPR */}
-              <div className="card p-5 bg-amber-50">
-                <p className="text-sm font-semibold text-primary-900 mb-2">💰 Simulasi KPR</p>
-                <Link href={`/calculator?harga=${project.priceMin}&from=${encodeURIComponent('/projects/' + project.slug)}`}
-                  className="btn-primary w-full justify-center text-sm py-2.5">
-                  Hitung Cicilan
-                </Link>
-              </div>
-
-            </div>
+            <ProjectDetailClient project={project} agents={agents} waKantor={waKantor} />
           </div>
         </div>
       </div>

@@ -4,9 +4,34 @@ import { useState } from 'react'
 export default function TitipListingPage() {
   const [form, setForm] = useState({ name:'', phone:'', email:'', propertyType:'Rumah', address:'', price:'', description:'' })
   const [done, setDone] = useState(false)
+  const [loading, setLoading] = useState(false)
   const wa = process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'
 
-  const handleWA = () => {
+  const handleWA = async () => {
+    if (!form.name || !form.phone) return
+    setLoading(true)
+    // Simpan lead ke GSheet sebagai SSoT
+    try {
+      await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:         form.name,
+          phone:        form.phone,
+          email:        form.email,
+          message:      `Titip Listing: ${form.propertyType} di ${form.address}. Harga: ${form.price}. ${form.description}`,
+          source:       'TitipListing',
+          listingTitle: `${form.propertyType} di ${form.address}`,
+          tipeProperti: form.propertyType,
+          jenis:        'Titip',
+          minatTipe:    'Titip/Jual',
+          lokasi:       form.address,
+          budgetMin:    form.price,
+          budgetMax:    form.price,
+        }),
+      })
+    } catch { /* tetap lanjut ke WA meski leads gagal disimpan */ }
+    setLoading(false)
     const msg = `*Titip Listing Properti*\n\nNama: ${form.name}\nTelepon: ${form.phone}\nTipe: ${form.propertyType}\nAlamat: ${form.address}\nHarga: ${form.price}\nDeskripsi: ${form.description}`
     window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank')
     setDone(true)
@@ -31,7 +56,7 @@ export default function TitipListingPage() {
             <div><label className="label-field">Alamat / Lokasi *</label><input className="input-field" placeholder="Jl. Contoh No. 1, Jakarta Selatan" value={form.address} onChange={e=>setForm(p=>({...p,address:e.target.value}))}/></div>
             <div><label className="label-field">Harga yang Diinginkan</label><input className="input-field" placeholder="cth: 850.000.000" value={form.price} onChange={e=>setForm(p=>({...p,price:e.target.value}))}/></div>
             <div><label className="label-field">Deskripsi Singkat</label><textarea className="input-field h-28 resize-none" placeholder="Kondisi properti, spesifikasi, dll..." value={form.description} onChange={e=>setForm(p=>({...p,description:e.target.value}))}/></div>
-            <button onClick={handleWA} className="btn-wa w-full justify-center py-4">💬 Kirim via WhatsApp</button>
+            <button onClick={handleWA} disabled={loading || !form.name || !form.phone} className="btn-wa w-full justify-center py-4 disabled:opacity-50 disabled:cursor-not-allowed">{loading ? 'Menyimpan...' : '💬 Kirim via WhatsApp'}</button>
           </div>
         ) : (
           <div className="card p-12 text-center"><div className="text-6xl mb-4">✅</div><h2 className="font-display font-bold text-primary-900 text-2xl mb-3">Terima Kasih!</h2><p className="text-gray-600 mb-6">Tim agen kami akan segera menghubungi Anda.</p><button onClick={()=>setDone(false)} className="btn-outline">Titip Lagi</button></div>

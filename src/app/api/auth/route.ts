@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs'
 import { createToken, verifyToken, COOKIE_NAME, AuthUser } from '@/lib/auth'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL || ''
-const GAS_SECRET = process.env.GAS_API_SECRET || 'mansion2026'
+const GAS_SECRET = process.env.GAS_API_SECRET || ''
 
 export async function POST(request: Request) {
   const { email, password } = await request.json()
