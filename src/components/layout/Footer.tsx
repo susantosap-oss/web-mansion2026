@@ -27,9 +27,9 @@ export default function Footer() {
             </div>
             <p className="text-white/60 text-sm leading-relaxed">Agen properti terpercaya untuk hunian dan investasi terbaik di Indonesia.</p>
             <div className="mt-4 space-y-1 text-sm text-white/60">
-              <p>📍 {process.env.NEXT_PUBLIC_COMPANY_ADDRESS || 'Jakarta Selatan'}</p>
-              <p>📞 {process.env.NEXT_PUBLIC_COMPANY_PHONE || '+6221-1234-5678'}</p>
-              <p>✉️ {process.env.NEXT_PUBLIC_COMPANY_EMAIL || 'info@mansionrealty.co.id'}</p>
+              <p>📍 {process.env.NEXT_PUBLIC_COMPANY_ADDRESS || 'Jl. Sentra Niaga Utama Ruko Niaga Utama F-7 Citraland Surabaya'}</p>
+              <p>📞 {process.env.NEXT_PUBLIC_COMPANY_PHONE || '+628219880889'}</p>
+              <p>✉️ {process.env.NEXT_PUBLIC_COMPANY_EMAIL || 'manprop26@gmail.com'}</p>
             </div>
           </div>
           {[

@@ -41,7 +41,7 @@ export default function ListingDetailClient({ listing, waLink, waKantor }: Props
           listingTitle: listing.title,
           agentId:      listing.agentId,
           message:      `Tertarik properti: ${listing.title} — ${formatPrice(listing.price)}`,
-          source:       'WhatsApp',
+          source:       'Web',
           tipeProperti: listing.propertyType,
           jenis:        listing.type === 'Sale' ? 'Secondary' : 'Sewa',
           minatTipe:    listing.type === 'Sale' ? 'Beli' : 'Sewa',

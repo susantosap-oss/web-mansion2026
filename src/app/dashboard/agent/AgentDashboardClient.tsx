@@ -47,8 +47,23 @@ export default function AgentDashboardClient({ user, stats }: Props) {
     router.push('/login')
   }
 
+  async function handleUpdateStatus(leadId: string, status: string) {
+    try {
+      await fetch('/api/leads', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId, status }),
+      })
+      setLeads(prev => prev.map((l: any) =>
+        (l['ID'] || l['id']) === leadId ? { ...l, Status_Lead: status, STATUS: status } : l
+      ))
+    } catch { /* silent */ }
+  }
+
   const totalViews = listings.reduce((sum: number, l: any) => sum + (Number(l['Views_Count']) || 0), 0)
-  const newLeads   = leads.filter((l: any) => l['STATUS'] === 'New' || l['status'] === 'New').length
+  const newLeads   = leads.filter((l: any) =>
+    ['Baru', 'New', 'new', 'baru'].includes(String(l['Status_Lead'] || l['STATUS'] || l['status'] || ''))
+  ).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,15 +154,29 @@ export default function AgentDashboardClient({ user, stats }: Props) {
                           <p className="text-sm text-gray-500">{lead['TELEPON'] || lead['phone'] || '-'}</p>
                           <p className="text-xs text-gray-400 mt-1 line-clamp-1">{lead['PESAN'] || lead['message'] || '-'}</p>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <span className={`badge text-xs ${
-                            (lead['STATUS'] || lead['status']) === 'New' ? 'bg-red-100 text-red-700' :
-                            (lead['STATUS'] || lead['status']) === 'Contacted' ? 'bg-blue-100 text-blue-700' :
-                            'bg-green-100 text-green-700'
-                          }`}>
-                            {lead['STATUS'] || lead['status'] || 'New'}
-                          </span>
-                          <p className="text-xs text-gray-400 mt-1">{lead['TANGGAL'] || lead['created_at'] || ''}</p>
+                        <div className="text-right flex-shrink-0 space-y-1">
+                          {(() => {
+                            const st = lead['Status_Lead'] || lead['STATUS'] || lead['status'] || 'Baru'
+                            const color =
+                              st === 'Baru'      ? 'bg-red-100 text-red-700' :
+                              st === 'Dihubungi' ? 'bg-blue-100 text-blue-700' :
+                              st === 'Warm'      ? 'bg-orange-100 text-orange-700' :
+                              st === 'Qualified' ? 'bg-purple-100 text-purple-700' :
+                              st === 'Closing'   ? 'bg-green-100 text-green-700' :
+                              st === 'Batal'     ? 'bg-gray-100 text-gray-500' :
+                              'bg-gray-100 text-gray-600'
+                            return <span className={`badge text-xs ${color}`}>{st}</span>
+                          })()}
+                          <select
+                            className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white text-gray-600 cursor-pointer block ml-auto"
+                            value={lead['Status_Lead'] || lead['STATUS'] || lead['status'] || 'Baru'}
+                            onChange={e => handleUpdateStatus(lead['ID'] || lead['id'], e.target.value)}
+                          >
+                            {['Baru','Dihubungi','Warm','Qualified','Closing','Batal'].map(s => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-gray-400">{lead['Tanggal'] || lead['TANGGAL'] || lead['created_at'] || ''}</p>
                         </div>
                       </div>
                     ))}

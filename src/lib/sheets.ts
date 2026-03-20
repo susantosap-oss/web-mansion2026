@@ -199,6 +199,8 @@ function mapAgent(row: SheetRow): Agent {
     joinDate:       str(row['Join_Date'] || row['Created_At']),
     instagram:      undefined,
     linkedin:       undefined,
+    nomerLsp:       str(row['Nomer_LSP'] || ''),
+    role:           str(row['Role'] || '').toLowerCase(),
   }
 }
 
@@ -283,7 +285,7 @@ export async function getAgents(): Promise<Agent[]> {
       delete row['Password']
       delete row['Telegram_ID']
     })
-    return rows.map(mapAgent)
+    return rows.map(mapAgent).filter(a => a.role !== 'admin' && a.role !== 'superadmin')
   } catch (e) {
     console.error('[getAgents]', e)
     return []

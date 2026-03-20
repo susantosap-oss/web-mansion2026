@@ -9,6 +9,37 @@ function sanitize(v: unknown): string {
     : s
 }
 
+function gasUrl() {
+  const url    = process.env.NEXT_PUBLIC_GAS_API_URL
+  const secret = process.env.GAS_API_SECRET
+  if (!url || url.includes('GANTI') || !secret) return null
+  return { url, secret }
+}
+
+export async function GET(request: Request) {
+  const gas = gasUrl()
+  if (!gas) return NextResponse.json({ success: true, data: [], note: 'GAS URL belum dikonfigurasi' })
+
+  try {
+    const { searchParams } = new URL(request.url)
+    const agentId = searchParams.get('agentId') || ''
+
+    const u = new URL(gas.url)
+    u.searchParams.set('action', 'getLeads')
+    u.searchParams.set('secret', gas.secret)
+    if (agentId) u.searchParams.set('agentId', agentId)
+
+    const res  = await fetch(u.toString(), { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(15000) })
+    const text = await res.text()
+    if (text.trim().startsWith('<'))
+      return NextResponse.json({ success: false, error: 'GAS error' }, { status: 500 })
+
+    return NextResponse.json(JSON.parse(text))
+  } catch {
+    return NextResponse.json({ success: false, error: 'Failed' }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -18,38 +49,67 @@ export async function POST(request: Request) {
     if (!name || !phone)
       return NextResponse.json({ success: false, error: 'name & phone wajib' }, { status: 400 })
 
-    const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL
-    const GAS_SECRET = process.env.GAS_API_SECRET
-    if (!GAS_URL || GAS_URL.includes('GANTI') || !GAS_SECRET)
+    const gas = gasUrl()
+    if (!gas)
       return NextResponse.json({ success: true, note: 'GAS URL belum dikonfigurasi, lead tidak disimpan' })
 
     // Kirim via GET params — hindari POST redirect body hilang di GAS
-    const url = new URL(GAS_URL)
-    url.searchParams.set('action',       'saveLead')
-    url.searchParams.set('secret',       GAS_SECRET)
-    url.searchParams.set('name',         name)
-    url.searchParams.set('phone',        phone)
-    url.searchParams.set('email',        sanitize(body.email))
-    url.searchParams.set('listingId',    sanitize(body.listingId))
-    url.searchParams.set('listingTitle', sanitize(body.listingTitle))
-    url.searchParams.set('agentId',      sanitize(body.agentId))
-    url.searchParams.set('message',      sanitize(body.message))
-    url.searchParams.set('source',       sanitize(body.source) || 'Web')
-    url.searchParams.set('tipeProperti', sanitize(body.tipeProperti))
-    url.searchParams.set('jenis',        sanitize(body.jenis))
-    url.searchParams.set('minatTipe',    sanitize(body.minatTipe))
-    url.searchParams.set('lokasi',       sanitize(body.lokasi))
-    url.searchParams.set('budgetMin',    sanitize(body.budgetMin))
-    url.searchParams.set('budgetMax',    sanitize(body.budgetMax))
+    const u = new URL(gas.url)
+    u.searchParams.set('action',       'saveLead')
+    u.searchParams.set('secret',       gas.secret)
+    u.searchParams.set('name',         name)
+    u.searchParams.set('phone',        phone)
+    u.searchParams.set('email',        sanitize(body.email))
+    u.searchParams.set('listingId',    sanitize(body.listingId))
+    u.searchParams.set('listingTitle', sanitize(body.listingTitle))
+    u.searchParams.set('agentId',      sanitize(body.agentId))
+    u.searchParams.set('message',      sanitize(body.message))
+    u.searchParams.set('source',       sanitize(body.source) || 'Web')
+    u.searchParams.set('tipeProperti', sanitize(body.tipeProperti))
+    u.searchParams.set('jenis',        sanitize(body.jenis))
+    u.searchParams.set('minatTipe',    sanitize(body.minatTipe))
+    u.searchParams.set('lokasi',       sanitize(body.lokasi))
+    u.searchParams.set('budgetMin',    sanitize(body.budgetMin))
+    u.searchParams.set('budgetMax',    sanitize(body.budgetMax))
 
-    const res = await fetch(url.toString(), {
-      method:   'GET',
-      redirect: 'follow',
-      signal:   AbortSignal.timeout(15000),
-    })
+    const res  = await fetch(u.toString(), { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(15000) })
     const text = await res.text()
     if (text.trim().startsWith('<'))
       return NextResponse.json({ success: false, error: 'GAS error — cek deployment GAS' }, { status: 500 })
+
+    return NextResponse.json(JSON.parse(text))
+  } catch {
+    return NextResponse.json({ success: false, error: 'Failed' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body    = await request.json()
+    const leadId  = sanitize(body.leadId)
+    const status  = sanitize(body.status)
+
+    if (!leadId || !status)
+      return NextResponse.json({ success: false, error: 'leadId & status wajib' }, { status: 400 })
+
+    const VALID_STATUS = ['Baru', 'Dihubungi', 'Warm', 'Qualified', 'Closing', 'Batal']
+    if (!VALID_STATUS.includes(status))
+      return NextResponse.json({ success: false, error: 'Status tidak valid' }, { status: 400 })
+
+    const gas = gasUrl()
+    if (!gas)
+      return NextResponse.json({ success: true, note: 'GAS URL belum dikonfigurasi' })
+
+    const u = new URL(gas.url)
+    u.searchParams.set('action', 'updateLeadStatus')
+    u.searchParams.set('secret', gas.secret)
+    u.searchParams.set('leadId', leadId)
+    u.searchParams.set('status', status)
+
+    const res  = await fetch(u.toString(), { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(15000) })
+    const text = await res.text()
+    if (text.trim().startsWith('<'))
+      return NextResponse.json({ success: false, error: 'GAS error' }, { status: 500 })
 
     return NextResponse.json(JSON.parse(text))
   } catch {

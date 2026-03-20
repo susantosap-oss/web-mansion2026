@@ -130,6 +130,21 @@ function doGet(e) {
         ])
         return resp({ success: true, message: 'Berita tersimpan!' })
 
+      case 'getLeads':
+        var allLeads = getSheet(SHEETS.LEADS)
+        var agentId  = e.parameter.agentId || ''
+        var filtered = agentId
+          ? allLeads.filter(function(r) { return String(r['Agen_ID'] || '') === agentId })
+          : allLeads
+        return resp({ success: true, data: filtered, total: filtered.length })
+
+      case 'updateLeadStatus':
+        var updLeadId = e.parameter.leadId || ''
+        var updStatus = e.parameter.status || ''
+        if (!updLeadId || !updStatus) return resp({ success: false, error: 'leadId & status wajib' })
+        updateLeadStatus(updLeadId, updStatus)
+        return resp({ success: true, message: 'Status lead diperbarui' })
+
       case 'saveLead':
         // Terima via GET params (hindari masalah POST redirect body hilang)
         saveLead(e.parameter)
@@ -251,7 +266,7 @@ function saveLead(p) {
     'Last_Contact':         '',
     'Next_Follow_Up':       '',
     'Notes':                '',
-    'Score':                0,
+    'Score':                'Warm',
     'Created_At':           now,
     'Updated_At':           now,
     'Tipe_Properti':        p.tipeProperti  || '',
@@ -276,6 +291,31 @@ function saveLead(p) {
   })
 
   sheet.appendRow(newRow)
+}
+
+// ── HELPER: updateLeadStatus → update kolom Status_Lead ──
+function updateLeadStatus(leadId, status) {
+  var ss    = SpreadsheetApp.openById(SHEET_ID)
+  var sheet = ss.getSheetByName(SHEETS.LEADS)
+  if (!sheet) throw new Error('Sheet LEADS tidak ditemukan')
+
+  var data    = sheet.getDataRange().getValues()
+  var headers = data[0]
+  var idCol   = headers.indexOf('ID')
+  var stCol   = headers.indexOf('Status_Lead')
+  var updCol  = headers.indexOf('Updated_At')
+
+  if (idCol < 0 || stCol < 0) throw new Error('Kolom ID atau Status_Lead tidak ditemukan')
+
+  var now = new Date().toISOString()
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]).trim() === String(leadId).trim()) {
+      sheet.getRange(i + 1, stCol + 1).setValue(status)
+      if (updCol >= 0) sheet.getRange(i + 1, updCol + 1).setValue(now)
+      return
+    }
+  }
+  throw new Error('Lead tidak ditemukan: ' + leadId)
 }
 
 // ── HELPER: Response JSON ─────────────────────────────────
