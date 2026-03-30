@@ -53,7 +53,7 @@ export default async function NewsPage() {
                     </span>
                   </div>
                   <div className="p-6 md:p-8 flex flex-col justify-center">
-                    <span className="text-xs text-gray-400 mb-3">{formatDate(news[0].createdAt)}</span>
+                    <span className="text-xs text-gray-400 mb-3">{formatDate(news[0].publishedAt)}</span>
                     <h2 className="text-xl md:text-2xl font-bold text-primary-900 mb-3 group-hover:text-gold transition-colors leading-tight">
                       {news[0].title}
                     </h2>
@@ -85,7 +85,7 @@ export default async function NewsPage() {
                       </span>
                     </div>
                     <div className="p-5">
-                      <p className="text-xs text-gray-400 mb-2">{formatDate(item.createdAt)}</p>
+                      <p className="text-xs text-gray-400 mb-2">{formatDate(item.publishedAt)}</p>
                       <h3 className="font-bold text-primary-900 mb-2 line-clamp-2 leading-tight group-hover:text-gold transition-colors">
                         {item.title}
                       </h3>

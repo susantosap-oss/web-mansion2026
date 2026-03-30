@@ -45,7 +45,7 @@ export default async function NewsDetailPage({ params }: Props) {
             {/* Category + Date */}
             <div className="flex items-center gap-3 mb-4">
               <span className="badge bg-primary-900 text-white">{item.category}</span>
-              <span className="text-sm text-gray-400">{formatDate(item.createdAt)}</span>
+              <span className="text-sm text-gray-400">{formatDate(item.publishedAt)}</span>
               <span className="text-sm text-gray-400">· oleh {item.author}</span>
             </div>
 
@@ -113,7 +113,7 @@ export default async function NewsDetailPage({ params }: Props) {
                           <p className="text-xs font-bold text-primary-900 line-clamp-2 group-hover:text-gold transition-colors">
                             {r.title}
                           </p>
-                          <p className="text-xs text-gray-400 mt-1">{formatDate(r.createdAt)}</p>
+                          <p className="text-xs text-gray-400 mt-1">{formatDate(r.publishedAt)}</p>
                         </div>
                       </Link>
                     ))}

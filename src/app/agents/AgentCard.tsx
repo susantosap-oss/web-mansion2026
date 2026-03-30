@@ -57,7 +57,7 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
   return (
     <div className="card p-5 hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1">
       {/* Rank badge */}
-      {sort === 'conversion' && (
+      {sort === 'top' && (
         <div className="flex justify-end mb-2">
           <span className={`text-xs font-bold px-2 py-1 rounded-full ${
             idx === 0 ? 'bg-yellow-100 text-yellow-700' :
@@ -83,6 +83,12 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
         <p className="text-xs text-gray-400">{agent.bio || 'Agen Properti'}</p>
         {agent.nomerLsp && (
           <p className="text-xs text-primary-700 font-medium mt-0.5">LSP: {agent.nomerLsp}</p>
+        )}
+        {agent.sertifikasi && (
+          <p className="text-xs text-blue-700 font-medium mt-0.5">Sert: {agent.sertifikasi}</p>
+        )}
+        {agent.nomerCra && (
+          <p className="text-xs text-purple-700 font-medium mt-0.5">CRA: {agent.nomerCra}</p>
         )}
         {agent.verified && (
           <span className="mt-1 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">

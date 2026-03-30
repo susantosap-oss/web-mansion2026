@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthUser } from '@/lib/auth'
 
-interface Props { user: AuthUser }
+interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number } }
 
 type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr'
 
@@ -84,13 +84,13 @@ export default function AdminDashboardClient({ user }: Props) {
     finally { setSaving(false); setTimeout(() => setSuccess(''), 5000) }
   }
 
-  const menuItems: Array<{ id: Tab; icon: string; label: string; roles: string[] }> = [
-    { id: 'overview',  icon: '📊', label: 'Overview',        roles: ['admin','superadmin'] },
-    { id: 'news',      icon: '📰', label: 'Input Berita',    roles: ['admin','superadmin'] },
-    { id: 'logo',      icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
-    { id: 'kpr',       icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
-    { id: 'settings',  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
-  ].filter(m => m.roles.includes(user.role))
+  const menuItems = ([
+    { id: 'overview' as Tab,  icon: '📊', label: 'Overview',        roles: ['admin','superadmin'] },
+    { id: 'news'     as Tab,  icon: '📰', label: 'Input Berita',    roles: ['admin','superadmin'] },
+    { id: 'logo'     as Tab,  icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
+    { id: 'kpr'      as Tab,  icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
+    { id: 'settings' as Tab,  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
+  ]).filter(m => m.roles.includes(user.role))
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

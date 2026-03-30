@@ -1,4 +1,4 @@
-import { getAgents } from '@/lib/sheets'
+import { getAgents, computeAgentScore } from '@/lib/sheets'
 import Link from 'next/link'
 import AgentCard from './AgentCard'
 
@@ -12,13 +12,12 @@ export default async function AgentsPage({ searchParams }: Props) {
   const sort   = searchParams.sort || 'default'
   let   agents = await getAgents()
 
-  // Sort by conversion rate (deal / listing)
-  if (sort === 'conversion') {
-    agents = [...agents].sort((a, b) => {
-      const rateA = a.totalListings > 0 ? a.totalDeals / a.totalListings : 0
-      const rateB = b.totalListings > 0 ? b.totalDeals / b.totalListings : 0
-      return rateB - rateA
-    }).slice(0, 10) // top 10
+  // Sort by multi-criteria score (7 prioritas)
+  if (sort === 'top') {
+    agents = [...agents]
+      .filter(a => a.verified)
+      .sort((a, b) => computeAgentScore(b) - computeAgentScore(a))
+      .slice(0, 10) // top 10
   }
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '628219880889'}?text=${encodeURIComponent('Halo, saya ingin konsultasi properti.')}`
@@ -29,11 +28,11 @@ export default async function AgentsPage({ searchParams }: Props) {
         <div className="mb-8">
           <div className="divider-gold mb-3"/>
           <h1 className="section-title">
-            {sort === 'conversion' ? '🏆 Agen Terbaik' : 'Tim Agen Kami'}
+            {sort === 'top' ? '🏆 Top 10 Agen Terbaik' : 'Tim Agen Kami'}
           </h1>
           <p className="text-gray-400 mt-1">
-            {sort === 'conversion'
-              ? 'Top 10 agen dengan tingkat konversi tertinggi'
+            {sort === 'top'
+              ? 'Peringkat agen berdasarkan sertifikasi, listing, aktivitas CRM & leads'
               : `${agents.length} agen profesional siap membantu Anda`}
           </p>
         </div>
@@ -44,9 +43,9 @@ export default async function AgentsPage({ searchParams }: Props) {
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sort === 'default' ? 'bg-primary-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
             Semua Agen
           </Link>
-          <Link href="/agents?sort=conversion"
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sort === 'conversion' ? 'bg-primary-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
-            🏆 Top Konversi
+          <Link href="/agents?sort=top"
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${sort === 'top' ? 'bg-primary-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`}>
+            🏆 Top Agen
           </Link>
         </div>
 
@@ -62,7 +61,7 @@ export default async function AgentsPage({ searchParams }: Props) {
                 key={agent.id}
                 agent={agent}
                 idx={idx}
-                sort={sort}
+                sort={sort === 'top' ? 'top' : 'default'}
                 waKantor={waKantor}
               />
             ))}

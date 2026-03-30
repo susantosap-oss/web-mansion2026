@@ -32,7 +32,12 @@ export interface Agent {
   specialization: string[]; areas: string[]
   totalListings: number; totalDeals: number; rating: number
   verified: boolean; joinDate: string; instagram?: string; linkedin?: string
-  nomerLsp?: string; role?: string
+  // Sertifikasi & identitas profesional (Prioritas 1)
+  nomerLsp?: string; sertifikasi?: string; nomerCra?: string
+  // Aktivitas CRM (Prioritas 3,4,5,6,7)
+  hitCount?: number; shareCount?: number; leadsCount?: number
+  loginCount?: number; jadwalCount?: number
+  role?: string
 }
 
 export interface News {

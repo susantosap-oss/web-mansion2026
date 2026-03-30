@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getProjects, getAgents, formatPrice } from '@/lib/sheets'
+import { getProjects, getAgents, formatPrice, computeAgentScore } from '@/lib/sheets'
 import BackButton from '@/components/ui/BackButton'
 import ProjectDetailClient from './ProjectDetailClient'
 
@@ -14,15 +14,11 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()
 
-  // Sort agen by konversi, ambil top 5 aktif
+  // Sort agen by multi-criteria score (7 prioritas), ambil top 10 aktif
   const agents = [...allAgents]
     .filter(a => a.verified)
-    .sort((a, b) => {
-      const rA = a.totalListings > 0 ? a.totalDeals / a.totalListings : 0
-      const rB = b.totalListings > 0 ? b.totalDeals / b.totalListings : 0
-      return rB - rA
-    })
-    .slice(0, 5)
+    .sort((a, b) => computeAgentScore(b) - computeAgentScore(a))
+    .slice(0, 10)
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`
 
@@ -54,7 +50,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               <div className="absolute top-4 left-4 flex gap-2">
                 <span className="badge bg-primary-900 text-white">{project.type}</span>
                 <span className={`badge ${
-                  project.status === 'Aktif' || project.status === 'Publish'
+                  project.status === 'Aktif'
                     ? 'bg-green-500 text-white'
                     : project.status === 'Sold Out' ? 'bg-red-500 text-white'
                     : 'badge-new'}`}>

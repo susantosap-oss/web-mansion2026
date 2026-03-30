@@ -71,7 +71,7 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
           Hubungi Agen
         </h3>
         <p className="text-xs text-gray-400 mb-4">
-          Pilih agen — diurutkan berdasarkan konversi tertinggi
+          Pilih agen — diurutkan berdasarkan sertifikasi, listing &amp; aktivitas CRM
         </p>
 
         {!sent ? (
@@ -121,9 +121,9 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                   )
                 })
               )}
-              <Link href="/agents?sort=conversion"
+              <Link href="/agents?sort=top"
                 className="block text-center text-xs text-gray-400 hover:text-primary-900 transition-colors pt-1">
-                Lihat semua agen →
+                Lihat semua top agen →
               </Link>
             </div>
           ) : (

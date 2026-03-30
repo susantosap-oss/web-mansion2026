@@ -199,9 +199,42 @@ function mapAgent(row: SheetRow): Agent {
     joinDate:       str(row['Join_Date'] || row['Created_At']),
     instagram:      undefined,
     linkedin:       undefined,
+    // Sertifikasi & identitas profesional (Prioritas 1)
     nomerLsp:       str(row['Nomer_LSP'] || ''),
+    sertifikasi:    str(row['Sertifikasi'] || ''),
+    nomerCra:       str(row['Nomer_CRA'] || ''),
+    // Aktivitas CRM
+    hitCount:       num(row['Hit_Count'] || 0),
+    shareCount:     num(row['Share_Count'] || 0),
+    leadsCount:     num(row['Leads_Count'] || 0),
+    loginCount:     num(row['Login_Count'] || 0),
+    jadwalCount:    num(row['Jadwal_Count'] || 0),
     role:           str(row['Role'] || '').toLowerCase(),
   }
+}
+
+/**
+ * Hitung skor peringkat agen berdasarkan 7 kriteria prioritas:
+ * P1: Nomer LSP / Sertifikasi / CRA          → bobot dominan (1.000.000)
+ * P2: Jumlah Listing terbanyak               → 500/listing
+ * P3: Hit & Share di CRM (Listing+Primary)   → 50/(hit+share)
+ * P4: Koordinator Aktif di CRM               → bonus 80.000
+ * P5: Leads terbanyak                        → 30/lead
+ * P6: Keaktifan login di CRM                 → 5/login
+ * P7: Pengisian Jadwal terbanyak             → 2/jadwal
+ */
+export function computeAgentScore(agent: Agent): number {
+  const hasLsp   = !!(agent.nomerLsp || agent.sertifikasi || agent.nomerCra)
+  const isKoord  = agent.role === 'koordinator' || agent.role === 'coordinator' || agent.role === 'koord'
+  return (
+    (hasLsp ? 1_000_000 : 0)                                         // P1
+    + agent.totalListings * 500                                       // P2
+    + ((agent.hitCount ?? 0) + (agent.shareCount ?? 0)) * 50         // P3
+    + (isKoord ? 80_000 : 0)                                          // P4
+    + (agent.leadsCount ?? 0) * 30                                    // P5
+    + (agent.loginCount ?? 0) * 5                                     // P6
+    + (agent.jadwalCount ?? 0) * 2                                    // P7
+  )
 }
 
 export async function getListings(filter?: {
