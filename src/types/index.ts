@@ -21,6 +21,7 @@ export interface Listing {
   sertifikat: 'SHM' | 'HGB' | 'AJB' | 'SHRS' | 'Lainnya'
   description: string; coverImage: string; images: string[]
   agentId: string; agentName: string; agentPhone: string; agentPhoto: string
+  coOwners: { id: string; name: string; phone: string; photo: string }[]
   viewCount: number; leadCount: number
   status: 'Aktif' | 'Terjual' | 'Disewa' | 'Off Market'
   featured: boolean; createdAt: string; updatedAt: string

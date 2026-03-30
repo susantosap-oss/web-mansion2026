@@ -144,6 +144,7 @@ function mapListing(row: SheetRow): Listing {
     })(),
     agentPhone:    str(row['_agentPhone'] || ''), // diisi dari join dengan AGENTS
     agentPhoto:    str(row['_agentPhoto'] || ''),
+    coOwners:      (row['_coOwners'] as unknown as { id: string; name: string; phone: string; photo: string }[]) || [],
     viewCount:     num(row['Views_Count']),
     leadCount:     0,
     status:        str(row['Status_Listing']) === 'Aktif' || str(row['Status_Listing']) === 'Active'
@@ -244,15 +245,34 @@ export async function getListings(filter?: {
   featured?: boolean
 }): Promise<Listing[]> {
   try {
-    // Fetch listings dan agents sekaligus untuk join data agen
-    const [rows, agents] = await Promise.all([
+    // Fetch listings, agents, dan listing_agents sekaligus
+    const [rows, agents, listingAgentRows] = await Promise.all([
       fetchFromGAS<SheetRow[]>('getListings', 300),
       fetchFromGAS<SheetRow[]>('getAgents', 600),
+      fetchFromGAS<SheetRow[]>('getListingAgents', 300).catch(() => [] as SheetRow[]),
     ])
 
     // Buat map agen untuk lookup cepat
     const agentMap = new Map<string, SheetRow>()
     agents.forEach(a => agentMap.set(str(a['ID']), a))
+
+    // Buat map co-owners per listing_id: listing_id → [{id, name, phone, photo}]
+    const coOwnerMap = new Map<string, { id: string; name: string; phone: string; photo: string }[]>()
+    listingAgentRows
+      .filter(r => str(r['Role']) === 'co_own')
+      .forEach(r => {
+        const listingId = str(r['Listing_ID'])
+        const agenId    = str(r['Agen_ID'])
+        const agent     = agentMap.get(agenId)
+        const entry = {
+          id:    agenId,
+          name:  agent ? str(agent['Nama'] || '') : str(r['Agen_Nama'] || ''),
+          phone: agent ? str(agent['No_WA_Business'] || agent['No_WA'] || '') : '',
+          photo: agent ? str(agent['Foto_URL'] || '') : '',
+        }
+        if (!coOwnerMap.has(listingId)) coOwnerMap.set(listingId, [])
+        coOwnerMap.get(listingId)!.push(entry)
+      })
 
     let listings = rows
       .filter(r => {
@@ -261,13 +281,16 @@ export async function getListings(filter?: {
         return v !== false && String(v).toUpperCase() !== 'FALSE'
       })
       .map(row => {
-        // Join data agen
+        // Join data owner (agen utama)
         const agent = agentMap.get(str(row['Agen_ID']))
         if (agent) {
           row['_agentPhone'] = str(agent['WhatsApp'] || agent['WA'] || agent['No_WA'] || agent['Telepon'] || '')
           row['_agentPhoto'] = str(agent['Foto_URL'] || agent['Foto'] || agent['Photo'] || '')
           row['_agentName']  = str(agent['Nama'] || '')
         }
+        // Join co-owners
+        const id = str(row['ID'])
+        ;(row as Record<string, unknown>)['_coOwners'] = coOwnerMap.get(id) || []
         return mapListing(row)
       })
 

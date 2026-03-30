@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getListings, formatPrice, buildWALink } from '@/lib/sheets'
+import { getListings, formatPrice } from '@/lib/sheets'
 import BackButton from '@/components/ui/BackButton'
 import FavButton from '@/components/ui/FavButton'
 import ListingDetailClient from './ListingDetailClient'
@@ -36,9 +36,7 @@ export default async function ListingDetailPage({ params }: Props) {
   const listing  = listings.find(l => l.slug === slug || l.id === slug)
   if (!listing) notFound()
 
-  const waMessage = `Halo kak, saya tertarik dengan properti:\n*${listing.title}*\nHarga: ${formatPrice(listing.price)}\n\nBisa info lebih lanjut?`
-  const waLink    = buildWALink(listing.agentPhone, waMessage)
-  const waKantor  = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}?text=${encodeURIComponent(waMessage)}`
+  const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}?text=${encodeURIComponent(`Halo, saya tertarik dengan properti:\n*${listing.title}*\nHarga: ${formatPrice(listing.price)}\n\nBisa info lebih lanjut?`)}`
 
   const specs = [
     { icon:'📐', label:'Luas Tanah',    value: listing.luasTanah > 0    ? `${listing.luasTanah} m²`    : null },
@@ -160,7 +158,6 @@ export default async function ListingDetailPage({ params }: Props) {
             <div className="lg:col-span-1">
               <ListingDetailClient
                 listing={listing}
-                waLink={waLink}
                 waKantor={waKantor}
               />
             </div>

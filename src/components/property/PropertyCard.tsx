@@ -113,9 +113,6 @@ export function ListingCard({ listing, className = '' }: { listing: Listing; cla
           <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
           {listing.featured && <span className="badge-new">⭐ Unggulan</span>}
         </div>
-        <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-2">
-          <span className="text-white text-xs font-semibold">{listing.agentName}</span>
-        </div>
       </div>
       <div className="p-4">
         <p className="text-xs text-gray-400 mb-1">📍 {listing.location}, {listing.city}</p>

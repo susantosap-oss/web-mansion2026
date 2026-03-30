@@ -7,14 +7,15 @@ var SHEET_ID   = '1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI'
 var API_SECRET = 'mansion2026'
 
 var SHEETS = {
-  LISTINGS: 'LISTING',
-  PROJECTS: 'PROJECTS',
-  AGENTS:   'AGENTS',
-  NEWS:     'NEWS',
-  LEADS:    'LEADS',
-  PIPELINE: 'PIPELINE_STAGES',
-  TEAMS:    'TEAMS',
-  CONFIG:   'CONFIG',
+  LISTINGS:        'LISTING',
+  PROJECTS:        'PROJECTS',
+  AGENTS:          'AGENTS',
+  NEWS:            'NEWS',
+  LEADS:           'LEADS',
+  PIPELINE:        'PIPELINE_STAGES',
+  TEAMS:           'TEAMS',
+  CONFIG:          'CONFIG',
+  LISTING_AGENTS:  'LISTING_AGENTS',
 }
 
 // ── ENTRY POINT GET ───────────────────────────────────────
@@ -59,6 +60,10 @@ function doGet(e) {
           return safe
         })
         return resp({ success: true, data: activeAgents, total: activeAgents.length })
+
+      case 'getListingAgents':
+        var laRows = getSheet(SHEETS.LISTING_AGENTS)
+        return resp({ success: true, data: laRows, total: laRows.length })
 
       case 'getNews':
         var news = getSheet(SHEETS.NEWS)
