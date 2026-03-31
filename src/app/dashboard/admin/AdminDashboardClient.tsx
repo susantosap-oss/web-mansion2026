@@ -6,10 +6,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthUser } from '@/lib/auth'
+import { DEFAULT_SCORE_WEIGHTS, AgentScoreWeights } from '@/types'
 
 interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number } }
 
-type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr'
+type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring'
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
@@ -20,6 +21,85 @@ export default function AdminDashboardClient({ user }: Props) {
   // Form states (Original GitHub)
   const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
   const [logoUrl, setLogoUrl]   = useState('')
+
+  // Form konten web
+  const [contentForm, setContentForm] = useState({
+    tentang_kami:       '',
+    karir:              '',
+    kebijakan_privasi:  '',
+    syarat_ketentuan:   '',
+    hubungi_kami:       '',
+    footer_text:        '',
+  })
+  const [contentLoading, setContentLoading] = useState(false)
+  const [contentLoaded,  setContentLoaded]  = useState(false)
+
+  async function loadContent() {
+    if (contentLoaded) return
+    setContentLoading(true)
+    try {
+      const keys = Object.keys(contentForm)
+      const results = await Promise.all(
+        keys.map(k => fetch(`/api/config?key=${k}`).then(r => r.json()).catch(() => ({ value: '' })))
+      )
+      const updated = { ...contentForm }
+      keys.forEach((k, i) => {
+        if (results[i]?.value) (updated as Record<string,string>)[k] = String(results[i].value)
+      })
+      setContentForm(updated)
+      setContentLoaded(true)
+    } finally { setContentLoading(false) }
+  }
+
+  // Scoring weights state
+  const [scoreWeights, setScoreWeights] = useState<AgentScoreWeights>(DEFAULT_SCORE_WEIGHTS)
+  const [scoreLoaded,  setScoreLoaded]  = useState(false)
+  const [scoreLoading, setScoreLoading] = useState(false)
+
+  async function loadScoreWeights() {
+    if (scoreLoaded) return
+    setScoreLoading(true)
+    try {
+      const res  = await fetch('/api/config?key=score_weights')
+      const json = await res.json()
+      if (json.value) {
+        const parsed = JSON.parse(String(json.value))
+        setScoreWeights(w => ({ ...w, ...parsed }))
+        setScoreLoaded(true)
+      }
+    } catch { /* gunakan default */ } finally { setScoreLoading(false) }
+  }
+
+  async function saveScoreWeights() {
+    setSaving(true)
+    try {
+      const res  = await fetch('/api/config', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ key: 'score_weights', value: JSON.stringify(scoreWeights) }),
+      })
+      const json = await res.json()
+      setSuccess(json.gasSaved ? '✅ Scoring tersimpan ke Google Sheet!' : '✅ Scoring tersimpan!')
+      setScoreLoaded(true)
+    } catch (e: any) {
+      setSuccess('❌ Gagal: ' + e.message)
+    } finally { setSaving(false); setTimeout(() => setSuccess(''), 4000) }
+  }
+
+  async function saveContent(key: string, value: string) {
+    setSaving(true)
+    try {
+      const res  = await fetch('/api/config', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ key, value }),
+      })
+      const json = await res.json()
+      setSuccess(json.gasSaved ? '✅ Tersimpan ke Google Sheet!' : '✅ Tersimpan!')
+    } catch (e: any) {
+      setSuccess('❌ Gagal: ' + e.message)
+    } finally { setSaving(false); setTimeout(() => setSuccess(''), 4000) }
+  }
 
   async function handleLogout() {
     await fetch('/api/auth', { method: 'DELETE' })
@@ -87,6 +167,8 @@ export default function AdminDashboardClient({ user }: Props) {
   const menuItems = ([
     { id: 'overview' as Tab,  icon: '📊', label: 'Overview',        roles: ['admin','superadmin'] },
     { id: 'news'     as Tab,  icon: '📰', label: 'Input Berita',    roles: ['admin','superadmin'] },
+    { id: 'content'  as Tab,  icon: '📝', label: 'Konten Web',      roles: ['superadmin'] },
+    { id: 'scoring'  as Tab,  icon: '🏆', label: 'Scoring Top Agen', roles: ['superadmin'] },
     { id: 'logo'     as Tab,  icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
     { id: 'kpr'      as Tab,  icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
     { id: 'settings' as Tab,  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
@@ -224,12 +306,124 @@ export default function AdminDashboardClient({ user }: Props) {
         )}
 
 
+        {/* ── KONTEN WEB ── */}
+        {tab === 'content' && user.role === 'superadmin' && (
+          <div>
+            <h1 className="section-title mb-2">📝 Konten Web</h1>
+            <p className="text-sm text-gray-400 mb-6">Kelola teks halaman statis & footer. Simpan per-bagian.</p>
+
+            {!contentLoaded && (
+              <button onClick={loadContent} disabled={contentLoading}
+                className="btn-primary mb-6 disabled:opacity-50">
+                {contentLoading ? '⏳ Memuat...' : '🔄 Muat Data Tersimpan'}
+              </button>
+            )}
+
+            <div className="space-y-6">
+              {([
+                { key: 'tentang_kami',      label: 'Tentang Kami',           rows: 8,  hint: 'Profil & sejarah perusahaan' },
+                { key: 'karir',             label: 'Karir',                  rows: 6,  hint: 'Info lowongan & kultur perusahaan' },
+                { key: 'kebijakan_privasi', label: 'Kebijakan Privasi',      rows: 8,  hint: 'Kebijakan penggunaan data pengguna' },
+                { key: 'syarat_ketentuan',  label: 'Syarat & Ketentuan',     rows: 8,  hint: 'Syarat penggunaan layanan' },
+                { key: 'hubungi_kami',      label: 'Hubungi Kami',           rows: 5,  hint: 'Alamat, telepon, jam operasional' },
+                { key: 'footer_text',       label: 'Footer MANSION Realty',  rows: 3,  hint: 'Teks tambahan di bagian bawah footer' },
+              ] as const).map(field => (
+                <div key={field.key} className="card p-5">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <label className="label-field mb-0">{field.label}</label>
+                      <p className="text-xs text-gray-400 mt-0.5">{field.hint}</p>
+                    </div>
+                    <button
+                      onClick={() => saveContent(field.key, contentForm[field.key])}
+                      disabled={saving}
+                      className="flex-shrink-0 px-4 py-2 text-sm font-semibold bg-primary-900 text-white rounded-xl hover:bg-primary-800 disabled:opacity-50 transition-colors">
+                      {saving ? '⏳' : '💾 Simpan'}
+                    </button>
+                  </div>
+                  <textarea
+                    className="input-field resize-y text-sm"
+                    rows={field.rows}
+                    placeholder={`Isi konten ${field.label}...`}
+                    value={contentForm[field.key]}
+                    onChange={e => setContentForm(p => ({ ...p, [field.key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── GANTI LOGO ── */}
         {tab === 'logo' && (
           <div><LogoUpload /></div>
         )}
 
 
+
+        {/* ── SCORING TOP AGEN ── */}
+        {tab === 'scoring' && user.role === 'superadmin' && (
+          <div>
+            <h1 className="section-title mb-2">🏆 Scoring Top Agen</h1>
+            <p className="text-sm text-gray-400 mb-6">Atur bobot penilaian untuk urutan Top Agen. Perubahan langsung berlaku di halaman Agen.</p>
+
+            {!scoreLoaded && (
+              <button onClick={loadScoreWeights} disabled={scoreLoading}
+                className="btn-primary mb-6 disabled:opacity-50">
+                {scoreLoading ? '⏳ Memuat...' : '🔄 Muat Nilai Tersimpan'}
+              </button>
+            )}
+
+            <div className="card p-6 space-y-5">
+              <div className="grid md:grid-cols-2 gap-5">
+                {([
+                  { key: 'lsp',       label: 'P1 — Bonus punya LSP/Sertifikasi/CRA',  hint: 'Flat bonus (contoh: 1000000)' },
+                  { key: 'listing',   label: 'P2 — Bobot per Listing aktif',           hint: 'Nilai × jumlah listing' },
+                  { key: 'hitShare',  label: 'P3 — Bobot per Hit+Share di CRM',        hint: 'Nilai × jumlah hit+share' },
+                  { key: 'koord',     label: 'P4a — Bonus Role Koordinator',           hint: 'Flat bonus' },
+                  { key: 'bm',        label: 'P4b — Bonus Role Business Manager',      hint: 'Flat bonus' },
+                  { key: 'principal', label: 'P4c — Bonus Role Principal',             hint: 'Flat bonus' },
+                  { key: 'leads',     label: 'P5 — Bobot per Lead',                   hint: 'Nilai × jumlah leads' },
+                  { key: 'login',     label: 'P6 — Bobot per Login CRM',               hint: 'Nilai × jumlah login' },
+                  { key: 'jadwal',    label: 'P7 — Bobot per Jadwal CRM',              hint: 'Nilai × jumlah jadwal' },
+                ] as const).map(field => (
+                  <div key={field.key}>
+                    <label className="label-field">{field.label}</label>
+                    <p className="text-xs text-gray-400 mb-1">{field.hint}</p>
+                    <input
+                      type="number"
+                      className="input-field"
+                      value={scoreWeights[field.key]}
+                      onChange={e => setScoreWeights(w => ({ ...w, [field.key]: Number(e.target.value) }))}
+                      min={0}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Preview formula */}
+              <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 font-mono space-y-1">
+                <p className="font-semibold text-gray-700 mb-2">Preview Formula:</p>
+                <p>hasLSP → +{scoreWeights.lsp.toLocaleString('id')}</p>
+                <p>listing × {scoreWeights.listing.toLocaleString('id')} &nbsp;|&nbsp; (hit+share) × {scoreWeights.hitShare}</p>
+                <p>Koord +{scoreWeights.koord.toLocaleString('id')} &nbsp;|&nbsp; BM +{scoreWeights.bm.toLocaleString('id')} &nbsp;|&nbsp; Principal +{scoreWeights.principal.toLocaleString('id')}</p>
+                <p>leads × {scoreWeights.leads} &nbsp;|&nbsp; login × {scoreWeights.login} &nbsp;|&nbsp; jadwal × {scoreWeights.jadwal}</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button onClick={saveScoreWeights} disabled={saving}
+                  className="btn-primary py-3 px-8 disabled:opacity-50">
+                  {saving ? '⏳ Menyimpan...' : '💾 Simpan Scoring'}
+                </button>
+                <button
+                  onClick={() => { setScoreWeights(DEFAULT_SCORE_WEIGHTS); setScoreLoaded(false) }}
+                  className="px-4 py-3 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-xl transition-colors">
+                  Reset ke Default
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}

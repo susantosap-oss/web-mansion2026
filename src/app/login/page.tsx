@@ -6,9 +6,39 @@ import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [form, setForm]       = useState({ email: '', password: '' })
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
+  const [form, setForm]             = useState({ email: '', password: '' })
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [showSetup, setShowSetup]   = useState(false)
+  const [setupForm, setSetupForm]   = useState({ setup_secret: '', new_password: '', confirm: '' })
+  const [setupMsg, setSetupMsg]     = useState('')
+  const [setupLoading, setSetupLoading] = useState(false)
+
+  const handleSetupPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (setupForm.new_password !== setupForm.confirm) { setSetupMsg('❌ Password tidak cocok'); return }
+    setSetupLoading(true); setSetupMsg('')
+    try {
+      const res  = await fetch('/api/auth/set-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          email:        form.email,
+          password:     setupForm.new_password,
+          setup_secret: setupForm.setup_secret,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        setSetupMsg('✅ Password berhasil diset! Silakan login sekarang.')
+        setShowSetup(false)
+        setError('')
+      } else {
+        setSetupMsg('❌ ' + (json.error || 'Gagal'))
+      }
+    } catch { setSetupMsg('❌ Gagal terhubung') }
+    finally { setSetupLoading(false) }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,11 +134,69 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-4 text-center">
+          {setupMsg && (
+            <div className={`mt-3 p-3 rounded-xl text-xs ${setupMsg.startsWith('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+              {setupMsg}
+            </div>
+          )}
+
+          <div className="mt-4 text-center space-y-2">
+            {(error === 'Password salah' || error === 'Email tidak ditemukan') && !showSetup && (
+              <button
+                type="button"
+                onClick={() => setShowSetup(true)}
+                className="text-xs text-amber-600 hover:text-amber-800 underline block w-full">
+                Belum punya password? Setup password pertama kali
+              </button>
+            )}
             <Link href="/" className="text-sm text-gray-400 hover:text-primary-900 transition-colors">
               ← Kembali ke Beranda MANSION
             </Link>
           </div>
+
+          {/* Setup Password Form */}
+          {showSetup && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-600 mb-3">🔑 Setup Password Pertama Kali</p>
+              <p className="text-xs text-gray-400 mb-3">Email yang akan diset: <strong>{form.email || '(isi email dulu)'}</strong></p>
+              <form onSubmit={handleSetupPassword} className="space-y-2">
+                <input
+                  type="password"
+                  className="input-field text-sm py-2"
+                  placeholder="Setup Secret (tanya admin)"
+                  value={setupForm.setup_secret}
+                  onChange={e => setSetupForm(p => ({ ...p, setup_secret: e.target.value }))}
+                  required
+                />
+                <input
+                  type="password"
+                  className="input-field text-sm py-2"
+                  placeholder="Password baru (min 6 karakter)"
+                  value={setupForm.new_password}
+                  onChange={e => setSetupForm(p => ({ ...p, new_password: e.target.value }))}
+                  required
+                />
+                <input
+                  type="password"
+                  className="input-field text-sm py-2"
+                  placeholder="Konfirmasi password"
+                  value={setupForm.confirm}
+                  onChange={e => setSetupForm(p => ({ ...p, confirm: e.target.value }))}
+                  required
+                />
+                <div className="flex gap-2">
+                  <button type="submit" disabled={setupLoading}
+                    className="flex-1 py-2 text-sm font-semibold bg-primary-900 text-white rounded-xl disabled:opacity-50">
+                    {setupLoading ? '⏳...' : '💾 Set Password'}
+                  </button>
+                  <button type="button" onClick={() => setShowSetup(false)}
+                    className="px-3 py-2 text-sm text-gray-400 border border-gray-200 rounded-xl hover:bg-gray-50">
+                    Batal
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-white/30 text-xs mt-6">

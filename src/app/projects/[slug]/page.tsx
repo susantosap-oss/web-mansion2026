@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getProjects, getAgents, formatPrice, computeAgentScore } from '@/lib/sheets'
+import { getScoreWeights } from '@/lib/serverSheets'
 import BackButton from '@/components/ui/BackButton'
 import ProjectDetailClient from './ProjectDetailClient'
 
@@ -10,14 +11,14 @@ interface Props { params: { slug: string } }
 
 export default async function ProjectDetailPage({ params }: Props) {
   const slug     = decodeURIComponent(params.slug)
-  const [projects, allAgents] = await Promise.all([getProjects(), getAgents()])
+  const [projects, allAgents, weights] = await Promise.all([getProjects(), getAgents(), getScoreWeights()])
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()
 
   // Sort agen by multi-criteria score (7 prioritas), ambil top 10 aktif
   const agents = [...allAgents]
     .filter(a => a.verified)
-    .sort((a, b) => computeAgentScore(b) - computeAgentScore(a))
+    .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
     .slice(0, 10)
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`

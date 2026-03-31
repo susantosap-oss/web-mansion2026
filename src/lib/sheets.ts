@@ -1,4 +1,4 @@
-import { Project, Listing, Agent, News, SheetRow } from '@/types'
+import { Project, Listing, Agent, News, SheetRow, AgentScoreWeights, DEFAULT_SCORE_WEIGHTS } from '@/types'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL!
 const GAS_SECRET = process.env.GAS_API_SECRET || ''
@@ -182,7 +182,12 @@ function mapProject(row: SheetRow): Project {
   }
 }
 
+function agentCity(kantorName: string): string {
+  return kantorName.toLowerCase().includes('malang') ? 'Malang' : 'Surabaya'
+}
+
 function mapAgent(row: SheetRow): Agent {
+  const kantor = str(row['Nama_Kantor'] || '')
   return {
     id:             str(row['ID']),
     name:           str(row['Nama']),
@@ -190,11 +195,11 @@ function mapAgent(row: SheetRow): Agent {
     phone:          str(row['No_WA']),
     email:          str(row['Email']),
     whatsapp:       str(row['No_WA_Business'] || row['No_WA']),
-    bio:            str(row['Nama_Kantor'] || ''),
+    bio:            kantor,
     specialization: [],
     areas:          [],
-    totalListings:  num(row['Listing_Count']),
-    totalDeals:     num(row['Deal_Count']),
+    totalListings:  num(row['Listing_Count'] || row['Total_Listing'] || row['listing_count'] || 0),
+    totalDeals:     num(row['Deal_Count'] || row['Total_Deal'] || row['deal_count'] || 0),
     rating:         5,
     verified:       str(row['Status']).toLowerCase() === 'active' || str(row['Status']).toLowerCase() === 'aktif',
     joinDate:       str(row['Join_Date'] || row['Created_At']),
@@ -211,32 +216,40 @@ function mapAgent(row: SheetRow): Agent {
     loginCount:     num(row['Login_Count'] || 0),
     jadwalCount:    num(row['Jadwal_Count'] || 0),
     role:           str(row['Role'] || '').toLowerCase(),
+    city:           agentCity(kantor),
   }
 }
 
+// ── Score Weights ─────────────────────────────────────────
+// (interface & defaults ada di @/types)
+
 /**
- * Hitung skor peringkat agen berdasarkan 7 kriteria prioritas:
- * P1: Nomer LSP / Sertifikasi / CRA          → bobot dominan (1.000.000)
- * P2: Jumlah Listing terbanyak               → 500/listing
- * P3: Hit & Share di CRM (Listing+Primary)   → 50/(hit+share)
- * P4: Koordinator Aktif di CRM               → bonus 80.000
- * P5: Leads terbanyak                        → 30/lead
- * P6: Keaktifan login di CRM                 → 5/login
- * P7: Pengisian Jadwal terbanyak             → 2/jadwal
+ * Hitung skor peringkat agen. Weights dapat dikustomisasi dari Dashboard.
+ * P1: Nomer LSP / Sertifikasi / CRA        → bobot lsp (flat)
+ * P2: Jumlah Listing                       → bobot listing × jumlah
+ * P3: Hit & Share di CRM                  → bobot hitShare × jumlah
+ * P4: Bonus Role Koord/BM/Principal       → flat sesuai role
+ * P5: Leads terbanyak                     → bobot leads × jumlah
+ * P6: Keaktifan login                     → bobot login × jumlah
+ * P7: Pengisian Jadwal                    → bobot jadwal × jumlah
  */
-export function computeAgentScore(agent: Agent): number {
+export function computeAgentScore(agent: Agent, weights: AgentScoreWeights = DEFAULT_SCORE_WEIGHTS): number {
   const hasLsp   = !!(agent.nomerLsp || agent.sertifikasi || agent.nomerCra)
-  const isKoord  = agent.role === 'koordinator' || agent.role === 'coordinator' || agent.role === 'koord'
+  const role     = agent.role || ''
+  const isKoord  = role === 'koordinator' || role === 'coordinator' || role === 'koord'
+  const isBM     = role === 'business_manager' || role === 'bm' || role === 'businessmanager' || role === 'business manager' || role === 'manager'
+  const isPrincipal = role === 'principal'
   return (
-    (hasLsp ? 1_000_000 : 0)                                         // P1
-    + agent.totalListings * 500                                       // P2
-    + ((agent.hitCount ?? 0) + (agent.shareCount ?? 0)) * 50         // P3
-    + (isKoord ? 80_000 : 0)                                          // P4
-    + (agent.leadsCount ?? 0) * 30                                    // P5
-    + (agent.loginCount ?? 0) * 5                                     // P6
-    + (agent.jadwalCount ?? 0) * 2                                    // P7
+    (hasLsp ? weights.lsp : 0)
+    + agent.totalListings * weights.listing
+    + ((agent.hitCount ?? 0) + (agent.shareCount ?? 0)) * weights.hitShare
+    + (isKoord ? weights.koord : isBM ? weights.bm : isPrincipal ? weights.principal : 0)
+    + (agent.leadsCount ?? 0) * weights.leads
+    + (agent.loginCount ?? 0) * weights.login
+    + (agent.jadwalCount ?? 0) * weights.jadwal
   )
 }
+
 
 export async function getListings(filter?: {
   type?: 'Sale' | 'Rent'
@@ -334,14 +347,42 @@ export async function getProjectBySlug(slug: string): Promise<Project | null> {
 
 export async function getAgents(): Promise<Agent[]> {
   try {
-    const rows = await fetchFromGAS<SheetRow[]>('getAgents', 600)
+    const [rows, listingRows] = await Promise.all([
+      fetchFromGAS<SheetRow[]>('getAgents', 600),
+      fetchFromGAS<SheetRow[]>('getListings', 300).catch(() => [] as SheetRow[]),
+    ])
+
     // Strip kolom sensitif — tidak boleh expose ke client
     rows.forEach((row: any) => {
       delete row['Password_Hash']
       delete row['Password']
       delete row['Telegram_ID']
     })
-    return rows.map(mapAgent).filter(a => a.role !== 'admin' && a.role !== 'superadmin')
+
+    // Hitung listing & deal dari LISTINGS sheet (SSoT dari GSheet)
+    const listingCountMap = new Map<string, number>()
+    const dealCountMap    = new Map<string, number>()
+    listingRows.forEach(l => {
+      const agentId = str(l['Agen_ID'])
+      if (!agentId || agentId.startsWith('[')) return
+      const tampil = l['Tampilkan_di_Web']
+      if (tampil === false || String(tampil).toUpperCase() === 'FALSE') return
+      listingCountMap.set(agentId, (listingCountMap.get(agentId) || 0) + 1)
+      const status = str(l['Status_Listing']).toLowerCase()
+      if (status === 'terjual' || status === 'disewa' || status === 'sold' || status === 'deal') {
+        dealCountMap.set(agentId, (dealCountMap.get(agentId) || 0) + 1)
+      }
+    })
+
+    return rows
+      .map(row => {
+        const agent = mapAgent(row)
+        // Override dengan hitungan real dari LISTINGS (SSoT)
+        if (listingCountMap.has(agent.id)) agent.totalListings = listingCountMap.get(agent.id)!
+        if (dealCountMap.has(agent.id))    agent.totalDeals    = dealCountMap.get(agent.id)!
+        return agent
+      })
+      .filter(a => a.role !== 'admin' && a.role !== 'superadmin')
   } catch (e) {
     console.error('[getAgents]', e)
     return []
@@ -413,3 +454,5 @@ export function buildWALink(phone: string, message: string): string {
 }
 
 export type { Listing, Project, Agent, News }
+export type { AgentScoreWeights }
+export { DEFAULT_SCORE_WEIGHTS }

@@ -3,6 +3,14 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Agent } from '@/types'
 
+function roleLabel(role: string | undefined): string {
+  const r = (role || '').toLowerCase()
+  if (r === 'koordinator' || r === 'coordinator' || r === 'koord') return 'Koordinator'
+  if (r === 'business_manager' || r === 'bm' || r === 'businessmanager' || r === 'business manager' || r === 'manager') return 'Business Manager'
+  if (r === 'principal') return 'Principal'
+  return 'Agen'
+}
+
 interface Props {
   agent:     Agent
   idx:       number
@@ -80,7 +88,7 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
           )}
         </div>
         <h3 className="font-bold text-primary-900">{agent.name}</h3>
-        <p className="text-xs text-gray-400">{agent.bio || 'Agen Properti'}</p>
+        <p className="text-xs text-gray-400">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
         {agent.nomerLsp && (
           <p className="text-xs text-primary-700 font-medium mt-0.5">LSP: {agent.nomerLsp}</p>
         )}

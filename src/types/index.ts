@@ -39,6 +39,7 @@ export interface Agent {
   hitCount?: number; shareCount?: number; leadsCount?: number
   loginCount?: number; jadwalCount?: number
   role?: string
+  city?: string
 }
 
 export interface News {
@@ -67,6 +68,30 @@ export interface KPRResult {
 }
 
 export interface SheetRow { [key: string]: string | number | boolean | null }
+
+export interface AgentScoreWeights {
+  lsp:       number
+  listing:   number
+  hitShare:  number
+  koord:     number
+  bm:        number
+  principal: number
+  leads:     number
+  login:     number
+  jadwal:    number
+}
+
+export const DEFAULT_SCORE_WEIGHTS: AgentScoreWeights = {
+  lsp:       1_000_000,
+  listing:   500,
+  hitShare:  50,
+  koord:     80_000,
+  bm:        120_000,
+  principal: 150_000,
+  leads:     30,
+  login:     5,
+  jadwal:    2,
+}
 
 export interface APIResponse<T> {
   success: boolean; data?: T; error?: string; timestamp: string; cached?: boolean

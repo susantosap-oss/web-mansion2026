@@ -5,6 +5,14 @@ import Image from 'next/image'
 import { formatPrice } from '@/lib/sheets'
 import { Project, Agent } from '@/types'
 
+function roleLabel(role: string | undefined): string {
+  const r = (role || '').toLowerCase()
+  if (r === 'koordinator' || r === 'coordinator' || r === 'koord') return 'Koordinator'
+  if (r === 'business_manager' || r === 'bm' || r === 'businessmanager' || r === 'business manager' || r === 'manager') return 'Business Manager'
+  if (r === 'principal') return 'Principal'
+  return 'Agen'
+}
+
 interface Props {
   project:  Project
   agents:   Agent[]
@@ -85,11 +93,7 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                   💬 Chat WhatsApp Agen
                 </button>
               ) : (
-                agents.map((agent, idx) => {
-                  const convRate = agent.totalListings > 0
-                    ? ((agent.totalDeals / agent.totalListings) * 100).toFixed(0)
-                    : '0'
-                  return (
+                agents.map((agent, idx) => (
                     <button
                       key={agent.id}
                       onClick={() => handlePilih(agent)}
@@ -113,13 +117,12 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                       {/* Info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-primary-900 text-sm truncate">{agent.name}</p>
-                        <p className="text-xs text-gray-400">{agent.totalDeals} deal · {convRate}% konversi</p>
+                        <p className="text-xs text-gray-400">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
                       </div>
                       {/* Arrow */}
                       <span className="text-gray-300 group-hover:text-gold text-sm">→</span>
                     </button>
-                  )
-                })
+                  ))
               )}
               <Link href="/agents?sort=top"
                 className="block text-center text-xs text-gray-400 hover:text-primary-900 transition-colors pt-1">
@@ -140,7 +143,7 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-primary-900 truncate">{selectedAgent.name}</p>
-                    <p className="text-xs text-gray-400">Agen terpilih</p>
+                    <p className="text-xs text-gray-400">{roleLabel(selectedAgent.role)} · {selectedAgent.city || 'Surabaya'}</p>
                   </div>
                   <button onClick={() => setShowForm(false)} className="text-xs text-gray-400 hover:text-gray-600">Ganti</button>
                 </div>

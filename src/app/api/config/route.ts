@@ -1,78 +1,110 @@
 import { NextResponse } from 'next/server'
+import { google } from 'googleapis'
 
-const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL || ''
-const GAS_SECRET = process.env.GAS_API_SECRET || ''
+const SHEET_ID = process.env.GOOGLE_SHEETS_ID || ''
 
-const localConfig = new Map<string, string>()
+function getSheetsClient() {
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+  const privateKey  = process.env.GOOGLE_PRIVATE_KEY
+  const auth = (clientEmail && privateKey)
+    ? new google.auth.JWT({
+        email: clientEmail,
+        key:   privateKey.replace(/\\n/g, '\n'),
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      })
+    : new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      })
+  return google.sheets({ version: 'v4', auth: auth as any })
+}
+
+// Baca semua rows CONFIG sheet: [[Key, Value], ...]
+async function readConfigRows(): Promise<string[][]> {
+  if (!SHEET_ID) return []
+  const sheets = getSheetsClient()
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'CONFIG',
+  })
+  return (res.data.values || []) as string[][]
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const key = searchParams.get('key') || ''
-
-  if (localConfig.has(key))
-    return NextResponse.json({ success: true, value: localConfig.get(key), source: 'local' })
+  if (!key) return NextResponse.json({ success: false, error: 'key required' })
 
   try {
+    const rows = await readConfigRows()
+    const row  = rows.find(r => r[0] === key)
+    const value = row ? (row[1] ?? null) : null
+    return NextResponse.json({ success: true, value })
+  } catch (e: any) {
+    console.error('[config GET]', e.message)
+    return NextResponse.json({ success: true, value: null, source: 'error' })
+  }
+}
+
+const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL || ''
+const GAS_SECRET = process.env.GAS_API_SECRET || ''
+
+async function saveViaGAS(key: string, value: string): Promise<boolean> {
+  if (!GAS_URL) return false
+  try {
     const url = new URL(GAS_URL)
-    url.searchParams.set('action', 'getConfig')
-    url.searchParams.set('key',    key)
+    url.searchParams.set('action', 'saveConfig')
     url.searchParams.set('secret', GAS_SECRET)
+    url.searchParams.set('key',    key)
+    url.searchParams.set('value',  value)
     const res  = await fetch(url.toString(), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
     const json = await res.json()
-    if (json.success) {
-      const value = json.value ?? (json.data ? json.data[key] : null) ?? null
-      if (value) localConfig.set(key, String(value))
-      return NextResponse.json({ success: true, value, source: 'gas' })
-    }
-    return NextResponse.json({ success: true, value: null })
-  } catch {
-    return NextResponse.json({ success: true, value: null, source: 'fallback' })
-  }
+    return json.success === true
+  } catch { return false }
 }
 
 export async function POST(request: Request) {
   const body = await request.json()
   const { key, value } = body
-
   if (!key)   return NextResponse.json({ success: false, error: 'key required' }, { status: 400 })
-  if (!value) return NextResponse.json({ success: false, error: 'value required' }, { status: 400 })
+  if (value === undefined || value === null)
+    return NextResponse.json({ success: false, error: 'value required' }, { status: 400 })
 
-  // Simpan ke memory
-  localConfig.set(String(key), String(value))
+  const strValue = String(value)
 
-  // Kirim ke GAS via GET — params di-encode otomatis oleh URLSearchParams
-  let gasSaved = false
-  let gasMsg   = ''
-  try {
-    const url = new URL(GAS_URL)
-    url.searchParams.set('action', 'saveConfig')
-    url.searchParams.set('secret', GAS_SECRET)
-    url.searchParams.set('key',    String(key))
-    url.searchParams.set('value',  String(value))   // URLSearchParams auto-encode
+  // ── Coba Sheets API langsung (perlu SA Editor) ──
+  if (SHEET_ID) {
+    try {
+      const sheets = getSheetsClient()
+      const rows   = await readConfigRows()
+      const idx    = rows.findIndex(r => r[0] === key)
 
-    console.log('[config POST] calling GAS:', url.toString().slice(0, 100))
-
-    const res  = await fetch(url.toString(), {
-      method: 'GET',
-      signal: AbortSignal.timeout(10000),
-    })
-    const text = await res.text()
-    console.log('[config POST] GAS response:', text.slice(0, 200))
-
-    const json = JSON.parse(text)
-    gasSaved   = json.success === true
-    gasMsg     = json.message || json.error || ''
-  } catch (e: any) {
-    console.error('[config POST] GAS error:', e.message)
-    gasMsg = e.message
+      if (idx >= 0) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SHEET_ID,
+          range:         `CONFIG!A${idx + 1}:B${idx + 1}`,
+          valueInputOption: 'RAW',
+          requestBody: { values: [[key, strValue]] },
+        })
+      } else {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId: SHEET_ID,
+          range:         'CONFIG!A:B',
+          valueInputOption: 'RAW',
+          insertDataOption: 'INSERT_ROWS',
+          requestBody: { values: [[key, strValue]] },
+        })
+      }
+      return NextResponse.json({ success: true, gasSaved: true, message: '✅ Tersimpan ke Google Sheet!' })
+    } catch (e: any) {
+      console.warn('[config POST] Sheets API write failed, fallback ke GAS:', e.message)
+    }
   }
 
-  return NextResponse.json({
-    success: true,
-    gasSaved,
-    gasMsg,
-    message: gasSaved
-      ? '✅ Tersimpan ke Google Sheet!'
-      : `✅ Tersimpan sementara (GAS: ${gasMsg})`,
-  })
+  // ── Fallback: GAS saveConfig (untuk nilai pendek, maks ~1500 chars) ──
+  if (strValue.length <= 1500) {
+    const ok = await saveViaGAS(key, strValue)
+    if (ok) return NextResponse.json({ success: true, gasSaved: true, message: '✅ Tersimpan via GAS!' })
+  }
+
+  return NextResponse.json({ success: false, error: 'Gagal menyimpan: akun tidak punya akses Editor ke sheet. Bagikan sheet ke 177351947478-compute@developer.gserviceaccount.com sebagai Editor.' }, { status: 500 })
 }

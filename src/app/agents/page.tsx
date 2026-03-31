@@ -1,4 +1,5 @@
 import { getAgents, computeAgentScore } from '@/lib/sheets'
+import { getScoreWeights } from '@/lib/serverSheets'
 import Link from 'next/link'
 import AgentCard from './AgentCard'
 
@@ -9,14 +10,15 @@ interface Props {
 }
 
 export default async function AgentsPage({ searchParams }: Props) {
-  const sort   = searchParams.sort || 'default'
-  let   agents = await getAgents()
+  const sort    = searchParams.sort || 'default'
+  let   agents  = await getAgents()
+  const weights = await getScoreWeights()
 
   // Sort by multi-criteria score (7 prioritas)
   if (sort === 'top') {
     agents = [...agents]
       .filter(a => a.verified)
-      .sort((a, b) => computeAgentScore(b) - computeAgentScore(a))
+      .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
       .slice(0, 10) // top 10
   }
 
