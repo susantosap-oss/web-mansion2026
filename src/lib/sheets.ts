@@ -215,6 +215,7 @@ function mapAgent(row: SheetRow): Agent {
     leadsCount:     num(row['Leads_Count'] || 0),
     loginCount:     num(row['Login_Count'] || 0),
     jadwalCount:    num(row['Jadwal_Count'] || 0),
+    aktivitasCount: num(row['Aktivitas_Count'] || 0),
     role:           str(row['Role'] || '').toLowerCase(),
     city:           agentCity(kantor),
   }
@@ -232,6 +233,7 @@ function mapAgent(row: SheetRow): Agent {
  * P5: Leads terbanyak                     → bobot leads × jumlah
  * P6: Keaktifan login                     → bobot login × jumlah
  * P7: Pengisian Jadwal                    → bobot jadwal × jumlah
+ * P8: Aktivitas Harian                    → bobot aktivitas × jumlah
  */
 export function computeAgentScore(agent: Agent, weights: AgentScoreWeights = DEFAULT_SCORE_WEIGHTS): number {
   const hasLsp   = !!(agent.nomerLsp || agent.sertifikasi || agent.nomerCra)
@@ -247,6 +249,7 @@ export function computeAgentScore(agent: Agent, weights: AgentScoreWeights = DEF
     + (agent.leadsCount ?? 0) * weights.leads
     + (agent.loginCount ?? 0) * weights.login
     + (agent.jadwalCount ?? 0) * weights.jadwal
+    + (agent.aktivitasCount ?? 0) * (weights.aktivitas ?? 10)
   )
 }
 

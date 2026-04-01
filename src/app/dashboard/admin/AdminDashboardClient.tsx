@@ -386,6 +386,7 @@ export default function AdminDashboardClient({ user }: Props) {
                   { key: 'leads',     label: 'P5 — Bobot per Lead',                   hint: 'Nilai × jumlah leads' },
                   { key: 'login',     label: 'P6 — Bobot per Login CRM',               hint: 'Nilai × jumlah login' },
                   { key: 'jadwal',    label: 'P7 — Bobot per Jadwal CRM',              hint: 'Nilai × jumlah jadwal' },
+                  { key: 'aktivitas', label: 'P8 — Bobot per Aktivitas Harian',         hint: 'Nilai × jumlah input aktivitas harian' },
                 ] as const).map(field => (
                   <div key={field.key}>
                     <label className="label-field">{field.label}</label>
@@ -407,7 +408,7 @@ export default function AdminDashboardClient({ user }: Props) {
                 <p>hasLSP → +{scoreWeights.lsp.toLocaleString('id')}</p>
                 <p>listing × {scoreWeights.listing.toLocaleString('id')} &nbsp;|&nbsp; (hit+share) × {scoreWeights.hitShare}</p>
                 <p>Koord +{scoreWeights.koord.toLocaleString('id')} &nbsp;|&nbsp; BM +{scoreWeights.bm.toLocaleString('id')} &nbsp;|&nbsp; Principal +{scoreWeights.principal.toLocaleString('id')}</p>
-                <p>leads × {scoreWeights.leads} &nbsp;|&nbsp; login × {scoreWeights.login} &nbsp;|&nbsp; jadwal × {scoreWeights.jadwal}</p>
+                <p>leads × {scoreWeights.leads} &nbsp;|&nbsp; login × {scoreWeights.login} &nbsp;|&nbsp; jadwal × {scoreWeights.jadwal} &nbsp;|&nbsp; aktivitas × {scoreWeights.aktivitas}</p>
               </div>
 
               <div className="flex items-center gap-3">

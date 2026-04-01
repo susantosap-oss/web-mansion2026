@@ -35,9 +35,9 @@ export interface Agent {
   verified: boolean; joinDate: string; instagram?: string; linkedin?: string
   // Sertifikasi & identitas profesional (Prioritas 1)
   nomerLsp?: string; sertifikasi?: string; nomerCra?: string
-  // Aktivitas CRM (Prioritas 3,4,5,6,7)
+  // Aktivitas CRM (Prioritas 3,4,5,6,7,8)
   hitCount?: number; shareCount?: number; leadsCount?: number
-  loginCount?: number; jadwalCount?: number
+  loginCount?: number; jadwalCount?: number; aktivitasCount?: number
   role?: string
   city?: string
 }
@@ -79,6 +79,7 @@ export interface AgentScoreWeights {
   leads:     number
   login:     number
   jadwal:    number
+  aktivitas: number   // P8: poin per aktivitas harian yang diinput agen
 }
 
 export const DEFAULT_SCORE_WEIGHTS: AgentScoreWeights = {
@@ -91,6 +92,7 @@ export const DEFAULT_SCORE_WEIGHTS: AgentScoreWeights = {
   leads:     30,
   login:     5,
   jadwal:    2,
+  aktivitas: 10,      // 10 poin per aktivitas harian
 }
 
 export interface APIResponse<T> {
