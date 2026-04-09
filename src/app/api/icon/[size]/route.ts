@@ -44,7 +44,7 @@ export async function GET(_req: Request, { params }: { params: { size: string } 
 
   if (!logoUrl) {
     // Fallback ke static icon
-    return NextResponse.redirect(new URL(`/icons/icon-${size}x${size}.png`, process.env.NEXT_PUBLIC_SITE_URL || 'https://web-mansion2026-177351947478.asia-southeast2.run.app'))
+    return NextResponse.redirect(new URL(`/icons/icon-${size}x${size}.png`, process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'))
   }
 
   const iconUrl = cloudinaryResize(logoUrl, size)
@@ -52,7 +52,7 @@ export async function GET(_req: Request, { params }: { params: { size: string } 
   // Fetch dari Cloudinary dan return sebagai image
   const res = await fetch(iconUrl, { next: { revalidate: 3600 } })
   if (!res.ok) {
-    return NextResponse.redirect(new URL(`/icons/icon-${size}x${size}.png`, process.env.NEXT_PUBLIC_SITE_URL || 'https://web-mansion2026-177351947478.asia-southeast2.run.app'))
+    return NextResponse.redirect(new URL(`/icons/icon-${size}x${size}.png`, process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'))
   }
 
   const buffer = await res.arrayBuffer()

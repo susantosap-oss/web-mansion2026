@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 import { getListings, getProjects } from '@/lib/sheets'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://web-mansion2026-cb5stice7a-et.a.run.app'
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
   const staticPages = [
     { url: BASE,               priority: 1.0,  changeFrequency: 'daily'   as const },

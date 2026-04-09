@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://web-mansion2026-cb5stice7a-et.a.run.app'
+  const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
   return {
     rules: [
       {
