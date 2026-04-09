@@ -30,6 +30,9 @@ export const metadata: Metadata = {
   authors:            [{ name: 'Mansion Realty' }],
   robots:             { index: true, follow: true },
   manifest:           '/manifest.json',
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || '',
+  },
   appleWebApp: {
     capable:          true,
     statusBarStyle:   'black-translucent',
