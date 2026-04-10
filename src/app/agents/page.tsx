@@ -22,6 +22,11 @@ export default async function AgentsPage({ searchParams }: Props) {
       .slice(0, 10) // top 10
   }
 
+  // Agen tanpa foto profile selalu tampil di bawah
+  const hasPhoto    = agents.filter(a => a.photo && a.photo.trim() !== '')
+  const noPhoto     = agents.filter(a => !a.photo || a.photo.trim() === '')
+  agents = [...hasPhoto, ...noPhoto]
+
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '628219880889'}?text=${encodeURIComponent('Halo, saya ingin konsultasi properti.')}`
 
   return (

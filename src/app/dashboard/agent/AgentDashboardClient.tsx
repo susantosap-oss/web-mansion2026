@@ -7,16 +7,25 @@ import { AuthUser } from '@/lib/auth'
 
 interface Props { user: AuthUser, stats: { listings: number } }
 
+interface ListingStat {
+  views7d:   number
+  views30d:  number
+  shares7d:  number
+  shares30d: number
+}
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
 export default function AgentDashboardClient({ user, stats }: Props) {
   const router  = useRouter()
-  const [tab, setTab]       = useState<'leads' | 'pipeline' | 'listings'>('leads')
-  const [leads, setLeads]   = useState<any[]>([])
-  const [listings, setListings] = useState<any[]>([])
-  const [loading, setLoading]   = useState(true)
+  const [tab, setTab]               = useState<'leads' | 'pipeline' | 'listings'>('leads')
+  const [leads, setLeads]           = useState<any[]>([])
+  const [listings, setListings]     = useState<any[]>([])
+  const [listingStats, setListingStats] = useState<Record<string, ListingStat>>({})
+  const [loading, setLoading]       = useState(true)
+  const [copied, setCopied]         = useState(false)
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+  useEffect(() => { fetchData() }, [])
 
   async function fetchData() {
     setLoading(true)
@@ -35,10 +44,38 @@ export default function AgentDashboardClient({ user, stats }: Props) {
         String(l['Agen_ID'] || '') === String(user.agentId || '')
       )
       setListings(myListings)
+
+      // Fetch listing event stats
+      if (myListings.length > 0) {
+        const ids = myListings.map((l: any) => l['ID']).filter(Boolean).join(',')
+        const statsRes  = await fetch(`/api/listing-events?listingIds=${ids}`)
+        const statsJson = await statsRes.json()
+        setListingStats(statsJson.data || {})
+      }
     } catch (e) {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleShareListing(listingId: string) {
+    // Track share from CRM
+    fetch('/api/listing-events', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ listingId, type: 'share', source: 'crm' }),
+    }).catch(() => {})
+  }
+
+  async function handleCopyProfileUrl() {
+    const url = `${SITE_URL}/agents/${user.agentId}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      prompt('Copy URL profil Anda:', url)
     }
   }
 
@@ -78,11 +115,19 @@ export default function AgentDashboardClient({ user, stats }: Props) {
             <span className="text-white/30 hidden sm:block">|</span>
             <span className="text-white/70 text-sm hidden sm:block">Dashboard MANSION Agent</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold">{user.name}</p>
               <p className="text-xs text-white/50 capitalize">{user.role}</p>
             </div>
+            <Link href={`${SITE_URL}/agents/${user.agentId}`} target="_blank"
+              className="text-xs px-3 py-1.5 border border-white/20 rounded-lg hover:bg-white/10 transition-colors hidden sm:inline-flex items-center gap-1">
+              👤 Profil
+            </Link>
+            <button onClick={handleCopyProfileUrl}
+              className="text-xs px-3 py-1.5 border border-white/20 rounded-lg hover:bg-white/10 transition-colors">
+              {copied ? '✅ Disalin!' : '🔗 Share Profil'}
+            </button>
             <button onClick={handleLogout} className="text-xs px-3 py-1.5 border border-white/20 rounded-lg hover:bg-white/10 transition-colors">
               Logout
             </button>
@@ -199,23 +244,37 @@ export default function AgentDashboardClient({ user, stats }: Props) {
                           <tr>
                             <th className="px-4 py-3 text-left rounded-l-lg">Listing</th>
                             <th className="px-4 py-3 text-center">Views</th>
-                            <th className="px-4 py-3 text-center">Leads</th>
+                            <th className="px-4 py-3 text-center">Leads 30h</th>
+                            <th className="px-4 py-3 text-center">Share</th>
                             <th className="px-4 py-3 text-center rounded-r-lg">Konversi</th>
                           </tr>
                         </thead>
                         <tbody>
                           {listings.map((l: any, i: number) => {
-                            const views    = Number(l['Views_Count']) || 0
-                            const myLeads  = leads.filter((ld: any) => ld['LISTING_ID'] === l['ID']).length
-                            const konversi = views > 0 ? ((myLeads / views) * 100).toFixed(1) : '0'
+                            const lid      = l['ID'] || ''
+                            const st       = listingStats[lid] || { views7d: 0, views30d: 0, shares7d: 0, shares30d: 0 }
+                            const now30    = Date.now() - 30 * 24 * 60 * 60 * 1000
+                            const myLeads  = leads.filter((ld: any) => {
+                              if ((ld['LISTING_ID'] || ld['listing_id'] || '') !== lid) return false
+                              const tgl = ld['Tanggal'] || ld['TANGGAL'] || ld['created_at'] || ''
+                              return !tgl || new Date(tgl).getTime() >= now30
+                            }).length
+                            const konversi = st.views30d > 0 ? ((myLeads / st.views30d) * 100).toFixed(1) : '0'
                             return (
                               <tr key={i} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                                 <td className="px-4 py-3">
                                   <p className="font-semibold text-primary-900 line-clamp-1">{l['Judul'] || '-'}</p>
                                   <p className="text-xs text-gray-400">{l['Kota'] || ''}</p>
                                 </td>
-                                <td className="px-4 py-3 text-center font-semibold">{views}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="font-semibold text-blue-700">{st.views7d}<span className="text-xs text-gray-400 font-normal ml-0.5">7h</span></div>
+                                  <div className="text-xs text-gray-500">{st.views30d} /30h</div>
+                                </td>
                                 <td className="px-4 py-3 text-center font-semibold text-purple-700">{myLeads}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="font-semibold text-green-700">{st.shares7d}<span className="text-xs text-gray-400 font-normal ml-0.5">7h</span></div>
+                                  <div className="text-xs text-gray-500">{st.shares30d} /30h</div>
+                                </td>
                                 <td className="px-4 py-3 text-center">
                                   <span className={`badge ${Number(konversi) > 5 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                     {konversi}%
@@ -239,27 +298,66 @@ export default function AgentDashboardClient({ user, stats }: Props) {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {listings.map((l: any, i: number) => (
-                      <div key={i} className="border border-gray-100 rounded-xl p-4 hover:border-primary-200 transition-colors">
-                        <div className="flex gap-3">
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                            {l['Foto_Utama_URL'] ? (
-                              <img src={l['Foto_Utama_URL']} alt={l['Judul']} className="w-full h-full object-cover"/>
-                            ) : <div className="w-full h-full flex items-center justify-center text-2xl">🏠</div>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-primary-900 text-sm line-clamp-2">{l['Judul'] || '-'}</p>
-                            <p className="text-xs text-gray-400">{l['Kota'] || ''}</p>
-                            <div className="flex gap-2 mt-1">
-                              <span className="text-xs text-gray-500">👁 {l['Views_Count'] || 0}</span>
-                              <span className={`badge text-xs ${l['Status_Listing'] === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {listings.map((l: any, i: number) => {
+                      const lid   = l['ID'] || ''
+                      const st    = listingStats[lid] || { views7d: 0, views30d: 0, shares7d: 0, shares30d: 0 }
+                      // Leads 30 hari: hitung dari data leads yang sudah di-fetch
+                      const now30 = Date.now() - 30 * 24 * 60 * 60 * 1000
+                      const leads30d = leads.filter((ld: any) => {
+                        if ((ld['LISTING_ID'] || ld['listing_id'] || '') !== lid) return false
+                        const tgl = ld['Tanggal'] || ld['TANGGAL'] || ld['created_at'] || ''
+                        if (!tgl) return true // jika tidak ada tanggal, masukkan saja
+                        return new Date(tgl).getTime() >= now30
+                      }).length
+                      return (
+                        <div key={i} className="border border-gray-100 rounded-xl p-4 hover:border-primary-200 transition-colors">
+                          <div className="flex gap-3 mb-3">
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                              {l['Foto_Utama_URL'] ? (
+                                <img src={l['Foto_Utama_URL']} alt={l['Judul']} className="w-full h-full object-cover"/>
+                              ) : <div className="w-full h-full flex items-center justify-center text-2xl">🏠</div>}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-primary-900 text-sm line-clamp-2">{l['Judul'] || '-'}</p>
+                              <p className="text-xs text-gray-400">{l['Kota'] || ''}</p>
+                              <span className={`badge text-xs mt-1 ${l['Status_Listing'] === 'Aktif' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                 {l['Status_Listing'] || 'Aktif'}
                               </span>
                             </div>
                           </div>
+                          {/* Stats per listing */}
+                          <div className="grid grid-cols-3 gap-1.5 text-center text-xs border-t border-gray-100 pt-3">
+                            <div className="bg-blue-50 rounded-lg p-2">
+                              <div className="text-blue-700 font-bold">👁 View</div>
+                              <div className="text-gray-600 mt-0.5">7h: <strong>{st.views7d}</strong></div>
+                              <div className="text-gray-600">30h: <strong>{st.views30d}</strong></div>
+                            </div>
+                            <div className="bg-purple-50 rounded-lg p-2">
+                              <div className="text-purple-700 font-bold">📩 Lead</div>
+                              <div className="text-gray-600 mt-0.5">—</div>
+                              <div className="text-gray-600">30h: <strong>{leads30d}</strong></div>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-2">
+                              <div className="text-green-700 font-bold">📤 Share</div>
+                              <div className="text-gray-600 mt-0.5">7h: <strong>{st.shares7d}</strong></div>
+                              <div className="text-gray-600">30h: <strong>{st.shares30d}</strong></div>
+                            </div>
+                          </div>
+                          {/* Tombol share listing dari CRM */}
+                          {l['Slug'] || lid ? (
+                            <button
+                              onClick={() => {
+                                handleShareListing(lid)
+                                const slug = l['Slug'] || lid
+                                navigator.clipboard.writeText(`${SITE_URL}/listings/${slug}`).catch(() => {})
+                              }}
+                              className="mt-2 w-full text-xs text-center py-1.5 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 transition-colors">
+                              🔗 Copy Link Listing
+                            </button>
+                          ) : null}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )
               )

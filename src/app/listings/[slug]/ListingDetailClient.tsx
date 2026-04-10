@@ -1,9 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Listing } from '@/types'
 import { formatPrice } from '@/lib/sheets'
+
+function trackEvent(listingId: string, type: 'view' | 'share', source: 'web' | 'crm' = 'web') {
+  fetch('/api/listing-events', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ listingId, type, source }),
+  }).catch(() => {})
+}
 
 interface Props {
   listing: Listing
@@ -22,11 +30,15 @@ function makeWaLink(phone: string, message: string): string {
 type Step = 'idle' | 'form' | 'pick' | 'sent'
 
 export default function ListingDetailClient({ listing, waKantor }: Props) {
+  // Track view saat halaman listing dibuka (sekali per mount)
+  useEffect(() => { trackEvent(listing.id, 'view') }, [listing.id])
+
   // waLink dihapus — WA link dibangun per agen saat user memilih (makeWaLink)
   const [step, setStep]       = useState<Step>('idle')
   const [name, setName]       = useState('')
   const [phone, setPhone]     = useState('')
   const [sending, setSending] = useState(false)
+  const [copied, setCopied]   = useState(false)
   // Agen yang dipilih user setelah form diisi
   const [pickedAgent, setPickedAgent] = useState<{ id: string; name: string; phone: string } | null>(null)
 
@@ -40,9 +52,24 @@ export default function ListingDetailClient({ listing, waKantor }: Props) {
   ]
   const hasMultiple = allAgents.length > 1
 
-  const handleCopyLink = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : ''
-    navigator?.clipboard?.writeText(url).then(() => alert('Link berhasil disalin!'))
+  const handleCopyLink = async () => {
+    const url = window.location.href
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      // Fallback untuk Safari iOS yang tidak support async clipboard
+      const ta = document.createElement('textarea')
+      ta.value = url
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    trackEvent(listing.id, 'share')
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   // Setelah form diisi: jika 1 agen → langsung simpan lead + buka WA
@@ -60,6 +87,10 @@ export default function ListingDetailClient({ listing, waKantor }: Props) {
   const handlePickAgent = async (ag: typeof allAgents[0]) => {
     setPickedAgent(ag)
     setSending(true)
+    const waUrl = ag.phone ? makeWaLink(ag.phone, waMessage) : waKantor
+    // Buka WA SEBELUM await — Safari iOS memblok window.open setelah async break
+    const waWindow = window.open(waUrl, '_blank')
+    trackEvent(listing.id, 'share')
     try {
       await fetch('/api/leads', {
         method:  'POST',
@@ -80,8 +111,8 @@ export default function ListingDetailClient({ listing, waKantor }: Props) {
       })
     } catch { /* tetap buka WA meski lead gagal */ }
     setSending(false)
-    const waUrl = ag.phone ? makeWaLink(ag.phone, waMessage) : waKantor
-    window.open(waUrl, '_blank')
+    // Fallback jika popup diblok (misalnya di WebView)
+    if (!waWindow || waWindow.closed) window.location.href = waUrl
     setStep('sent')
   }
 
@@ -232,7 +263,7 @@ export default function ListingDetailClient({ listing, waKantor }: Props) {
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Bagikan</p>
         <button onClick={handleCopyLink}
           className="w-full py-2.5 text-center text-sm font-semibold border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors">
-          🔗 Copy Link
+          {copied ? '✅ Link Disalin!' : '🔗 Copy Link'}
         </button>
       </div>
 
