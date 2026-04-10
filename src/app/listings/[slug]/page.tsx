@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getListings, formatPrice } from '@/lib/sheets'
@@ -10,14 +11,49 @@ export const dynamic = 'force-dynamic'
 
 interface Props { params: { slug: string } }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const slug     = decodeURIComponent(params.slug)
+  const listings = await getListings()
+  const listing  = listings.find(l => l.slug === slug || l.id === slug)
+  if (!listing) return { title: 'Listing Tidak Ditemukan' }
+
+  const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+  const title      = `${listing.title} — Mansion Realty`
+  const priceStr   = formatPrice(listing.price)
+  const lokasi     = [listing.location, listing.city].filter(Boolean).join(', ')
+  const description = `${listing.type === 'Sale' ? 'Dijual' : 'Disewa'}: ${listing.title} di ${lokasi}. Harga ${priceStr}. ${listing.description ? listing.description.slice(0, 100) + '…' : 'Hubungi Mansion Realty untuk info lebih lanjut.'}`
+  const imageUrl   = listing.coverImage || null
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url:    `${siteUrl}/listings/${listing.slug}`,
+      type:   'website',
+      images: imageUrl ? [{ url: imageUrl, width: 1200, height: 630, alt: listing.title }] : [],
+    },
+    twitter: {
+      card:        'summary_large_image',
+      title,
+      description,
+      images:      imageUrl ? [imageUrl] : [],
+    },
+  }
+}
+
 function RealEstateSchema({ listing }: { listing: any }) {
-  const schema = {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+  const images  = listing.images?.length > 0 ? listing.images : (listing.coverImage ? [listing.coverImage] : [])
+
+  const schema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateListing',
     name: listing.title,
     description: listing.description,
-    url: `${process.env.NEXT_PUBLIC_SITE_URL}/listings/${listing.slug}`,
-    image: listing.images?.length > 0 ? listing.images : [listing.coverImage],
+    url: `${siteUrl}/listings/${listing.slug}`,
+    image: images,
     offers: { '@type': 'Offer', price: listing.price, priceCurrency: 'IDR' },
     address: {
       '@type': 'PostalAddress',
@@ -27,7 +63,29 @@ function RealEstateSchema({ listing }: { listing: any }) {
       streetAddress: listing.address,
     },
   }
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/>
+
+  if (listing.kamarTidur > 0)    schema.numberOfBedrooms       = listing.kamarTidur
+  if (listing.kamarMandi > 0)    schema.numberOfBathroomsTotal  = listing.kamarMandi
+  if (listing.luasBangunan > 0)  schema.floorSize = { '@type': 'QuantitativeValue', value: listing.luasBangunan, unitCode: 'MTK' }
+  if (listing.luasTanah > 0)     schema.lotSize   = { '@type': 'QuantitativeValue', value: listing.luasTanah,    unitCode: 'MTK' }
+  if (listing.carport > 0)       schema.numberOfParkingSpaces  = listing.carport
+
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Beranda',  item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Listing',  item: `${siteUrl}/listings` },
+      { '@type': 'ListItem', position: 3, name: listing.title, item: `${siteUrl}/listings/${listing.slug}` },
+    ],
+  }
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}/>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}/>
+    </>
+  )
 }
 
 export default async function ListingDetailPage({ params }: Props) {

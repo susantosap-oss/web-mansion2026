@@ -487,11 +487,12 @@ Lakukan ini setiap bulan di Google Search Console:
 Beberapa fitur SEO lanjutan yang bisa dikembangkan ke depan:
 
 ### Prioritas Tinggi:
-| Fitur | Manfaat | Estimasi |
-|-------|---------|----------|
-| OG Image per listing | Preview gambar properti saat share WA/FB | Medium |
-| generateMetadata() per listing | Custom title & desc per properti di Google | Medium |
-| Breadcrumb Schema | Tampilan "Beranda > Listing > Nama Properti" di Google | Easy |
+| Fitur | Manfaat | Status |
+|-------|---------|--------|
+| OG Image per listing | Preview gambar properti saat share WA/FB | ✅ Done (April 2026) |
+| generateMetadata() per listing | Custom title & desc per properti di Google | ✅ Done (April 2026) |
+| Breadcrumb Schema | Tampilan "Beranda > Listing > Nama Properti" di Google | ✅ Done (April 2026) |
+| Schema.org fields lengkap | kamarTidur, kamarMandi, luas tanah/bangunan, carport | ✅ Done (April 2026) |
 
 ### Prioritas Sedang:
 | Fitur | Manfaat |
@@ -502,7 +503,7 @@ Beberapa fitur SEO lanjutan yang bisa dikembangkan ke depan:
 | Canonical tags per halaman | Hindari duplicate content |
 
 ### Catatan Penting:
-> SEO per listing detail (judul & deskripsi masing-masing properti muncul unik di Google) saat ini **belum diimplementasikan**. Semua halaman listing menggunakan judul/deskripsi global dari seo_title dan seo_desc. Ini adalah item paling impactful untuk dikerjakan selanjutnya.
+> SEO per listing detail sudah diimplementasikan (April 2026): `generateMetadata()`, OG Image dari foto utama, Breadcrumb Schema, dan Schema.org fields lengkap (kamar tidur, kamar mandi, luas tanah, luas bangunan, carport).
 
 ---
 
