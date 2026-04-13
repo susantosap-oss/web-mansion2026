@@ -386,7 +386,8 @@ export default function AdminDashboardClient({ user }: Props) {
                   { key: 'leads',     label: 'P5 — Bobot per Lead',                   hint: 'Nilai × jumlah leads' },
                   { key: 'login',     label: 'P6 — Bobot per Login CRM',               hint: 'Nilai × jumlah login' },
                   { key: 'jadwal',    label: 'P7 — Bobot per Jadwal CRM',              hint: 'Nilai × jumlah jadwal' },
-                  { key: 'aktivitas', label: 'P8 — Bobot per Aktivitas Harian',         hint: 'Nilai × jumlah input aktivitas harian' },
+                  { key: 'aktivitas',    label: 'P8 — Bobot per Aktivitas Harian',              hint: 'Nilai × jumlah input aktivitas harian' },
+                  { key: 'koordProject', label: 'P9 — Prioritas Koordinator di Halaman Proyeknya', hint: 'Flat bonus: koordinator tampil pertama di picker agen pada halaman proyek miliknya' },
                 ] as const).map(field => (
                   <div key={field.key}>
                     <label className="label-field">{field.label}</label>
@@ -409,6 +410,7 @@ export default function AdminDashboardClient({ user }: Props) {
                 <p>listing × {scoreWeights.listing.toLocaleString('id')} &nbsp;|&nbsp; (hit+share) × {scoreWeights.hitShare}</p>
                 <p>Koord +{scoreWeights.koord.toLocaleString('id')} &nbsp;|&nbsp; BM +{scoreWeights.bm.toLocaleString('id')} &nbsp;|&nbsp; Principal +{scoreWeights.principal.toLocaleString('id')}</p>
                 <p>leads × {scoreWeights.leads} &nbsp;|&nbsp; login × {scoreWeights.login} &nbsp;|&nbsp; jadwal × {scoreWeights.jadwal} &nbsp;|&nbsp; aktivitas × {scoreWeights.aktivitas}</p>
+                <p>Koord di proyek sendiri +{(scoreWeights.koordProject ?? 999999).toLocaleString('id')} (tampil pertama di picker)</p>
               </div>
 
               <div className="flex items-center gap-3">

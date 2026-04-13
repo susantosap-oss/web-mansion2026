@@ -15,10 +15,16 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()
 
-  // Sort agen by multi-criteria score (7 prioritas), ambil top 10 aktif
+  // Sort agen by score — koordinator proyek ini mendapat bonus koordProject
+  // agar selalu muncul pertama di picker agen pada halaman proyeknya sendiri
+  const koordBonus = weights.koordProject ?? 999_999
   const agents = [...allAgents]
     .filter(a => a.verified)
-    .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
+    .sort((a, b) => {
+      const scoreA = computeAgentScore(a, weights) + (a.id === project.agentId ? koordBonus : 0)
+      const scoreB = computeAgentScore(b, weights) + (b.id === project.agentId ? koordBonus : 0)
+      return scoreB - scoreA
+    })
     .slice(0, 10)
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`

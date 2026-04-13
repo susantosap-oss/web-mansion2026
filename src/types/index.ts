@@ -70,29 +70,31 @@ export interface KPRResult {
 export interface SheetRow { [key: string]: string | number | boolean | null }
 
 export interface AgentScoreWeights {
-  lsp:       number
-  listing:   number
-  hitShare:  number
-  koord:     number
-  bm:        number
-  principal: number
-  leads:     number
-  login:     number
-  jadwal:    number
-  aktivitas: number   // P8: poin per aktivitas harian yang diinput agen
+  lsp:          number
+  listing:      number
+  hitShare:     number
+  koord:        number
+  bm:           number
+  principal:    number
+  leads:        number
+  login:        number
+  jadwal:       number
+  aktivitas:    number   // P8: poin per aktivitas harian yang diinput agen
+  koordProject: number   // P9: bonus koordinator di halaman proyek miliknya sendiri
 }
 
 export const DEFAULT_SCORE_WEIGHTS: AgentScoreWeights = {
-  lsp:       1_000_000,
-  listing:   500,
-  hitShare:  50,
-  koord:     80_000,
-  bm:        120_000,
-  principal: 150_000,
-  leads:     30,
-  login:     5,
-  jadwal:    2,
-  aktivitas: 10,      // 10 poin per aktivitas harian
+  lsp:          1_000_000,
+  listing:      500,
+  hitShare:     50,
+  koord:        80_000,
+  bm:           120_000,
+  principal:    150_000,
+  leads:        30,
+  login:        5,
+  jadwal:       2,
+  aktivitas:    10,
+  koordProject: 999_999,  // default: koordinator proyek selalu muncul pertama
 }
 
 export interface APIResponse<T> {
