@@ -392,9 +392,17 @@ export async function getAgents(): Promise<Agent[]> {
   }
 }
 
+function nameToSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
+}
+
 export async function getAgentById(id: string): Promise<Agent | null> {
   const agents = await getAgents()
-  return agents.find(a => a.id === id) || null
+  // Coba match UUID dulu
+  const byId = agents.find(a => a.id === id)
+  if (byId) return byId
+  // Fallback: match by name slug (untuk URL dari share WA)
+  return agents.find(a => nameToSlug(a.name) === id) || null
 }
 
 function mapNews(row: SheetRow): News {

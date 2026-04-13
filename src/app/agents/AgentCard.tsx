@@ -1,7 +1,12 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { Agent } from '@/types'
+
+function nameToSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
+}
 
 function roleLabel(role: string | undefined): string {
   const r = (role || '').toLowerCase()
@@ -62,6 +67,8 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
     window.open(buildWaLink(), '_blank')
   }
 
+  const agentSlug = nameToSlug(agent.name)
+
   return (
     <div className="card p-5 hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1">
       {/* Rank badge */}
@@ -78,16 +85,16 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
         </div>
       )}
 
-      {/* Photo */}
-      <div className="flex flex-col items-center text-center mb-4">
-        <div className="w-20 h-20 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center mb-3 border-4 border-white shadow-md">
+      {/* Photo + Info — klik masuk ke halaman profil agen */}
+      <Link href={`/agents/${agentSlug}`} className="flex flex-col items-center text-center mb-4 group">
+        <div className="w-20 h-20 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center mb-3 border-4 border-white shadow-md group-hover:border-primary-200 transition-colors">
           {agent.photo ? (
             <Image src={agent.photo} alt={agent.name} width={80} height={80} className="object-cover w-full h-full"/>
           ) : (
             <span className="text-primary-900 font-bold text-2xl">{agent.name.charAt(0)}</span>
           )}
         </div>
-        <h3 className="font-bold text-primary-900">{agent.name}</h3>
+        <h3 className="font-bold text-primary-900 group-hover:text-primary-700 transition-colors">{agent.name}</h3>
         <p className="text-xs text-gray-400">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
         {agent.nomerLsp && (
           <p className="text-xs text-primary-700 font-medium mt-0.5">LSP: {agent.nomerLsp}</p>
@@ -103,7 +110,7 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
             ✓ Terverifikasi
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-4">
