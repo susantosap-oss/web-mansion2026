@@ -14,9 +14,10 @@ type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scor
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
-  const [tab, setTab]         = useState<Tab>('overview')
-  const [saving, setSaving]   = useState(false)
-  const [success, setSuccess] = useState('')
+  const [tab, setTab]           = useState<Tab>('overview')
+  const [saving, setSaving]     = useState(false)
+  const [success, setSuccess]   = useState('')
+  const [mobileMenu, setMobileMenu] = useState(false)
 
   // Form states (Original GitHub)
   const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
@@ -49,6 +50,41 @@ export default function AdminDashboardClient({ user }: Props) {
       setContentForm(updated)
       setContentLoaded(true)
     } finally { setContentLoading(false) }
+  }
+
+  // SEO form state
+  const [seoForm, setSeoForm]       = useState({ seo_title: '', seo_desc: '', seo_keywords: '' })
+  const [seoLoading, setSeoLoading] = useState(false)
+  const [seoLoaded,  setSeoLoaded]  = useState(false)
+
+  async function loadSeo() {
+    if (seoLoaded) return
+    setSeoLoading(true)
+    try {
+      const keys = ['seo_title', 'seo_desc', 'seo_keywords'] as const
+      const results = await Promise.all(
+        keys.map(k => fetch(`/api/config?key=${k}`).then(r => r.json()).catch(() => ({ value: '' })))
+      )
+      setSeoForm({ seo_title: results[0]?.value ?? '', seo_desc: results[1]?.value ?? '', seo_keywords: results[2]?.value ?? '' })
+      setSeoLoaded(true)
+    } finally { setSeoLoading(false) }
+  }
+
+  async function saveSeo() {
+    setSaving(true)
+    try {
+      const keys = ['seo_title', 'seo_desc', 'seo_keywords'] as const
+      await Promise.all(
+        keys.map(k => fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: k, value: seoForm[k] }),
+        }))
+      )
+      setSuccess('✅ Pengaturan SEO tersimpan ke Google Sheet!')
+    } catch (e: any) {
+      setSuccess('❌ Gagal: ' + e.message)
+    } finally { setSaving(false); setTimeout(() => setSuccess(''), 4000) }
   }
 
   // Scoring weights state
@@ -176,7 +212,40 @@ export default function AdminDashboardClient({ user }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar (Original GitHub) */}
+
+      {/* ── Mobile top bar ─────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-primary-900 text-white flex items-center justify-between px-4 h-14">
+        <div className="flex items-center gap-2">
+          {tab !== 'overview' && (
+            <button onClick={() => { setTab('overview'); setMobileMenu(false) }} className="text-white/70 hover:text-white mr-1">
+              ‹
+            </button>
+          )}
+          <span className="font-bold text-sm">
+            {tab === 'overview' ? 'Dashboard' : menuItems.find(m => m.id === tab)?.label ?? 'Dashboard'}
+          </span>
+        </div>
+        <button onClick={() => setMobileMenu(v => !v)} className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 text-xl">
+          {mobileMenu ? '✕' : '☰'}
+        </button>
+      </div>
+
+      {/* Mobile slide-down menu */}
+      {mobileMenu && (
+        <div className="md:hidden fixed top-14 left-0 right-0 z-50 bg-primary-900 text-white shadow-xl" onClick={() => setMobileMenu(false)}>
+          {menuItems.map(item => (
+            <button key={item.id} onClick={() => setTab(item.id)}
+              className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-semibold border-b border-white/10 transition-colors ${tab === item.id ? 'bg-white/15 text-gold' : 'text-white/80'}`}>
+              <span>{item.icon}</span>{item.label}
+            </button>
+          ))}
+          <button onClick={handleLogout} className="w-full px-5 py-3.5 text-sm text-red-300 font-semibold text-left">
+            🚪 Logout
+          </button>
+        </div>
+      )}
+
+      {/* ── Sidebar desktop ─────────────────────────────────── */}
       <div className="w-64 bg-primary-900 text-white flex flex-col fixed h-full z-40 hidden md:flex">
         <div className="p-6 border-b border-white/10">
           <Link href="/" className="flex items-center gap-3">
@@ -215,7 +284,7 @@ export default function AdminDashboardClient({ user }: Props) {
       </div>
 
       {/* Main Content */}
-      <div className="md:ml-64 flex-1 p-6 pt-8">
+      <div className="md:ml-64 flex-1 p-6 pt-20 md:pt-8">
 
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">
@@ -431,23 +500,35 @@ export default function AdminDashboardClient({ user }: Props) {
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}
 
-        {/* ── SETTINGS SEO (KEMBALI KE ORIGINAL) ── */}
+        {/* ── SETTINGS SEO ── */}
         {tab === 'settings' && user.role === 'superadmin' && (
           <div>
             <h1 className="section-title mb-6">⚙️ Pengaturan SEO & CTA</h1>
+
+            {!seoLoaded && (
+              <button onClick={loadSeo} disabled={seoLoading} className="btn-primary mb-6 disabled:opacity-50">
+                {seoLoading ? '⏳ Memuat...' : '🔄 Muat Data Tersimpan'}
+              </button>
+            )}
+
             <div className="card p-6 space-y-5">
-              {[
-                { label: 'Judul Website (SEO)', key: 'seo_title' },
-                { label: 'Deskripsi Meta (SEO)', key: 'seo_desc' },
-                { label: 'Keywords', key: 'seo_keywords' },
-              ].map(field => (
+              {([
+                { label: 'Judul Website (SEO)', key: 'seo_title' as const, placeholder: 'Mansion Realty — Properti Terpercaya di Jakarta' },
+                { label: 'Deskripsi Meta (SEO)', key: 'seo_desc' as const, placeholder: 'Temukan rumah, apartemen & properti investasi terbaik...' },
+                { label: 'Keywords', key: 'seo_keywords' as const, placeholder: 'properti jakarta, rumah dijual, apartemen jakarta...' },
+              ]).map(field => (
                 <div key={field.key}>
                   <label className="label-field">{field.label}</label>
-                  <input className="input-field" placeholder="Masukkan nilai..."/>
+                  <input
+                    className="input-field"
+                    placeholder={field.placeholder}
+                    value={seoForm[field.key]}
+                    onChange={e => setSeoForm(p => ({ ...p, [field.key]: e.target.value }))}
+                  />
                 </div>
               ))}
-              <button className="btn-primary" onClick={() => setSuccess('✅ Pengaturan disimpan!')}>
-                💾 Simpan Pengaturan
+              <button className="btn-primary disabled:opacity-50" disabled={saving} onClick={saveSeo}>
+                {saving ? '⏳ Menyimpan...' : '💾 Simpan Pengaturan'}
               </button>
             </div>
           </div>
