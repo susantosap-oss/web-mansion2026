@@ -1,20 +1,8 @@
 import { Project, Listing, Agent, News, SheetRow, AgentScoreWeights, DEFAULT_SCORE_WEIGHTS } from '@/types'
+import { getCached, setCached } from '@/lib/gasCache'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL!
 const GAS_SECRET = process.env.GAS_API_SECRET || ''
-
-// ── In-Memory Cache ───────────────────────────────────────
-interface CacheEntry<T> { data: T; expiresAt: number }
-const cache = new Map<string, CacheEntry<unknown>>()
-
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key)
-  if (!entry || Date.now() > entry.expiresAt) { cache.delete(key); return null }
-  return entry.data as T
-}
-function setCached<T>(key: string, data: T, ttl = 300) {
-  cache.set(key, { data, expiresAt: Date.now() + ttl * 1000 })
-}
 
 // ── Fetch dari GAS ────────────────────────────────────────
 async function fetchFromGAS<T>(action: string, ttl = 300): Promise<T> {

@@ -3,8 +3,9 @@
 // Disesuaikan dengan CRM crm-broker2026
 // ============================================================
 
-var SHEET_ID   = '1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI'
-var API_SECRET = 'mansion2026'
+var SHEET_ID      = '1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI'
+var API_SECRET    = 'mansion2026'
+var NEXT_SITE_URL = 'https://mansionrealty.co.id'
 
 var SHEETS = {
   LISTINGS:        'LISTING',
@@ -402,6 +403,40 @@ function diagnosLeads() {
       ' | M=' + r[12] + ' | N=' + r[13]
     )
   }
+}
+
+// ── REVALIDATE WEB ───────────────────────────────────────
+function notifyRevalidate(action) {
+  try {
+    var options = {
+      method: 'post', contentType: 'application/json',
+      payload: JSON.stringify({ secret: API_SECRET, action: action }),
+      muteHttpExceptions: true,
+    }
+    var res = UrlFetchApp.fetch(NEXT_SITE_URL + '/api/revalidate', options)
+    Logger.log('[Revalidate] ' + action + ' → HTTP ' + res.getResponseCode())
+  } catch (e) { Logger.log('[Revalidate] Error: ' + e.message) }
+}
+
+function onSheetChange(e) {
+  var sheetName = ''
+  try { sheetName = e.source.getActiveSheet().getName() } catch (_) {}
+  var action = 'all'
+  if      (sheetName === SHEETS.LISTINGS || sheetName === SHEETS.LISTING_AGENTS) action = 'getListings'
+  else if (sheetName === SHEETS.PROJECTS) action = 'getProjects'
+  else if (sheetName === SHEETS.AGENTS)   action = 'getAgents'
+  else if (sheetName === SHEETS.NEWS)     action = 'getNews'
+  notifyRevalidate(action)
+}
+
+// Jalankan SEKALI dari GAS editor: Run → createChangeTrigger
+function createChangeTrigger() {
+  var ss = SpreadsheetApp.openById(SHEET_ID)
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'onSheetChange') ScriptApp.deleteTrigger(t)
+  })
+  ScriptApp.newTrigger('onSheetChange').forSpreadsheet(ss).onChange().create()
+  Logger.log('✅ Trigger onChange → onSheetChange berhasil dipasang')
 }
 
 // ── TEST (jalankan manual di GAS editor) ─────────────────

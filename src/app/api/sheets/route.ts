@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
+import { getCached, setCached } from '@/lib/gasCache'
 
 export const dynamic = 'force-dynamic'
-
-const cache = new Map<string, { data: unknown; expiresAt: number }>()
 
 const SENSITIVE_COLS = ['Password_Hash', 'Password', 'Telegram_ID']
 
@@ -13,9 +12,9 @@ export async function GET(request: Request) {
   if (!action)
     return NextResponse.json({ success: false, error: 'action required' }, { status: 400 })
 
-  const cached = cache.get(action)
-  if (cached && Date.now() < cached.expiresAt)
-    return NextResponse.json({ success: true, data: cached.data, cached: true })
+  const cached = getCached<unknown>(`api:${action}`)
+  if (cached !== null)
+    return NextResponse.json({ success: true, data: cached, cached: true })
 
   const GAS_URL = process.env.NEXT_PUBLIC_GAS_API_URL
   if (!GAS_URL || GAS_URL.includes('GANTI'))
@@ -39,7 +38,7 @@ export async function GET(request: Request) {
     }
 
     if (json.success)
-      cache.set(action, { data: json.data, expiresAt: Date.now() + 300_000 })
+      setCached(`api:${action}`, json.data, 300)
 
     return NextResponse.json(json)
   } catch (e) {
