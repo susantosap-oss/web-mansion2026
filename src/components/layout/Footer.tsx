@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="section-wrapper flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h3 className="font-display font-bold text-2xl text-primary-900">Siap menemukan properti impian Anda?</h3>
-            <p className="text-primary-900/70 mt-1">Konsultasikan kebutuhan properti Anda dengan agen kami.</p>
+            <p className="text-primary-900 mt-1">Konsultasikan kebutuhan properti Anda dengan agen kami.</p>
           </div>
           <a href={`https://wa.me/${wa}?text=Halo%20MANSION%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
             className="flex-shrink-0 px-6 py-3 bg-primary-900 text-white font-bold rounded-lg hover:bg-primary-800 transition-colors flex items-center gap-2">
@@ -47,7 +47,7 @@ export default function Footer() {
             </div>
           ))}
         </div>
-        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
+        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/70">
           <p>© {year} MANSION Realty. Semua hak dilindungi.</p>
           <p>Built with ❤️ for Indonesian Property Market</p>
         </div>

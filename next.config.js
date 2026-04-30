@@ -23,6 +23,8 @@ const nextConfig = {
   typescript:   { ignoreBuildErrors: true },
   eslint:       { ignoreDuringBuilds: true },
   images: {
+    loader: 'custom',
+    loaderFile: './src/lib/imageLoader.ts',
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '*.cloudinary.com' },
@@ -30,6 +32,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'drive.google.com' },
     ],
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 86400,
   },
 }
 

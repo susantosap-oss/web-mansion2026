@@ -218,6 +218,39 @@ export default async function ListingDetailPage({ params }: Props) {
                 listing={listing}
                 waKantor={waKantor}
               />
+
+              {/* Berita properti terkait */}
+              <div className="mt-4 card p-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Baca Juga</p>
+                <Link
+                  href={`/news?q=${encodeURIComponent(listing.city || 'Surabaya')}`}
+                  className="flex items-start gap-2 group hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors"
+                >
+                  <span className="text-xl flex-shrink-0">📰</span>
+                  <div>
+                    <p className="text-sm font-semibold text-primary-900 group-hover:text-gold transition-colors leading-snug">
+                      Berita &amp; Tips Properti {listing.city || 'Surabaya'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Panduan investasi dan info pasar properti terkini
+                    </p>
+                  </div>
+                </Link>
+                <Link
+                  href="/news?category=KPR+%26+Pembiayaan"
+                  className="flex items-start gap-2 group hover:bg-gray-50 rounded-xl p-2 -mx-2 transition-colors mt-1"
+                >
+                  <span className="text-xl flex-shrink-0">🏦</span>
+                  <div>
+                    <p className="text-sm font-semibold text-primary-900 group-hover:text-gold transition-colors leading-snug">
+                      Cara KPR &amp; Simulasi Cicilan {listing.propertyType}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Tips mengajukan KPR untuk {listing.propertyType.toLowerCase()}
+                    </p>
+                  </div>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

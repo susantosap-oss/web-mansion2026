@@ -79,7 +79,7 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
           Hubungi Agen
         </h3>
         <p className="text-xs text-gray-400 mb-4">
-          Pilih agen — diurutkan berdasarkan sertifikasi, listing &amp; aktivitas CRM
+          Koordinator proyek di urutan #1, diikuti agen berdasarkan sertifikasi &amp; aktivitas CRM
         </p>
 
         {!sent ? (
@@ -93,11 +93,17 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                   💬 Chat WhatsApp Agen
                 </button>
               ) : (
-                agents.map((agent, idx) => (
+                agents.map((agent, idx) => {
+                  const isKoord = idx === 0 && agent.id === project.agentId
+                  return (
                     <button
                       key={agent.id}
                       onClick={() => handlePilih(agent)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gold hover:bg-amber-50 transition-all text-left group">
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left group ${
+                        isKoord
+                          ? 'border-gold bg-amber-50 hover:bg-amber-100'
+                          : 'border-gray-100 hover:border-gold hover:bg-amber-50'
+                      }`}>
                       {/* Rank */}
                       <span className={`text-xs font-bold w-6 text-center flex-shrink-0 ${
                         idx === 0 ? 'text-yellow-500' :
@@ -116,13 +122,21 @@ export default function ProjectDetailClient({ project, agents, waKantor }: Props
                       </div>
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-primary-900 text-sm truncate">{agent.name}</p>
-                        <p className="text-xs text-gray-400">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-semibold text-primary-900 text-sm truncate">{agent.name}</p>
+                          {isKoord && (
+                            <span className="flex-shrink-0 text-[10px] font-bold bg-gold text-primary-900 px-1.5 py-0.5 rounded-full leading-none">
+                              Koordinator
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
                       </div>
                       {/* Arrow */}
                       <span className="text-gray-300 group-hover:text-gold text-sm">→</span>
                     </button>
-                  ))
+                  )
+                })
               )}
               <Link href="/agents?sort=top"
                 className="block text-center text-xs text-gray-400 hover:text-primary-900 transition-colors pt-1">

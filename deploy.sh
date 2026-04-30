@@ -37,7 +37,7 @@ gcloud run deploy ${SERVICE_NAME} \
   --port 8080 \
   --memory 1Gi \
   --cpu 1 \
-  --min-instances 0 \
+  --min-instances 1 \
   --max-instances 3 \
   --set-env-vars "NEXT_PUBLIC_GAS_API_URL=https://script.google.com/macros/s/AKfycbzOBNzrW0lOpT1J0ZkMbydfTq42SaSQiIOuV15njyCIBp6P0Grl3GQpjhVE8K_vSzROeg/exec,GAS_API_SECRET=mansion2026,NEXTAUTH_SECRET=webmansion2026authsecret,NEXT_PUBLIC_WA_OFFICE=628219880889,NEXT_PUBLIC_COMPANY_NAME=MANSION Realty,NEXT_PUBLIC_COMPANY_TAGLINE=Properti Impian Anda Investasi Terbaik Anda,NEXT_PUBLIC_COMPANY_ADDRESS=Jl. Sentra Niaga Utama Ruko Niaga Utama F-7 Citraland Surabaya,NEXT_PUBLIC_COMPANY_EMAIL=manprop26@gmail.com,NEXT_PUBLIC_COMPANY_PHONE=+628219880889,NEXT_PUBLIC_SITE_URL=https://www.mansionpro.id,NEXT_PUBLIC_SITE_DOMAIN=mansionpro.id,GOOGLE_SHEETS_ID=1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI"
 

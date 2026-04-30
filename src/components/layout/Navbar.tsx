@@ -16,16 +16,6 @@ const navLinks = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
-
-  const [logoUrl, setLogoUrl] = useState<string>('')
-
-  useEffect(() => {
-    // Fetch logo dari CONFIG
-    fetch('/api/config?key=logo_url')
-      .then(r => r.json())
-      .then(d => { if (d.value && d.value.startsWith('http')) setLogoUrl(d.value) })
-      .catch(() => {})
-  }, [])
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname   = usePathname()
   const { total }  = useFavourite()
@@ -85,8 +75,14 @@ export default function Navbar() {
           <Link href="/listings/titip" className="hidden md:inline-flex btn-gold text-sm px-4 py-2">+ Titip Listing</Link>
 
           {/* Mobile toggle */}
-          <button className="lg:hidden p-2 text-white" onClick={() => setMenuOpen(v => !v)}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button
+            className="lg:hidden p-2 text-white"
+            onClick={() => setMenuOpen(v => !v)}
+            aria-label={menuOpen ? 'Tutup menu' : 'Buka menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               {menuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>}
             </svg>
           </button>
@@ -95,7 +91,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="lg:hidden bg-primary-900 border-t border-white/10 py-4">
+        <div id="mobile-menu" className="lg:hidden bg-primary-900 border-t border-white/10 py-4">
           <div className="section-wrapper flex flex-col gap-1">
             {navLinks.map(link => (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}

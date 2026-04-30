@@ -15,7 +15,7 @@
   .btn-primary { @apply inline-flex items-center gap-2 px-6 py-3 bg-primary-900 text-white font-body font-semibold rounded-lg hover:bg-primary-800 transition-all duration-200 shadow-navy; }
   .btn-gold { @apply inline-flex items-center gap-2 px-6 py-3 bg-gold text-primary-900 font-body font-bold rounded-lg hover:bg-gold-light transition-all duration-200; }
   .btn-outline { @apply inline-flex items-center gap-2 px-6 py-3 border-2 border-primary-900 text-primary-900 font-body font-semibold rounded-lg hover:bg-primary-900 hover:text-white transition-all duration-200; }
-  .btn-wa { @apply inline-flex items-center gap-2 px-6 py-3 bg-[#128C7E] text-white font-body font-bold rounded-lg hover:bg-[#0e6b5e] transition-all duration-200; }
+  .btn-wa { @apply inline-flex items-center gap-2 px-6 py-3 bg-[#0f7266] text-white font-body font-bold rounded-lg hover:bg-[#0e6b5e] transition-all duration-200; }
   .card { @apply bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden border border-gray-100; }
   .section-title { @apply text-3xl md:text-4xl font-display font-bold text-primary-900; }
   .section-subtitle { @apply text-lg text-gray-500 font-body mt-3 max-w-2xl; }

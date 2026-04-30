@@ -15,17 +15,18 @@ export default async function ProjectDetailPage({ params }: Props) {
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()
 
-  // Sort agen by score — koordinator proyek ini mendapat bonus koordProject
-  // agar selalu muncul pertama di picker agen pada halaman proyeknya sendiri
-  const koordBonus = weights.koordProject ?? 999_999
-  const agents = [...allAgents]
-    .filter(a => a.verified)
-    .sort((a, b) => {
-      const scoreA = computeAgentScore(a, weights) + (a.id === project.agentId ? koordBonus : 0)
-      const scoreB = computeAgentScore(b, weights) + (b.id === project.agentId ? koordBonus : 0)
-      return scoreB - scoreA
-    })
-    .slice(0, 10)
+  // Koordinator proyek selalu di posisi #1 — mandatory, lepas dari score & status verified
+  const koordAgent = project.agentId
+    ? allAgents.find(a => a.id === project.agentId) ?? null
+    : null
+
+  // Sisa slot: agen verified lain, sorted by score
+  const restAgents = allAgents
+    .filter(a => a.verified && a.id !== project.agentId)
+    .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
+    .slice(0, koordAgent ? 9 : 10)
+
+  const agents = koordAgent ? [koordAgent, ...restAgents] : restAgents
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`
 

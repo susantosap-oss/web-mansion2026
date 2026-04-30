@@ -147,6 +147,8 @@ function mapListing(row: SheetRow): Listing {
 function mapProject(row: SheetRow): Project {
   const id   = str(row['ID'])
   const nama = str(row['Nama_Proyek'])
+  // SSoT koordinator: kolom Koordinator_ID (col U), fallback Created_By_ID
+  const koordId = str(row['Koordinator_ID']) || str(row['Created_By_ID'])
   return {
     id,
     slug:        makeSlug(nama, id),
@@ -164,7 +166,7 @@ function mapProject(row: SheetRow): Project {
     images:      [str(row['Foto_1_URL']), str(row['Foto_2_URL'])].filter(s => s.startsWith('http')),
     specs:       {},
     facilities:  [],
-    agentId:     str(row['Created_By_ID']),
+    agentId:     koordId,
     createdAt:   str(row['Created_At'] || row['Tanggal_Input']),
     updatedAt:   str(row['Updated_At']),
   }

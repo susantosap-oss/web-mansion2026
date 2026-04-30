@@ -147,9 +147,9 @@ export default async function HomePage() {
                     <span className="absolute top-3 left-3 badge bg-primary-900 text-white">{a.category}</span>
                   </div>
                   <div className="p-4">
-                    <p className="text-xs text-gray-400 mb-2">{new Date(a.publishedAt).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
+                    <p className="text-xs text-gray-600 mb-2">{new Date(a.publishedAt).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
                     <h3 className="font-display font-semibold text-primary-900 line-clamp-2">{a.title}</h3>
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-2">{a.summary}</p>
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{a.summary}</p>
                   </div>
                 </Link>
               ))}

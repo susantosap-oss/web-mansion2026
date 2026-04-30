@@ -47,7 +47,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (sent) {
     return (
       <button onClick={() => window.open(waHref, '_blank')}
-        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#128C7E] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
         💬 WA Agen
       </button>
     )
@@ -56,7 +56,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (!show) {
     return (
       <button onClick={() => setShow(true)}
-        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#128C7E] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
         💬 WA Agen
       </button>
     )
@@ -83,7 +83,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
         <button
           onClick={handleContact}
           disabled={sending || !name.trim() || !phone.trim()}
-          className="flex-1 py-1.5 text-xs font-semibold text-white bg-[#128C7E] rounded-lg hover:bg-[#0e6b5e] disabled:opacity-50 transition-colors">
+          className="flex-1 py-1.5 text-xs font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] disabled:opacity-50 transition-colors">
           {sending ? '...' : '💬 WA'}
         </button>
         <button onClick={() => setShow(false)}
@@ -115,12 +115,12 @@ export function ListingCard({ listing, className = '' }: { listing: Listing; cla
         </div>
       </div>
       <div className="p-4">
-        <p className="text-xs text-gray-400 mb-1">📍 {listing.location}, {listing.city}</p>
+        <p className="text-xs text-gray-600 mb-1">📍 {listing.location}, {listing.city}</p>
         <Link href={`/listings/${listing.slug}`}>
           <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors line-clamp-2 mb-2 leading-snug">{listing.title}</h3>
         </Link>
         <p className="price-display mb-3">{formatPrice(listing.price)}</p>
-        <div className="flex gap-3 text-xs text-gray-500 border-t border-gray-100 pt-3 mb-3">
+        <div className="flex gap-3 text-xs text-gray-600 border-t border-gray-100 pt-3 mb-3">
           {listing.luasTanah > 0 && <span>🏠 {listing.luasTanah}m²</span>}
           {listing.luasBangunan > 0 && <span>📐 {listing.luasBangunan}m²</span>}
           {listing.kamarTidur > 0 && <span>🛏 {listing.kamarTidur}</span>}
@@ -165,13 +165,13 @@ export function ProjectCard({ project, className = '' }: { project: Project; cla
         </div>
       </div>
       <div className="p-4">
-        <p className="text-xs text-gray-400 mb-1">📍 {project.location}, {project.city}</p>
+        <p className="text-xs text-gray-600 mb-1">📍 {project.location}, {project.city}</p>
         <Link href={`/projects/${project.slug}`}>
           <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors leading-snug mb-2">{project.name}</h3>
         </Link>
-        <p className="text-sm text-gray-500 line-clamp-2 mb-3">{project.description}</p>
+        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{project.description}</p>
         <div className="bg-primary-50 rounded-lg p-2.5 mb-3">
-          <p className="text-xs text-gray-500">Mulai dari</p>
+          <p className="text-xs text-gray-700">Mulai dari</p>
           <p className="price-display text-lg">{formatPrice(project.priceMin)}</p>
         </div>
         <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm">Lihat Detail Proyek</Link>

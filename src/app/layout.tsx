@@ -3,6 +3,7 @@ import { Poppins } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import ChunkErrorHandler from '@/components/ChunkErrorHandler'
 
 const poppins = Poppins({
   subsets:  ['latin'],
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png"/>
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
+        <ChunkErrorHandler />
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
 import BackButton from '@/components/ui/BackButton'
+import RelatedProperties from '@/components/property/RelatedProperties'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
@@ -30,10 +31,14 @@ export default async function NewsDetailPage({ params }: Props) {
         <BackButton label="Kembali ke Berita" />
 
         {/* Breadcrumb */}
-        <nav className="text-sm text-gray-400 mb-6 flex items-center gap-2 flex-wrap">
+        <nav aria-label="Breadcrumb" className="text-sm text-gray-400 mb-6 flex items-center gap-2 flex-wrap">
           <Link href="/" className="hover:text-primary-900">Beranda</Link>
           <span>/</span>
           <Link href="/news" className="hover:text-primary-900">Berita</Link>
+          <span>/</span>
+          <Link href={`/news?category=${encodeURIComponent(item.category)}`} className="hover:text-primary-900">
+            {item.category}
+          </Link>
           <span>/</span>
           <span className="text-primary-900 font-medium truncate max-w-xs">{item.title}</span>
         </nav>
@@ -81,11 +86,20 @@ export default async function NewsDetailPage({ params }: Props) {
               <div className="flex gap-2">
                 <a href={`https://wa.me/?text=${encodeURIComponent(item.title + '\n\n' + (process.env.NEXT_PUBLIC_SITE_URL||'') + '/news/' + item.slug)}`}
                    target="_blank" rel="noopener noreferrer"
-                   className="px-4 py-2 bg-[#128C7E] text-white rounded-xl text-sm font-semibold hover:bg-[#0e6b5e] transition-colors">
+                   className="px-4 py-2 bg-[#0f7266] text-white rounded-xl text-sm font-semibold hover:bg-[#0e6b5e] transition-colors">
                   WhatsApp
                 </a>
               </div>
             </div>
+
+            {/* Properti Terkait — otomatis dari tags berita */}
+            {item.tags.length > 0 && (
+              <RelatedProperties
+                tags={item.tags}
+                newsCategory={item.category}
+                newsSlug={item.slug}
+              />
+            )}
           </div>
 
           {/* Sidebar */}

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import { google } from 'googleapis'
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID || ''
@@ -18,16 +19,24 @@ function getSheetsClient() {
   return google.sheets({ version: 'v4', auth: auth as any })
 }
 
-// Baca semua rows CONFIG sheet: [[Key, Value], ...]
 async function readConfigRows(): Promise<string[][]> {
   if (!SHEET_ID) return []
   const sheets = getSheetsClient()
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'CONFIG',
-  })
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Sheets timeout')), 8000)
+  )
+  const res = await Promise.race([
+    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'CONFIG' }),
+    timeout,
+  ])
   return (res.data.values || []) as string[][]
 }
+
+const getCachedConfigRows = unstable_cache(
+  readConfigRows,
+  ['config-sheet-rows'],
+  { revalidate: 300 }
+)
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -35,13 +44,19 @@ export async function GET(request: Request) {
   if (!key) return NextResponse.json({ success: false, error: 'key required' })
 
   try {
-    const rows = await readConfigRows()
+    const rows = await getCachedConfigRows()
     const row  = rows.find(r => r[0] === key)
     const value = row ? (row[1] ?? null) : null
-    return NextResponse.json({ success: true, value })
+    return NextResponse.json(
+      { success: true, value },
+      { headers: { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=600' } }
+    )
   } catch (e: any) {
     console.error('[config GET]', e.message)
-    return NextResponse.json({ success: true, value: null, source: 'error' })
+    return NextResponse.json(
+      { success: true, value: null, source: 'error' },
+      { headers: { 'Cache-Control': 'public, max-age=60' } }
+    )
   }
 }
 
