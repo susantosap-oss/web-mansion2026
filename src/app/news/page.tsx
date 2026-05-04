@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
 
 export const dynamic = 'force-dynamic'
@@ -97,7 +96,7 @@ export default async function NewsPage({ searchParams }: Props) {
                   {/* Gambar — tinggi tetap */}
                   <div className="relative h-48 flex-shrink-0 overflow-hidden bg-primary-50">
                     {item.coverImage ? (
-                      <Image src={item.coverImage} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500"/>
+                      <img src={item.coverImage} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl">📰</div>
                     )}
@@ -114,16 +113,12 @@ export default async function NewsPage({ searchParams }: Props) {
                     <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed flex-1 overflow-hidden">
                       {item.summary || item.content?.replace(/<[^>]+>/g,'').slice(0,120)}
                     </p>
-                    {/* Tags selalu di bawah */}
+                    {/* Tags — span biasa, bukan Link (hindari nested anchor) */}
                     <div className="flex gap-1 flex-wrap mt-3 flex-shrink-0 min-h-[22px]">
                       {item.tags?.slice(0,3).map(tag => (
-                        <Link
-                          key={tag}
-                          href={`/news?q=${encodeURIComponent(tag)}`}
-                          className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full hover:bg-primary-100 hover:text-primary-900 transition-colors"
-                        >
+                        <span key={tag} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                           #{tag}
-                        </Link>
+                        </span>
                       ))}
                     </div>
                   </div>
