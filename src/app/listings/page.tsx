@@ -4,7 +4,7 @@ import BackButton from '@/components/ui/BackButton'
 import { getListings } from '@/lib/sheets'
 import { ListingCard } from '@/components/property/PropertyCard'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Properti Dijual & Disewa | Mansion Realty' }
 
 export default async function ListingsPage({ searchParams }: { searchParams: { type?: string; propertyType?: string } }) {

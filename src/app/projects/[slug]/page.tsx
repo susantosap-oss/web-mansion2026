@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import ImageGallery from '@/components/property/ImageGallery'
 import { getProjects, getAgents, formatPrice, computeAgentScore } from '@/lib/sheets'
 import { getScoreWeights } from '@/lib/serverSheets'
 import BackButton from '@/components/ui/BackButton'
@@ -48,14 +49,9 @@ export default async function ProjectDetailPage({ params }: Props) {
 
           {/* Kiri */}
           <div className="lg:col-span-2">
-            {/* Cover */}
-            <div className="rounded-2xl overflow-hidden h-72 md:h-96 bg-gray-100 mb-6 relative">
-              {project.coverImage ? (
-                <Image src={project.coverImage} alt={project.name} fill className="object-cover" priority sizes="66vw"/>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-6xl bg-primary-50">🏗</div>
-              )}
-              <div className="absolute top-4 left-4 flex gap-2">
+            {/* Gallery — semua foto bisa diklik/diperbesar */}
+            <div className="relative mb-2">
+              <div className="absolute top-4 left-4 flex gap-2 z-10">
                 <span className="badge bg-primary-900 text-white">{project.type}</span>
                 <span className={`badge ${
                   project.status === 'Aktif'
@@ -65,18 +61,8 @@ export default async function ProjectDetailPage({ params }: Props) {
                   {project.status}
                 </span>
               </div>
+              <ImageGallery images={project.images.length ? project.images : (project.coverImage ? [project.coverImage] : [])} title={project.name} />
             </div>
-
-            {/* Sub gallery */}
-            {project.images && project.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2 mb-6">
-                {project.images.slice(1, 5).map((img, i) => (
-                  <div key={i} className="relative h-20 rounded-lg overflow-hidden bg-gray-100">
-                    <Image src={img} alt={`foto ${i+2}`} fill className="object-cover hover:scale-105 transition-transform"/>
-                  </div>
-                ))}
-              </div>
-            )}
 
             <h1 className="text-2xl md:text-3xl font-bold text-primary-900 mb-2">{project.name}</h1>
             {project.location && (

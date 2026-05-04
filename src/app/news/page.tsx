@@ -89,42 +89,13 @@ export default async function NewsPage({ searchParams }: Props) {
           </div>
         ) : (
           <>
-            {/* Featured — artikel pertama */}
-            {!isFiltered && news[0] && (
-              <Link href={`/news/${news[0].slug}`} className="block mb-10 group">
-                <div className="grid md:grid-cols-2 gap-0 bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-all duration-300">
-                  <div className="relative h-64 md:h-auto bg-primary-100">
-                    {news[0].coverImage ? (
-                      <Image src={news[0].coverImage} alt={news[0].title} fill className="object-cover group-hover:scale-105 transition-transform duration-500"/>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-6xl">📰</div>
-                    )}
-                    <span className="absolute top-4 left-4 badge bg-primary-900 text-white">
-                      {news[0].category}
-                    </span>
-                  </div>
-                  <div className="p-6 md:p-8 flex flex-col justify-center">
-                    <span className="text-xs text-gray-500 mb-3">{formatDate(news[0].publishedAt)}</span>
-                    <h2 className="text-xl md:text-2xl font-bold text-primary-900 mb-3 group-hover:text-gold transition-colors leading-tight">
-                      {news[0].title}
-                    </h2>
-                    <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
-                      {news[0].summary || news[0].content?.slice(0,150)}
-                    </p>
-                    <span className="text-primary-900 font-semibold text-sm group-hover:text-gold transition-colors">
-                      Baca Selengkapnya →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            )}
-
             {/* Grid artikel */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(isFiltered ? news : news.slice(1)).map(item => (
+              {news.map(item => (
                 <Link key={item.slug} href={`/news/${item.slug}`}
-                  className="card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 group">
-                  <div className="relative h-48 overflow-hidden bg-primary-50">
+                  className="card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 group flex flex-col h-[380px] overflow-hidden">
+                  {/* Gambar — tinggi tetap */}
+                  <div className="relative h-48 flex-shrink-0 overflow-hidden bg-primary-50">
                     {item.coverImage ? (
                       <Image src={item.coverImage} alt={item.title} fill className="object-cover group-hover:scale-105 transition-transform duration-500"/>
                     ) : (
@@ -134,28 +105,27 @@ export default async function NewsPage({ searchParams }: Props) {
                       {item.category}
                     </span>
                   </div>
-                  <div className="p-5">
-                    <p className="text-xs text-gray-600 mb-2">{formatDate(item.publishedAt)}</p>
-                    <h3 className="font-bold text-primary-900 mb-2 line-clamp-2 leading-tight group-hover:text-gold transition-colors">
+                  {/* Konten */}
+                  <div className="p-5 flex flex-col flex-1 overflow-hidden">
+                    <p className="text-xs text-gray-500 mb-2 flex-shrink-0">{formatDate(item.publishedAt)}</p>
+                    <h3 className="font-bold text-primary-900 mb-2 line-clamp-2 leading-tight group-hover:text-gold transition-colors flex-shrink-0">
                       {item.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 leading-relaxed">
-                      {item.summary || item.content?.slice(0,100)}
+                    <p className="text-gray-500 text-sm line-clamp-3 leading-relaxed flex-1 overflow-hidden">
+                      {item.summary || item.content?.replace(/<[^>]+>/g,'').slice(0,120)}
                     </p>
-                    {item.tags?.length > 0 && (
-                      <div className="flex gap-1 flex-wrap mt-3">
-                        {item.tags.slice(0,3).map(tag => (
-                          <Link
-                            key={tag}
-                            href={`/news?q=${encodeURIComponent(tag)}`}
-                            onClick={e => e.stopPropagation()}
-                            className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full hover:bg-primary-100 hover:text-primary-900 transition-colors"
-                          >
-                            #{tag}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                    {/* Tags selalu di bawah */}
+                    <div className="flex gap-1 flex-wrap mt-3 flex-shrink-0 min-h-[22px]">
+                      {item.tags?.slice(0,3).map(tag => (
+                        <Link
+                          key={tag}
+                          href={`/news?q=${encodeURIComponent(tag)}`}
+                          className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full hover:bg-primary-100 hover:text-primary-900 transition-colors"
+                        >
+                          #{tag}
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </Link>
               ))}

@@ -132,7 +132,8 @@ function doGet(e) {
           e.parameter.Ringkasan || '',
           e.parameter.Konten    || '',
           e.parameter.foto_url  || '',
-          ts
+          ts,
+          e.parameter.Tags      || ''
         ])
         return resp({ success: true, message: 'Berita tersimpan!' })
 

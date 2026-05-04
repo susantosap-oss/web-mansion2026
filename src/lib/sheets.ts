@@ -163,7 +163,7 @@ function mapProject(row: SheetRow): Project {
     status:      (str(row['Status']) as Project['status']) || 'Aktif',
     description: str(row['Deskripsi']),
     coverImage:  str(row['Foto_1_URL']),
-    images:      [str(row['Foto_1_URL']), str(row['Foto_2_URL'])].filter(s => s.startsWith('http')),
+    images:      [str(row['Foto_1_URL']), str(row['Foto_2_URL']), str(row['Foto_3_URL']), str(row['Foto_4_URL'])].filter(s => s.startsWith('http')),
     specs:       {},
     facilities:  [],
     agentId:     koordId,
@@ -253,9 +253,9 @@ export async function getListings(filter?: {
   try {
     // Fetch listings, agents, dan listing_agents sekaligus
     const [rows, agents, listingAgentRows] = await Promise.all([
-      fetchFromGAS<SheetRow[]>('getListings', 300),
+      fetchFromGAS<SheetRow[]>('getListings', 60),
       fetchFromGAS<SheetRow[]>('getAgents', 600),
-      fetchFromGAS<SheetRow[]>('getListingAgents', 300).catch(() => [] as SheetRow[]),
+      fetchFromGAS<SheetRow[]>('getListingAgents', 60).catch(() => [] as SheetRow[]),
     ])
 
     // Buat map agen untuk lookup cepat
@@ -342,7 +342,7 @@ export async function getAgents(): Promise<Agent[]> {
   try {
     const [rows, listingRows] = await Promise.all([
       fetchFromGAS<SheetRow[]>('getAgents', 600),
-      fetchFromGAS<SheetRow[]>('getListings', 300).catch(() => [] as SheetRow[]),
+      fetchFromGAS<SheetRow[]>('getListings', 60).catch(() => [] as SheetRow[]),
     ])
 
     // Strip kolom sensitif — tidak boleh expose ke client

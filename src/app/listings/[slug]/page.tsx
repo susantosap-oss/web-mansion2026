@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { getListings, formatPrice } from '@/lib/sheets'
 import BackButton from '@/components/ui/BackButton'
 import FavButton from '@/components/ui/FavButton'
+import ImageGallery from '@/components/property/ImageGallery'
 import ListingDetailClient from './ListingDetailClient'
 
 export const dynamic = 'force-dynamic'
@@ -130,33 +131,18 @@ export default async function ListingDetailPage({ params }: Props) {
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               {/* Gallery */}
-              <div className="rounded-2xl overflow-hidden mb-6 bg-gray-100">
-                <div className="relative h-72 md:h-[460px]">
-                  {listing.coverImage ? (
-                    <Image src={listing.coverImage} alt={listing.title} fill className="object-cover" priority sizes="66vw"/>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl">🏠</div>
-                  )}
-                  <div className="absolute top-4 left-4 flex gap-2">
-                    <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>
-                      {listing.type === 'Sale' ? '🏷 Dijual' : '🔑 Disewa'}
-                    </span>
-                    <span className="badge bg-white/90 text-gray-700">{listing.propertyType}</span>
-                  </div>
-                  {/* Fav button — client component */}
-                  <div className="absolute top-4 right-4">
-                    <FavButton listingId={listing.id} />
-                  </div>
+              <div className="relative mb-6">
+                <ImageGallery images={images} title={listing.title} />
+                {/* Badge overlay — ditampilkan di atas gallery */}
+                <div className="absolute top-4 left-4 flex gap-2 z-10 pointer-events-none">
+                  <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>
+                    {listing.type === 'Sale' ? '🏷 Dijual' : '🔑 Disewa'}
+                  </span>
+                  <span className="badge bg-white/90 text-gray-700">{listing.propertyType}</span>
                 </div>
-                {listing.images && listing.images.length > 1 && (
-                  <div className="grid grid-cols-4 gap-1 mt-1">
-                    {listing.images.slice(1, 5).map((img: string, i: number) => (
-                      <div key={i} className="relative h-20 overflow-hidden bg-gray-200">
-                        <Image src={img} alt={`foto ${i+2}`} fill className="object-cover hover:scale-105 transition-transform"/>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="absolute top-4 right-4 z-10">
+                  <FavButton listingId={listing.id} />
+                </div>
               </div>
 
               {/* Judul & Harga */}

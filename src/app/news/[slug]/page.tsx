@@ -76,9 +76,10 @@ export default async function NewsDetailPage({ params }: Props) {
             )}
 
             {/* Konten */}
-            <div className="prose prose-gray max-w-none text-gray-600 leading-relaxed whitespace-pre-line text-sm md:text-base">
-              {item.content}
-            </div>
+            <div
+              className="prose prose-gray max-w-none text-gray-600 leading-relaxed text-sm md:text-base"
+              dangerouslySetInnerHTML={{ __html: item.content.replace(/\n/g, '<br/>') }}
+            />
 
             {/* Share */}
             <div className="mt-8 pt-6 border-t border-gray-100">

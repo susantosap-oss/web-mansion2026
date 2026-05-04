@@ -20,7 +20,7 @@ export default function AdminDashboardClient({ user }: Props) {
   const [mobileMenu, setMobileMenu] = useState(false)
 
   // Form states (Original GitHub)
-  const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
+  const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '', tags: '' })
   const [logoUrl, setLogoUrl]   = useState('')
 
   // Form konten web
@@ -172,6 +172,50 @@ export default function AdminDashboardClient({ user }: Props) {
     } finally { setSaving(false) }
   }
 
+  function handleKontenKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!e.ctrlKey) return
+    const shortcuts: Record<string, string> = {
+      b: '<b>',
+      i: '<i>',
+      u: '<u>',
+    }
+    const isList7 = e.shiftKey && e.key === '7'
+    const isList8 = e.shiftKey && e.key === '8'
+    const tag = !e.shiftKey ? shortcuts[e.key.toLowerCase()] : null
+
+    if (!tag && !isList7 && !isList8) return
+    e.preventDefault()
+
+    const ta    = e.currentTarget
+    const start = ta.selectionStart
+    const end   = ta.selectionEnd
+    const val   = newsForm.konten
+    const sel   = val.slice(start, end)
+
+    let newVal: string
+    let newCursor: number
+
+    if (isList7 || isList8) {
+      const lines = sel ? sel.split('\n') : ['']
+      const prefixed = lines.map((l, idx) =>
+        isList7 ? `${idx + 1}. ${l}` : `• ${l}`
+      ).join('\n')
+      newVal    = val.slice(0, start) + prefixed + val.slice(end)
+      newCursor = start + prefixed.length
+    } else {
+      const closeTag = tag!.replace('<', '</')
+      const wrapped  = sel ? `${tag}${sel}${closeTag}` : `${tag}${closeTag}`
+      newVal    = val.slice(0, start) + wrapped + val.slice(end)
+      newCursor = sel ? start + wrapped.length : start + tag!.length
+    }
+
+    setNewsForm(p => ({ ...p, konten: newVal }))
+    requestAnimationFrame(() => {
+      ta.setSelectionRange(newCursor, newCursor)
+      ta.focus()
+    })
+  }
+
   async function submitNews(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -185,12 +229,18 @@ export default function AdminDashboardClient({ user }: Props) {
           Ringkasan: newsForm.ringkasan,
           Konten:    newsForm.konten,
           foto_url:  newsForm.foto_url,
+          Tags:      newsForm.tags,
         }),
       })
       const json = await res.json()
       if (json.success) {
+        await fetch('/api/revalidate', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ secret: 'mansion2026', action: 'getNews' }),
+        }).catch(() => {})
         setSuccess('✅ Berita berhasil disimpan ke Google Sheet!')
-        setNewsForm({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '' })
+        setNewsForm({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '', tags: '' })
       } else {
         setSuccess('❌ Gagal: ' + (json.error || json.message || 'Unknown error'))
       }
@@ -339,12 +389,24 @@ export default function AdminDashboardClient({ user }: Props) {
                   </select>
                 </div>
                 <div>
+                  <label className="label-field">Tags</label>
+                  <input className="input-field" placeholder="properti, KPR, investasi" value={newsForm.tags} onChange={e => setNewsForm(p => ({...p, tags: e.target.value}))}/>
+                  <p className="text-xs text-gray-400 mt-1">Pisahkan dengan koma. Digunakan untuk filter & pencarian.</p>
+                </div>
+                <div>
                   <label className="label-field">Ringkasan (untuk preview)</label>
                   <textarea className="input-field h-20 resize-none" placeholder="Ringkasan singkat artikel..." value={newsForm.ringkasan} onChange={e => setNewsForm(p => ({...p, ringkasan: e.target.value}))}/>
                 </div>
                 <div>
                   <label className="label-field">Konten Lengkap *</label>
-                  <textarea className="input-field h-48 resize-none" placeholder="Tulis konten artikel di sini..." value={newsForm.konten} onChange={e => setNewsForm(p => ({...p, konten: e.target.value}))} required/>
+                  <div className="flex gap-2 mb-1 text-xs text-gray-400 flex-wrap">
+                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+B</span><span>Bold</span>
+                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+I</span><span>Italic</span>
+                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+U</span><span>Underline</span>
+                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+Shift+7</span><span>Numbered list</span>
+                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+Shift+8</span><span>Bullet list</span>
+                  </div>
+                  <textarea className="input-field h-48 resize-y font-mono text-sm" placeholder="Tulis konten artikel di sini..." value={newsForm.konten} onChange={e => setNewsForm(p => ({...p, konten: e.target.value}))} onKeyDown={handleKontenKeyDown} required/>
                 </div>
                 <div>
                   <label className="label-field">URL Foto Cover</label>

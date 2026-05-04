@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     url.searchParams.set('Ringkasan', body.Ringkasan || body.ringkasan || '')
     url.searchParams.set('Konten',    body.Konten    || body.konten    || '')
     url.searchParams.set('foto_url',  body.foto_url  || '')
+    url.searchParams.set('Tags',      body.Tags      || body.tags      || '')
 
     const res  = await fetch(url.toString(), {
       method:   'GET',
