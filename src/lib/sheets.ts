@@ -368,6 +368,7 @@ export async function getAgents(): Promise<Agent[]> {
     })
 
     return rows
+      .filter(row => str(row['Tampilkan_di_Web']).toUpperCase() !== 'FALSE')
       .map(row => {
         const agent = mapAgent(row)
         // Override dengan hitungan real dari LISTINGS (SSoT)
@@ -375,7 +376,7 @@ export async function getAgents(): Promise<Agent[]> {
         if (dealCountMap.has(agent.id))    agent.totalDeals    = dealCountMap.get(agent.id)!
         return agent
       })
-      .filter(a => a.role !== 'admin' && a.role !== 'superadmin')
+      .filter(a => a.role !== 'admin' && a.role !== 'superadmin' && a.role !== 'kantor')
   } catch (e) {
     console.error('[getAgents]', e)
     return []

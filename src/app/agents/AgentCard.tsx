@@ -88,11 +88,13 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
       {/* Photo + Info — klik masuk ke halaman profil agen */}
       <Link href={`/agents/${agentSlug}`} className="flex flex-col items-center text-center mb-4 group">
         <div className="w-20 h-20 rounded-full overflow-hidden bg-primary-100 flex items-center justify-center mb-3 border-4 border-white shadow-md group-hover:border-primary-200 transition-colors">
-          {agent.photo ? (
-            <Image src={agent.photo} alt={agent.name} width={80} height={80} className="object-cover w-full h-full"/>
-          ) : (
-            <span className="text-primary-900 font-bold text-2xl">{agent.name.charAt(0)}</span>
-          )}
+          <Image
+            src={agent.photo && agent.photo.trim() !== '' ? agent.photo : '/icons/icon-192x192.png'}
+            alt={agent.name}
+            width={80}
+            height={80}
+            className="object-cover w-full h-full"
+          />
         </div>
         <h3 className="font-bold text-primary-900 group-hover:text-primary-700 transition-colors">{agent.name}</h3>
         <p className="text-xs text-gray-400">{roleLabel(agent.role)} · {agent.city || 'Surabaya'}</p>
