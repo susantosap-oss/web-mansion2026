@@ -14,6 +14,17 @@ function formatDate(ts: string): string {
   catch { return ts }
 }
 
+// Konversi URL plain-text → <a> yang bisa diklik, tanpa double-link yang sudah ada
+function linkify(html: string): string {
+  return html.replace(
+    /(?<![='"\/])(\()?(https?:\/\/[^\s<>"')\]]+)(\))?/g,
+    (_match, open, url, close) => {
+      const wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary-700 underline hover:text-gold break-all">${url}</a>`
+      return (open || '') + wrapped + (close || '')
+    }
+  )
+}
+
 export default async function NewsDetailPage({ params }: Props) {
   const slug = decodeURIComponent(params.slug)
   const news = await getNews()
@@ -78,7 +89,7 @@ export default async function NewsDetailPage({ params }: Props) {
             {/* Konten */}
             <div
               className="prose prose-gray max-w-none text-gray-600 leading-relaxed text-sm md:text-base"
-              dangerouslySetInnerHTML={{ __html: item.content.replace(/\n/g, '<br/>') }}
+              dangerouslySetInnerHTML={{ __html: linkify(item.content.replace(/\n/g, '<br/>')) }}
             />
 
             {/* Share */}
