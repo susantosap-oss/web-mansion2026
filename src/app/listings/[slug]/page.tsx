@@ -97,6 +97,8 @@ export default async function ListingDetailPage({ params }: Props) {
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}?text=${encodeURIComponent(`Halo, saya tertarik dengan properti:\n*${listing.title}*\nHarga: ${formatPrice(listing.price)}\n\nBisa info lebih lanjut?`)}`
 
+  const images = listing.images?.length > 0 ? listing.images : (listing.coverImage ? [listing.coverImage] : [])
+
   const specs = [
     { icon:'📐', label:'Luas Tanah',    value: listing.luasTanah > 0    ? `${listing.luasTanah} m²`    : null },
     { icon:'🏗',  label:'Luas Bangunan', value: listing.luasBangunan > 0 ? `${listing.luasBangunan} m²` : null },
