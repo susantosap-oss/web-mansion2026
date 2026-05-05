@@ -12,7 +12,6 @@ const shuffleDaily = (arr: any[]) => {
   } 
   return arr; 
 };
-export const revalidate = 300
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
@@ -45,7 +44,7 @@ export default async function HomePage() {
               Temukan rumah, apartemen, kavling, dan properti komersial premium dengan bantuan agen berpengalaman Mansion Realty.
             </p>
             <div className="flex flex-wrap gap-4 mb-14">
-              <Link href="/listings" className="btn-gold px-8 py-4 text-base">🏠 Cari Properti</Link>
+              <Link href="/listings" className="btn-gold px-8 py-4 text-base"><span aria-hidden="true">🏠</span> Cari Properti Dijual &amp; Disewa</Link>
               <a href={`https://wa.me/${wa}?text=Halo%20Mansion%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary-900 transition-all text-base">
                 💬 Konsultasi Gratis
@@ -65,11 +64,11 @@ export default async function HomePage() {
         <div className="section-wrapper">
           <div className="flex items-end justify-between mb-10">
             <div><div className="divider-gold mb-3"/><h2 className="section-title">Proyek Baru</h2><p className="section-subtitle">Perumahan baru dari developer terpercaya</p></div>
-            <Link href="/projects" className="hidden md:inline-flex btn-outline text-sm">Lihat Semua →</Link>
+            <Link href="/projects" className="btn-outline text-sm">Lihat Semua Proyek →</Link>
           </div>
           {projects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.slice(0,6).map(p => <ProjectCard key={p.id} project={p}/>)}
+              {projects.slice(0,6).map((p, i) => <ProjectCard key={p.id} project={p} priority={i === 0}/>)}
             </div>
           ) : (
             <div className="text-center py-16 text-gray-400"><div className="text-5xl mb-4">🏗</div><p>Data proyek dari CRM Mansion akan tampil di sini.</p></div>
@@ -81,12 +80,12 @@ export default async function HomePage() {
       <section className="py-20 bg-gray-50">
         <div className="section-wrapper">
           <div className="flex items-end justify-between mb-10">
-            <div><div className="divider-gold mb-3"/><h2 className="section-title">Listing Properti [Jual/Sewa]</h2><p className="section-subtitle">Pilihan properti terbaik siap dihuni dan diinvestasikan</p></div>
-            <Link href="/listings" className="hidden md:inline-flex btn-outline text-sm">Lihat Semua →</Link>
+            <div><div className="divider-gold mb-3"/><h2 className="section-title"><Link href="/listings" className="hover:text-primary-700 transition-colors">Properti Dijual &amp; Disewa Surabaya</Link></h2><p className="section-subtitle">Pilihan properti terbaik siap dihuni dan diinvestasikan</p></div>
+            <Link href="/listings" className="btn-outline text-sm">Lihat Semua Listing →</Link>
           </div>
           {allListings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allListings.map(l => <ListingCard key={l.id} listing={l}/>)}
+              {allListings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0}/>)}
             </div>
           ) : (
             <div className="text-center py-16 text-gray-400"><div className="text-5xl mb-4">🏠</div><p>Data listing dari CRM Mansion akan tampil di sini.</p></div>

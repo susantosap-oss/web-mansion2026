@@ -96,7 +96,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
 }
 
 // ── Listing Card ───────────────────────────────────────────
-export function ListingCard({ listing, className = '' }: { listing: Listing; className?: string }) {
+export function ListingCard({ listing, className = '', priority = false }: { listing: Listing; className?: string; priority?: boolean }) {
   const wa = buildWALink(
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
@@ -105,7 +105,7 @@ export function ListingCard({ listing, className = '' }: { listing: Listing; cla
     <div className={`card group property-card ${className}`}>
       <div className="relative h-52 overflow-hidden">
         {listing.coverImage ? (
-          <Image src={listing.coverImage} alt={listing.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/>
+          <Image src={listing.coverImage} alt={listing.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw" priority={priority}/>
         ) : (
           <div className="w-full h-full bg-primary-100 flex items-center justify-center"><span className="text-4xl">🏠</span></div>
         )}
@@ -147,12 +147,12 @@ export function ListingCard({ listing, className = '' }: { listing: Listing; cla
 }
 
 // ── Project Card ───────────────────────────────────────────
-export function ProjectCard({ project, className = '' }: { project: Project; className?: string }) {
+export function ProjectCard({ project, className = '', priority = false }: { project: Project; className?: string; priority?: boolean }) {
   return (
     <div className={`card group property-card ${className}`}>
       <div className="relative h-52 overflow-hidden">
         {project.coverImage ? (
-          <Image src={project.coverImage} alt={project.name} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/>
+          <Image src={project.coverImage} alt={project.name} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw" priority={priority}/>
         ) : (
           <div className="w-full h-full bg-primary-900 flex items-center justify-center"><span className="text-4xl">🏗</span></div>
         )}
@@ -174,7 +174,7 @@ export function ProjectCard({ project, className = '' }: { project: Project; cla
           <p className="text-xs text-gray-700">Mulai dari</p>
           <p className="price-display text-lg">{formatPrice(project.priceMin)}</p>
         </div>
-        <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm">Lihat Detail Proyek</Link>
+        <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm" aria-label={`Lihat Detail Proyek ${project.name}`}>Lihat Detail Proyek</Link>
       </div>
     </div>
   )

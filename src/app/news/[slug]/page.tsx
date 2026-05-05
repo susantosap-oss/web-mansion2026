@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
+import { markdownToHtml } from '@/lib/markdownToHtml'
 import BackButton from '@/components/ui/BackButton'
 import RelatedProperties from '@/components/property/RelatedProperties'
 
@@ -14,16 +15,6 @@ function formatDate(ts: string): string {
   catch { return ts }
 }
 
-// Konversi URL plain-text → <a> yang bisa diklik, tanpa double-link yang sudah ada
-function linkify(html: string): string {
-  return html.replace(
-    /(?<![='"\/])(\()?(https?:\/\/[^\s<>"')\]]+)(\))?/g,
-    (_match, open, url, close) => {
-      const wrapped = `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary-700 underline hover:text-gold break-all">${url}</a>`
-      return (open || '') + wrapped + (close || '')
-    }
-  )
-}
 
 export default async function NewsDetailPage({ params }: Props) {
   const slug = decodeURIComponent(params.slug)
@@ -89,7 +80,7 @@ export default async function NewsDetailPage({ params }: Props) {
             {/* Konten */}
             <div
               className="prose prose-gray max-w-none text-gray-600 leading-relaxed text-sm md:text-base"
-              dangerouslySetInnerHTML={{ __html: linkify(item.content.replace(/\n/g, '<br/>')) }}
+              dangerouslySetInnerHTML={{ __html: markdownToHtml(item.content) }}
             />
 
             {/* Share */}

@@ -176,13 +176,37 @@ function doGet(e) {
 // ── ENTRY POINT POST (fallback, tidak dipakai utama) ──────
 function doPost(e) {
   try {
-    var body = {}
-    if (e.postData && e.postData.contents) {
-      try { body = JSON.parse(e.postData.contents) } catch(pe) {}
-    }
-    var secret = body.secret || e.parameter.secret || ''
+    // e.parameter mencakup URL query params + form-urlencoded body sekaligus
+    var secret = e.parameter.secret || ''
     if (secret !== API_SECRET) return resp({ success: false, error: 'Unauthorized' })
-    return resp({ success: false, error: 'Gunakan GET dengan action param' })
+
+    var action = e.parameter.action || ''
+
+    switch (action) {
+      case 'saveConfig':
+        var cfgKey   = e.parameter.key   || ''
+        var cfgValue = e.parameter.value || ''
+        if (!cfgKey) return resp({ success: false, error: 'key required' })
+        var ss2    = SpreadsheetApp.openById(SHEET_ID)
+        var cfgSht = ss2.getSheetByName(SHEETS.CONFIG)
+        if (!cfgSht) {
+          cfgSht = ss2.insertSheet(SHEETS.CONFIG)
+          cfgSht.getRange(1,1,1,3).setValues([['Key','Value','Updated_At']])
+        }
+        var cfgRows = cfgSht.getDataRange().getValues()
+        var now     = new Date()
+        for (var ri = 1; ri < cfgRows.length; ri++) {
+          if (String(cfgRows[ri][0]).trim() === cfgKey) {
+            cfgSht.getRange(ri+1, 2, 1, 2).setValues([[cfgValue, now]])
+            return resp({ success: true, message: 'Config updated' })
+          }
+        }
+        cfgSht.appendRow([cfgKey, cfgValue, now])
+        return resp({ success: true, message: 'Config created' })
+
+      default:
+        return resp({ success: false, error: 'Action tidak dikenal: ' + action })
+    }
   } catch(err) {
     return resp({ success: false, error: err.message })
   }

@@ -2,15 +2,17 @@
 import LogoBadge from '@/components/ui/LogoBadge'
 import LogoUpload from './LogoUpload'
 import KprSettings from './KprSettings'
-import { useState } from 'react'
+import CleanURLsManager from './CleanURLsManager'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthUser } from '@/lib/auth'
 import { DEFAULT_SCORE_WEIGHTS, AgentScoreWeights } from '@/types'
+import { markdownToHtml } from '@/lib/markdownToHtml'
 
 interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number } }
 
-type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring'
+type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring' | 'cleanurls'
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
@@ -18,6 +20,8 @@ export default function AdminDashboardClient({ user }: Props) {
   const [saving, setSaving]     = useState(false)
   const [success, setSuccess]   = useState('')
   const [mobileMenu, setMobileMenu] = useState(false)
+  const [kontenPreview, setKontenPreview] = useState(false)
+  const kontenRef = useRef<HTMLTextAreaElement>(null)
 
   // Form states (Original GitHub)
   const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '', tags: '' })
@@ -172,41 +176,33 @@ export default function AdminDashboardClient({ user }: Props) {
     } finally { setSaving(false) }
   }
 
-  function handleKontenKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (!e.ctrlKey) return
-    const shortcuts: Record<string, string> = {
-      b: '<b>',
-      i: '<i>',
-      u: '<u>',
-    }
-    const isList7 = e.shiftKey && e.key === '7'
-    const isList8 = e.shiftKey && e.key === '8'
-    const tag = !e.shiftKey ? shortcuts[e.key.toLowerCase()] : null
-
-    if (!tag && !isList7 && !isList8) return
-    e.preventDefault()
-
-    const ta    = e.currentTarget
+  function insertMarkdown(wrap: string, placeholder = '', isLine = false) {
+    const ta = kontenRef.current
+    if (!ta) return
     const start = ta.selectionStart
     const end   = ta.selectionEnd
     const val   = newsForm.konten
     const sel   = val.slice(start, end)
+    let newVal: string, newCursor: number
 
-    let newVal: string
-    let newCursor: number
-
-    if (isList7 || isList8) {
-      const lines = sel ? sel.split('\n') : ['']
-      const prefixed = lines.map((l, idx) =>
-        isList7 ? `${idx + 1}. ${l}` : `• ${l}`
-      ).join('\n')
+    if (isLine) {
+      // prefix setiap baris
+      const lines    = (sel || placeholder).split('\n')
+      const prefixed = lines.map((l, i) => wrap.replace('$n', String(i + 1)) + l).join('\n')
       newVal    = val.slice(0, start) + prefixed + val.slice(end)
       newCursor = start + prefixed.length
+    } else if (wrap === '[](url)') {
+      // link: [teks](url)
+      const text    = sel || placeholder
+      const snippet = `[${text}](url)`
+      newVal    = val.slice(0, start) + snippet + val.slice(end)
+      newCursor = start + text.length + 3   // posisi cursor di "url"
     } else {
-      const closeTag = tag!.replace('<', '</')
-      const wrapped  = sel ? `${tag}${sel}${closeTag}` : `${tag}${closeTag}`
+      // wrap kiri-kanan: **teks**
+      const text    = sel || placeholder
+      const wrapped = `${wrap}${text}${wrap}`
       newVal    = val.slice(0, start) + wrapped + val.slice(end)
-      newCursor = sel ? start + wrapped.length : start + tag!.length
+      newCursor = sel ? start + wrapped.length : start + wrap.length
     }
 
     setNewsForm(p => ({ ...p, konten: newVal }))
@@ -214,6 +210,22 @@ export default function AdminDashboardClient({ user }: Props) {
       ta.setSelectionRange(newCursor, newCursor)
       ta.focus()
     })
+  }
+
+  function handleKontenKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!e.ctrlKey) return
+    const isList7 = e.shiftKey && e.key === '7'
+    const isList8 = e.shiftKey && e.key === '8'
+    const key     = e.key.toLowerCase()
+
+    if (!['b','i','k'].includes(key) && !isList7 && !isList8) return
+    e.preventDefault()
+
+    if (key === 'b')  insertMarkdown('**', 'teks bold')
+    if (key === 'i')  insertMarkdown('*', 'teks italic')
+    if (key === 'k')  insertMarkdown('[](url)', 'teks link')
+    if (isList7)      insertMarkdown('$n. ', 'item', true)
+    if (isList8)      insertMarkdown('- ', 'item', true)
   }
 
   async function submitNews(e: React.FormEvent) {
@@ -254,10 +266,11 @@ export default function AdminDashboardClient({ user }: Props) {
     { id: 'overview' as Tab,  icon: '📊', label: 'Overview',        roles: ['admin','superadmin'] },
     { id: 'news'     as Tab,  icon: '📰', label: 'Input Berita',    roles: ['admin','superadmin'] },
     { id: 'content'  as Tab,  icon: '📝', label: 'Konten Web',      roles: ['superadmin'] },
-    { id: 'scoring'  as Tab,  icon: '🏆', label: 'Scoring Top Agen', roles: ['superadmin'] },
-    { id: 'logo'     as Tab,  icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
-    { id: 'kpr'      as Tab,  icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
-    { id: 'settings' as Tab,  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
+    { id: 'scoring'   as Tab, icon: '🏆', label: 'Scoring Top Agen', roles: ['superadmin'] },
+    { id: 'cleanurls' as Tab, icon: '🔗', label: 'Clean URL',        roles: ['superadmin'] },
+    { id: 'logo'      as Tab, icon: '🖼',  label: 'Ganti Logo',      roles: ['superadmin'] },
+    { id: 'kpr'       as Tab, icon: '🏦', label: 'Setting KPR',     roles: ['admin','superadmin'] },
+    { id: 'settings'  as Tab, icon: '⚙️', label: 'Pengaturan SEO',  roles: ['superadmin'] },
   ]).filter(m => m.roles.includes(user.role))
 
   return (
@@ -398,15 +411,59 @@ export default function AdminDashboardClient({ user }: Props) {
                   <textarea className="input-field h-20 resize-none" placeholder="Ringkasan singkat artikel..." value={newsForm.ringkasan} onChange={e => setNewsForm(p => ({...p, ringkasan: e.target.value}))}/>
                 </div>
                 <div>
-                  <label className="label-field">Konten Lengkap *</label>
-                  <div className="flex gap-2 mb-1 text-xs text-gray-400 flex-wrap">
-                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+B</span><span>Bold</span>
-                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+I</span><span>Italic</span>
-                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+U</span><span>Underline</span>
-                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+Shift+7</span><span>Numbered list</span>
-                    <span className="bg-gray-100 rounded px-1.5 py-0.5 font-mono">Ctrl+Shift+8</span><span>Bullet list</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label-field mb-0">Konten Lengkap *</label>
+                    <div className="flex gap-1">
+                      <button type="button" onClick={() => setKontenPreview(false)}
+                        className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${!kontenPreview ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                        ✏️ Tulis
+                      </button>
+                      <button type="button" onClick={() => setKontenPreview(true)}
+                        className={`px-3 py-1 text-xs rounded-lg font-medium transition-colors ${kontenPreview ? 'bg-primary-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                        👁 Preview
+                      </button>
+                    </div>
                   </div>
-                  <textarea className="input-field h-48 resize-y font-mono text-sm" placeholder="Tulis konten artikel di sini..." value={newsForm.konten} onChange={e => setNewsForm(p => ({...p, konten: e.target.value}))} onKeyDown={handleKontenKeyDown} required/>
+
+                  {/* Toolbar */}
+                  {!kontenPreview && (
+                    <div className="flex flex-wrap gap-1 mb-1 p-2 bg-gray-50 rounded-t-xl border border-b-0 border-gray-200">
+                      {[
+                        { label: 'B',       title: 'Bold (Ctrl+B)',           action: () => insertMarkdown('**', 'teks bold'),        cls: 'font-bold' },
+                        { label: 'I',       title: 'Italic (Ctrl+I)',          action: () => insertMarkdown('*', 'teks italic'),        cls: 'italic' },
+                        { label: 'H2',      title: 'Heading 2',                action: () => insertMarkdown('## ', 'Judul', true),      cls: '' },
+                        { label: 'H3',      title: 'Heading 3',                action: () => insertMarkdown('### ', 'Sub-judul', true), cls: '' },
+                        { label: '🔗',      title: 'Link (Ctrl+K)',            action: () => insertMarkdown('[](url)', 'teks link'),    cls: '' },
+                        { label: '1.',      title: 'Numbered list (Ctrl+⇧+7)', action: () => insertMarkdown('$n. ', 'item', true),     cls: '' },
+                        { label: '•',       title: 'Bullet list (Ctrl+⇧+8)',   action: () => insertMarkdown('- ', 'item', true),       cls: '' },
+                        { label: '—',       title: 'Garis pemisah',            action: () => { const ta = kontenRef.current; if (!ta) return; const v = newsForm.konten; const s = ta.selectionStart; const ins = '\n---\n'; setNewsForm(p => ({...p, konten: v.slice(0,s)+ins+v.slice(s)})) }, cls: '' },
+                      ].map(btn => (
+                        <button key={btn.label} type="button" title={btn.title} onClick={btn.action}
+                          className={`px-2 py-0.5 text-xs border border-gray-200 rounded bg-white hover:bg-primary-50 hover:border-primary-300 transition-colors ${btn.cls}`}>
+                          {btn.label}
+                        </button>
+                      ))}
+                      <span className="text-xs text-gray-300 self-center ml-1">|</span>
+                      <span className="text-xs text-gray-400 self-center">[teks](url) · **bold** · *italic* · ## Judul</span>
+                    </div>
+                  )}
+
+                  {kontenPreview ? (
+                    <div
+                      className="input-field h-64 overflow-y-auto prose prose-gray max-w-none text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: markdownToHtml(newsForm.konten) || '<span class="text-gray-300">Belum ada konten</span>' }}
+                    />
+                  ) : (
+                    <textarea
+                      ref={kontenRef}
+                      className="input-field h-64 resize-y font-mono text-sm rounded-t-none border-t-0"
+                      placeholder={'Tulis konten di sini...\n\nContoh:\n## Judul Bagian\n\nParagraf biasa dengan **tebal** dan *miring*.\n\nLink: [klik di sini](https://contoh.com)\n\n- Poin satu\n- Poin dua'}
+                      value={newsForm.konten}
+                      onChange={e => setNewsForm(p => ({...p, konten: e.target.value}))}
+                      onKeyDown={handleKontenKeyDown}
+                      required
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="label-field">URL Foto Cover</label>
@@ -558,6 +615,9 @@ export default function AdminDashboardClient({ user }: Props) {
             </div>
           </div>
         )}
+
+        {/* ── CLEAN URLS ── */}
+        {tab === 'cleanurls' && user.role === 'superadmin' && <CleanURLsManager />}
 
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}

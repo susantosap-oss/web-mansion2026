@@ -69,6 +69,19 @@ export interface KPRResult {
 
 export interface SheetRow { [key: string]: string | number | boolean | null }
 
+export interface CleanURL {
+  id: string
+  slug: string
+  label: string
+  filterType?: 'Sale' | 'Rent'
+  propertyType?: string
+  city?: string
+  title: string
+  description: string
+  h1: string
+  active: boolean
+}
+
 export interface AgentScoreWeights {
   lsp:          number
   listing:      number
