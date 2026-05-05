@@ -419,9 +419,12 @@ function notifyRevalidate(action) {
   } catch (e) { Logger.log('[Revalidate] Error: ' + e.message) }
 }
 
+// onEdit fires on EVERY cell edit — correct trigger for new listing entries from CRM
 function onSheetChange(e) {
   var sheetName = ''
-  try { sheetName = e.source.getActiveSheet().getName() } catch (_) {}
+  try { sheetName = e.range.getSheet().getName() } catch (_) {
+    try { sheetName = e.source.getActiveSheet().getName() } catch (_) {}
+  }
   var action = 'all'
   if      (sheetName === SHEETS.LISTINGS || sheetName === SHEETS.LISTING_AGENTS) action = 'getListings'
   else if (sheetName === SHEETS.PROJECTS) action = 'getProjects'
@@ -430,14 +433,17 @@ function onSheetChange(e) {
   notifyRevalidate(action)
 }
 
-// Jalankan SEKALI dari GAS editor: Run → createChangeTrigger
+// Jalankan SEKALI dari GAS editor: Run → createEditTrigger
+// PENTING: pakai onEdit() bukan onChange() — onChange hanya fire saat struktur sheet berubah,
+// bukan saat isi sel diedit (= input listing baru dari CRM)
 function createChangeTrigger() {
   var ss = SpreadsheetApp.openById(SHEET_ID)
+  // Hapus semua trigger lama (onChange maupun onEdit) untuk handler ini
   ScriptApp.getProjectTriggers().forEach(function(t) {
     if (t.getHandlerFunction() === 'onSheetChange') ScriptApp.deleteTrigger(t)
   })
-  ScriptApp.newTrigger('onSheetChange').forSpreadsheet(ss).onChange().create()
-  Logger.log('✅ Trigger onChange → onSheetChange berhasil dipasang')
+  ScriptApp.newTrigger('onSheetChange').forSpreadsheet(ss).onEdit().create()
+  Logger.log('✅ Trigger onEdit → onSheetChange berhasil dipasang')
 }
 
 // ── TEST (jalankan manual di GAS editor) ─────────────────

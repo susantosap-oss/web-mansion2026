@@ -19,7 +19,7 @@ async function fetchFromGAS<T>(action: string, ttl = 300): Promise<T> {
   url.searchParams.set('action', action)
   url.searchParams.set('secret', GAS_SECRET)
 
-  const res = await fetch(url.toString(), { next: { revalidate: ttl } })
+  const res = await fetch(url.toString(), { next: { revalidate: ttl, tags: [`gas:${action}`] } })
   if (!res.ok) throw new Error(`GAS error: ${res.status}`)
 
   const json = await res.json()
