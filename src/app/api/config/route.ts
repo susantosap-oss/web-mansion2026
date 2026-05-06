@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { unstable_cache } from 'next/cache'
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { google } from 'googleapis'
+import { readConfigRows } from '@/lib/serverConfig'
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID || ''
 
@@ -19,23 +20,12 @@ function getSheetsClient() {
   return google.sheets({ version: 'v4', auth: auth as any })
 }
 
-async function readConfigRows(): Promise<string[][]> {
-  if (!SHEET_ID) return []
-  const sheets = getSheetsClient()
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error('Sheets timeout')), 8000)
-  )
-  const res = await Promise.race([
-    sheets.spreadsheets.values.get({ spreadsheetId: SHEET_ID, range: 'CONFIG' }),
-    timeout,
-  ])
-  return (res.data.values || []) as string[][]
-}
+const CONFIG_CACHE_TAG = 'config-sheet-rows'
 
 const getCachedConfigRows = unstable_cache(
   readConfigRows,
-  ['config-sheet-rows'],
-  { revalidate: 300 }
+  [CONFIG_CACHE_TAG],
+  { revalidate: 300, tags: [CONFIG_CACHE_TAG] }
 )
 
 export async function GET(request: Request) {
@@ -44,18 +34,18 @@ export async function GET(request: Request) {
   if (!key) return NextResponse.json({ success: false, error: 'key required' })
 
   try {
-    const rows = await getCachedConfigRows()
-    const row  = rows.find(r => r[0] === key)
+    const rows  = await getCachedConfigRows()
+    const row   = rows.find(r => r[0] === key)
     const value = row ? (row[1] ?? null) : null
     return NextResponse.json(
       { success: true, value },
-      { headers: { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=600' } }
+      { headers: { 'Cache-Control': 'no-store' } }
     )
   } catch (e: any) {
     console.error('[config GET]', e.message)
     return NextResponse.json(
       { success: true, value: null, source: 'error' },
-      { headers: { 'Cache-Control': 'public, max-age=60' } }
+      { headers: { 'Cache-Control': 'no-store' } }
     )
   }
 }
@@ -66,12 +56,15 @@ const GAS_SECRET = process.env.GAS_API_SECRET || ''
 async function saveViaGAS(key: string, value: string): Promise<boolean> {
   if (!GAS_URL) return false
   try {
-    const url = new URL(GAS_URL)
-    url.searchParams.set('action', 'saveConfig')
-    url.searchParams.set('secret', GAS_SECRET)
-    url.searchParams.set('key',    key)
-    url.searchParams.set('value',  value)
-    const res  = await fetch(url.toString(), { cache: 'no-store', signal: AbortSignal.timeout(8000) })
+    // POST body untuk menghindari batas panjang URL (JSON bisa panjang)
+    const body = new URLSearchParams({ action: 'saveConfig', secret: GAS_SECRET, key, value })
+    const res  = await fetch(GAS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    body.toString(),
+      cache:   'no-store',
+      signal:  AbortSignal.timeout(10000),
+    })
     const json = await res.json()
     return json.success === true
   } catch { return false }
@@ -109,17 +102,22 @@ export async function POST(request: Request) {
           requestBody: { values: [[key, strValue]] },
         })
       }
+      revalidateTag(CONFIG_CACHE_TAG)
       return NextResponse.json({ success: true, gasSaved: true, message: '✅ Tersimpan ke Google Sheet!' })
     } catch (e: any) {
       console.warn('[config POST] Sheets API write failed, fallback ke GAS:', e.message)
     }
   }
 
-  // ── Fallback: GAS saveConfig (untuk nilai pendek, maks ~1500 chars) ──
-  if (strValue.length <= 1500) {
-    const ok = await saveViaGAS(key, strValue)
-    if (ok) return NextResponse.json({ success: true, gasSaved: true, message: '✅ Tersimpan via GAS!' })
+  // ── Fallback: GAS saveConfig via POST (tidak ada batas panjang) ──
+  const ok = await saveViaGAS(key, strValue)
+  if (ok) {
+    revalidateTag(CONFIG_CACHE_TAG)
+    return NextResponse.json({ success: true, gasSaved: true, message: '✅ Tersimpan via GAS!' })
   }
 
-  return NextResponse.json({ success: false, error: 'Gagal menyimpan: akun tidak punya akses Editor ke sheet. Bagikan sheet ke 177351947478-compute@developer.gserviceaccount.com sebagai Editor.' }, { status: 500 })
+  return NextResponse.json({
+    success: false,
+    error: 'Gagal menyimpan. Pastikan sheet dibagikan ke 177351947478-compute@developer.gserviceaccount.com sebagai Editor, atau cek GAS API.',
+  }, { status: 500 })
 }

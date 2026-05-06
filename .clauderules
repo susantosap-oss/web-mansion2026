@@ -1,0 +1,9 @@
+# Terminal Execution & Timeout Rules
+- Selalu gunakan timeout maksimal **60 detik** untuk setiap perintah terminal (build, deploy, install) kecuali saya instruksikan sebaliknya.
+- Jika perintah memakan waktu lebih dari 1 menit, hentikan proses dan laporkan error-nya.
+- Utamakan penggunaan flag `--quiet` atau `-y` agar proses tidak tertahan oleh prompt interaktif yang bisa memicu timeout.
+- Untuk perintah `gcloud deploy` atau `npm build`, segera berikan ringkasan jika proses memakan waktu lebih dari 20 detik.
+# Cloud Run Deployment Rules
+- Setiap kali melakukan deploy ke Google Cloud Run, gunakan flag `--timeout=2m`.
+- Pastikan konfigurasi gcloud disetel ke `request_manager/timeout 120` sebelum eksekusi.
+- Jangan menunggu log stream jika proses sudah mencapai status "Ready".

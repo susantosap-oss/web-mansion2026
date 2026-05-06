@@ -33,7 +33,7 @@ export default function Footer() {
             </div>
           </div>
           {[
-            { title: 'Properti', links: [['Proyek Baru','/projects'],['Rumah Dijual','/listings?type=Sale'],['Apartemen','/listings?type=Sale&propertyType=Apartemen'],['Disewa','/listings?type=Rent'],['Kavling','/listings?propertyType=Kavling'], ['Gudang','/listings?propertyType=Gudang']] },
+            { title: 'Properti', links: [['Semua Listing','/listings'],['Proyek Baru','/projects'],['Rumah Dijual','/listings?type=Sale'],['Apartemen','/listings?type=Sale&propertyType=Apartemen'],['Disewa','/listings?type=Rent'],['Kavling','/listings?propertyType=Kavling'],['Gudang','/listings?propertyType=Gudang']] },
             { title: 'Layanan',  links: [['KPR & Pembiayaan','/calculator'],['Titip Listing','/listings/titip'],['Daftar Agen','/agents'],['Berita Properti','/news'],['Tentang Kami','/about']] },
             { title: 'Lainnya', links: [['Karir','/career'],['Kebijakan Privasi','/privacy'],['Syarat & Ketentuan','/terms'],['Hubungi Kami','/contact']] },
           ].map(col => (

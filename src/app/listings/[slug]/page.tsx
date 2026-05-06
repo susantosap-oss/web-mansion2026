@@ -3,6 +3,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getListings, formatPrice } from '@/lib/sheets'
+import { findCleanURL } from '@/lib/cleanUrls'
+import { ListingCard } from '@/components/property/PropertyCard'
 import BackButton from '@/components/ui/BackButton'
 import FavButton from '@/components/ui/FavButton'
 import ImageGallery from '@/components/property/ImageGallery'
@@ -10,10 +12,24 @@ import ListingDetailClient from './ListingDetailClient'
 
 export const dynamic = 'force-dynamic'
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
 interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug     = decodeURIComponent(params.slug)
+
+  // Clean URL check
+  const cleanURL = await findCleanURL(slug)
+  if (cleanURL) {
+    return {
+      title:       cleanURL.title,
+      description: cleanURL.description,
+      alternates:  { canonical: `${BASE}/listings/${slug}` },
+      openGraph:   { title: cleanURL.title, description: cleanURL.description, url: `${BASE}/listings/${slug}`, type: 'website' },
+    }
+  }
+
   const listings = await getListings()
   const listing  = listings.find(l => l.slug === slug || l.id === slug)
   if (!listing) return { title: 'Listing Tidak Ditemukan' }
@@ -90,9 +106,85 @@ function RealEstateSchema({ listing }: { listing: any }) {
 }
 
 export default async function ListingDetailPage({ params }: Props) {
-  const slug     = decodeURIComponent(params.slug)
-  const listings = await getListings()
-  const listing  = listings.find(l => l.slug === slug || l.id === slug)
+  const slug = decodeURIComponent(params.slug)
+
+  // ── Clean URL category page ────────────────────────────
+  const cleanURL = await findCleanURL(slug)
+  if (cleanURL) {
+    const listings = await getListings({
+      type:         cleanURL.filterType,
+      propertyType: cleanURL.propertyType,
+      city:         cleanURL.city,
+    })
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type':    'ItemList',
+      name:        cleanURL.h1,
+      numberOfItems: listings.length,
+      url:         `${BASE}/listings/${slug}`,
+      itemListElement: listings.slice(0, 20).map((l, i) => ({
+        '@type':   'ListItem',
+        position:  i + 1,
+        item: {
+          '@type':     'RealEstateListing',
+          name:        l.title,
+          url:         `${BASE}/listings/${l.slug}`,
+          image:       l.coverImage || undefined,
+          offers: { '@type': 'Offer', priceCurrency: 'IDR', price: l.price },
+          address: { '@type': 'PostalAddress', addressLocality: l.city, addressCountry: 'ID' },
+        },
+      })),
+    }
+
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type':    'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda', item: BASE },
+        { '@type': 'ListItem', position: 2, name: 'Listing', item: `${BASE}/listings` },
+        { '@type': 'ListItem', position: 3, name: cleanURL.label, item: `${BASE}/listings/${slug}` },
+      ],
+    }
+
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}/>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}/>
+        <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
+          <div className="section-wrapper">
+            <nav className="text-sm text-gray-400 mb-6 flex items-center gap-2">
+              <Link href="/" className="hover:text-primary-900">Beranda</Link>
+              <span>/</span>
+              <Link href="/listings" className="hover:text-primary-900">Listing</Link>
+              <span>/</span>
+              <span className="text-primary-900 font-medium">{cleanURL.label}</span>
+            </nav>
+            <div className="mb-8">
+              <div className="divider-gold mb-3"/>
+              <h1 className="section-title">{cleanURL.h1}</h1>
+              <p className="text-gray-500 mt-2">{listings.length} properti ditemukan</p>
+            </div>
+            {listings.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0}/>)}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <div className="text-5xl mb-4">🔍</div>
+                <p>Belum ada listing untuk kategori ini.</p>
+                <Link href="/listings" className="btn-primary mt-6">Lihat Semua Listing</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Listing detail (existing) ──────────────────────────
+  const allListings = await getListings()
+  const listing  = allListings.find(l => l.slug === slug || l.id === slug)
   if (!listing) notFound()
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}?text=${encodeURIComponent(`Halo, saya tertarik dengan properti:\n*${listing.title}*\nHarga: ${formatPrice(listing.price)}\n\nBisa info lebih lanjut?`)}`
