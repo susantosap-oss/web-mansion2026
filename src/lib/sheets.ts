@@ -190,6 +190,7 @@ function mapAgent(row: SheetRow): Agent {
     areas:          [],
     totalListings:  num(row['Listing_Count'] || row['Total_Listing'] || row['listing_count'] || 0),
     totalDeals:     num(row['Deal_Count'] || row['Total_Deal'] || row['deal_count'] || 0),
+    konversiRate:   num(row['Konversi_Rate'] || row['konversi_rate'] || 0),
     rating:         5,
     verified:       str(row['Status']).toLowerCase() === 'active' || str(row['Status']).toLowerCase() === 'aktif',
     joinDate:       str(row['Join_Date'] || row['Created_At']),

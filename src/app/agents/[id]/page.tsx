@@ -67,7 +67,7 @@ export default async function AgentProfilePage({ params }: Props) {
   const agentUrl  = `${siteUrl}/agents/${agent.id}`
   const waKantor  = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '628219880889'}?text=${encodeURIComponent(`Halo, saya ingin terhubung dengan agen ${agent.name}.`)}`
   const score     = computeAgentScore(agent, weights)
-  const convRate  = agent.totalListings > 0 ? ((agent.totalDeals / agent.totalListings) * 100).toFixed(0) : '0'
+  const convRate  = String(agent.konversiRate ?? 0)
 
   const PersonSchema = {
     '@context':  'https://schema.org',

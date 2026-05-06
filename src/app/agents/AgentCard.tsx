@@ -30,9 +30,7 @@ export default function AgentCard({ agent, idx, sort, waKantor }: Props) {
   const [sending,  setSending]  = useState(false)
   const [sent,     setSent]     = useState(false)
 
-  const convRate = agent.totalListings > 0
-    ? ((agent.totalDeals / agent.totalListings) * 100).toFixed(0)
-    : '0'
+  const convRate = String(agent.konversiRate ?? 0)
 
   const buildWaLink = () => {
     const num = (agent.whatsapp || agent.phone || '').replace(/\D/g, '')

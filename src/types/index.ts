@@ -31,7 +31,7 @@ export interface Agent {
   id: string; name: string; photo: string; phone: string
   email: string; whatsapp: string; bio: string
   specialization: string[]; areas: string[]
-  totalListings: number; totalDeals: number; rating: number
+  totalListings: number; totalDeals: number; konversiRate: number; rating: number
   verified: boolean; joinDate: string; instagram?: string; linkedin?: string
   // Sertifikasi & identitas profesional (Prioritas 1)
   nomerLsp?: string; sertifikasi?: string; nomerCra?: string
