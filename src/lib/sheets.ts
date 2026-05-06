@@ -352,28 +352,23 @@ export async function getAgents(): Promise<Agent[]> {
       delete row['Telegram_ID']
     })
 
-    // Hitung listing & deal dari LISTINGS sheet (SSoT dari GSheet)
+    // Hitung listing count dari LISTINGS sheet
     const listingCountMap = new Map<string, number>()
-    const dealCountMap    = new Map<string, number>()
     listingRows.forEach(l => {
       const agentId = str(l['Agen_ID'])
       if (!agentId || agentId.startsWith('[')) return
       const tampil = l['Tampilkan_di_Web']
       if (tampil === false || String(tampil).toUpperCase() === 'FALSE') return
       listingCountMap.set(agentId, (listingCountMap.get(agentId) || 0) + 1)
-      const status = str(l['Status_Listing']).toLowerCase()
-      if (status === 'terjual' || status === 'disewa' || status === 'sold' || status === 'deal') {
-        dealCountMap.set(agentId, (dealCountMap.get(agentId) || 0) + 1)
-      }
     })
 
+    // Deal_Count dibaca langsung dari AGENTS sheet (di-update oleh CRM saat closing)
     return rows
       .filter(row => str(row['Tampilkan_di_Web']).toUpperCase() !== 'FALSE')
       .map(row => {
         const agent = mapAgent(row)
-        // Override dengan hitungan real dari LISTINGS (SSoT)
         if (listingCountMap.has(agent.id)) agent.totalListings = listingCountMap.get(agent.id)!
-        if (dealCountMap.has(agent.id))    agent.totalDeals    = dealCountMap.get(agent.id)!
+        // totalDeals sudah dibaca dari Deal_Count di mapAgent — tidak perlu override
         return agent
       })
       .filter(a => a.role !== 'admin' && a.role !== 'superadmin' && a.role !== 'kantor')
