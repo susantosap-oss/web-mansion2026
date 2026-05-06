@@ -62,16 +62,34 @@ export default function AdminDashboardClient({ user }: Props) {
   const [trendsData,    setTrendsData]    = useState<TrendResult[]>([])
   const [trendsLoading, setTrendsLoading] = useState(false)
   const [trendsSource,  setTrendsSource]  = useState('')
-  const [trendKwTab,    setTrendKwTab]    = useState<'Rumah' | 'Ruko'>('Rumah')
+  const [trendKwTab,    setTrendKwTab]    = useState('')
   const [copiedQuery,   setCopiedQuery]   = useState('')
+  const [trendsGeo,     setTrendsGeo]     = useState('ID-JI')
+  const [trendsKws,     setTrendsKws]     = useState('Rumah, Ruko')
+
+  const GEO_OPTIONS = [
+    { code: 'ID-JI', label: 'Jawa Timur'      },
+    { code: 'ID-JK', label: 'Jakarta'          },
+    { code: 'ID-JB', label: 'Jawa Barat'       },
+    { code: 'ID-JT', label: 'Jawa Tengah'      },
+    { code: 'ID-BA', label: 'Bali'             },
+    { code: 'ID-SU', label: 'Sumatera Utara'   },
+    { code: 'ID-SS', label: 'Sumatera Selatan' },
+    { code: 'ID-SN', label: 'Sulawesi Selatan' },
+    { code: 'ID-KS', label: 'Kalimantan Selatan'},
+    { code: 'ID',    label: 'Seluruh Indonesia' },
+  ]
 
   async function loadTrends() {
     setTrendsLoading(true)
+    setTrendsData([])
     try {
-      const res  = await fetch('/api/trends')
+      const kws  = encodeURIComponent(trendsKws.split(',').map(k => k.trim()).filter(Boolean).join(','))
+      const res  = await fetch(`/api/trends?geo=${trendsGeo}&keywords=${kws}`)
       const json = await res.json()
       setTrendsData(json.data ?? [])
       setTrendsSource(json.source === 'google' ? '🌐 Live Google Trends' : '📋 Data Kurasi')
+      setTrendKwTab(json.data?.[0]?.keyword ?? '')
     } catch { setTrendsSource('⚠️ Gagal memuat') }
     finally  { setTrendsLoading(false) }
   }
@@ -653,40 +671,64 @@ export default function AdminDashboardClient({ user }: Props) {
         {tab === 'trends' && user.role === 'superadmin' && (
           <div>
             <h1 className="section-title mb-2">📈 Google Trends Properti</h1>
-            <p className="text-sm text-gray-500 mb-6">
-              Related Queries untuk <strong>Rumah</strong> &amp; <strong>Ruko</strong> — Lokasi: <span className="text-indigo-600 font-semibold">Jawa Timur</span>.
-              Gunakan sebagai referensi saat mengisi slug Clean URL Manager.
+            <p className="text-sm text-gray-500 mb-5">
+              Related Queries dari Google Trends. Gunakan sebagai referensi saat mengisi slug Clean URL Manager.
             </p>
 
-            {/* Tombol Cek Trend */}
-            {!trendsData.length && (
+            {/* Input Lokasi & Keyword */}
+            <div className="card p-4 mb-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="label-field">Lokasi / Provinsi</label>
+                  <select
+                    className="input-field"
+                    value={trendsGeo}
+                    onChange={e => setTrendsGeo(e.target.value)}
+                  >
+                    {GEO_OPTIONS.map(g => (
+                      <option key={g.code} value={g.code}>{g.label} ({g.code})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label-field">Keywords <span className="text-gray-400 font-normal">(pisah koma, maks 5)</span></label>
+                  <input
+                    className="input-field"
+                    placeholder="Rumah, Ruko, Apartemen..."
+                    value={trendsKws}
+                    onChange={e => setTrendsKws(e.target.value)}
+                  />
+                </div>
+              </div>
               <button
                 onClick={loadTrends}
                 disabled={trendsLoading}
-                className="btn-primary mb-6 disabled:opacity-50 flex items-center gap-2"
+                className="btn-primary disabled:opacity-50 flex items-center gap-2 w-full sm:w-auto justify-center"
               >
-                {trendsLoading ? '⏳ Mengambil data...' : '🔍 Cek Google Trends Sekarang'}
+                {trendsLoading ? '⏳ Mengambil data...' : '🔍 Cek Google Trends'}
               </button>
-            )}
+            </div>
 
             {trendsData.length > 0 && (
               <div className="space-y-5">
                 {/* Header bar */}
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div className="flex gap-2">
-                    {(['Rumah', 'Ruko'] as const).map(kw => (
-                      <button key={kw}
-                        onClick={() => setTrendKwTab(kw)}
+                  <div className="flex gap-2 flex-wrap">
+                    {trendsData.map(r => (
+                      <button key={r.keyword}
+                        onClick={() => setTrendKwTab(r.keyword)}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                          trendKwTab === kw
+                          trendKwTab === r.keyword
                             ? 'bg-indigo-600 text-white'
                             : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                         }`}
-                      >{kw}</button>
+                      >{r.keyword}</button>
                     ))}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400">{trendsSource} · ID-JI</span>
+                    <span className="text-xs text-gray-400">
+                      {trendsSource} · {GEO_OPTIONS.find(g => g.code === trendsGeo)?.label ?? trendsGeo}
+                    </span>
                     <button onClick={loadTrends} disabled={trendsLoading}
                       className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40">
                       {trendsLoading ? '⏳' : '🔄 Refresh'}
@@ -695,7 +737,7 @@ export default function AdminDashboardClient({ user }: Props) {
                 </div>
 
                 {/* Data panel */}
-                {trendsData.filter(r => r.keyword === trendKwTab).map(result => (
+                {trendsData.filter(r => r.keyword === (trendKwTab || trendsData[0]?.keyword)).map(result => (
                   <div key={result.keyword} className="grid md:grid-cols-2 gap-4">
 
                     {/* Top Queries */}

@@ -1,8 +1,5 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
-
-const GEO     = 'ID-JI'           // Jawa Timur
-const KEYWORDS = ['Rumah', 'Ruko']
 
 const CURATED: Record<string, { top: TrendItem[]; rising: TrendItem[] }> = {
   Rumah: {
@@ -52,12 +49,12 @@ export interface TrendResult {
   rising:  TrendItem[]
 }
 
-async function fetchRelatedQueries(keyword: string): Promise<{ top: TrendItem[]; rising: TrendItem[] }> {
+async function fetchRelatedQueries(keyword: string, geo: string): Promise<{ top: TrendItem[]; rising: TrendItem[] }> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const googleTrends = require('google-trends-api')
   const raw = await googleTrends.relatedQueries({
     keyword,
-    geo: GEO,
+    geo,
     startTime: new Date(Date.now() - 90 * 24 * 3600 * 1000),
   })
   const parsed = JSON.parse(raw)
@@ -71,24 +68,30 @@ async function fetchRelatedQueries(keyword: string): Promise<{ top: TrendItem[];
   return { top: map(topRanked), rising: map(risingRanked) }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getSession()
   if (!session || session.role !== 'superadmin') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const { searchParams } = req.nextUrl
+  const geo      = searchParams.get('geo')      || 'ID-JI'
+  const kwParam  = searchParams.get('keywords') || 'Rumah,Ruko'
+  const keywords = kwParam.split(',').map(k => k.trim()).filter(Boolean).slice(0, 5)
+
   const results: TrendResult[] = []
   let source = 'google'
 
-  for (const kw of KEYWORDS) {
+  for (const kw of keywords) {
     try {
-      const data = await fetchRelatedQueries(kw)
+      const data = await fetchRelatedQueries(kw, geo)
       results.push({ keyword: kw, ...data })
     } catch {
-      results.push({ keyword: kw, ...CURATED[kw] })
+      const fallback = CURATED[kw]
+      results.push({ keyword: kw, ...(fallback ?? { top: [], rising: [] }) })
       source = 'curated'
     }
   }
 
-  return NextResponse.json({ success: true, data: results, source, geo: 'Jawa Timur' })
+  return NextResponse.json({ success: true, data: results, source, geo })
 }
