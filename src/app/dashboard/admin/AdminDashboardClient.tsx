@@ -10,7 +10,7 @@ import { DEFAULT_SCORE_WEIGHTS, AgentScoreWeights } from '@/types'
 
 interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number } }
 
-type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring'
+type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring' | 'trends'
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
@@ -50,6 +50,32 @@ export default function AdminDashboardClient({ user }: Props) {
       setContentForm(updated)
       setContentLoaded(true)
     } finally { setContentLoading(false) }
+  }
+
+  // Google Trends state
+  type TrendItem  = { query: string; value: number }
+  type TrendResult = { keyword: string; top: TrendItem[]; rising: TrendItem[] }
+  const [trendsData,    setTrendsData]    = useState<TrendResult[]>([])
+  const [trendsLoading, setTrendsLoading] = useState(false)
+  const [trendsSource,  setTrendsSource]  = useState('')
+  const [trendKwTab,    setTrendKwTab]    = useState<'Rumah' | 'Ruko'>('Rumah')
+  const [copiedQuery,   setCopiedQuery]   = useState('')
+
+  async function loadTrends() {
+    setTrendsLoading(true)
+    try {
+      const res  = await fetch('/api/trends')
+      const json = await res.json()
+      setTrendsData(json.data ?? [])
+      setTrendsSource(json.source === 'google' ? '🌐 Live Google Trends' : '📋 Data Kurasi')
+    } catch { setTrendsSource('⚠️ Gagal memuat') }
+    finally  { setTrendsLoading(false) }
+  }
+
+  function copyQuery(q: string) {
+    navigator.clipboard.writeText(q).catch(() => {})
+    setCopiedQuery(q)
+    setTimeout(() => setCopiedQuery(''), 2000)
   }
 
   // SEO form state
@@ -258,6 +284,7 @@ export default function AdminDashboardClient({ user }: Props) {
     { id: 'logo'     as Tab,  icon: '🖼',  label: 'Ganti Logo',     roles: ['superadmin'] },
     { id: 'kpr'      as Tab,  icon: '🏦', label: 'Setting KPR',    roles: ['admin','superadmin'] },
     { id: 'settings' as Tab,  icon: '⚙️', label: 'Pengaturan SEO', roles: ['superadmin'] },
+    { id: 'trends'   as Tab,  icon: '📈', label: 'Google Trends',  roles: ['superadmin'] },
   ]).filter(m => m.roles.includes(user.role))
 
   return (
@@ -561,6 +588,129 @@ export default function AdminDashboardClient({ user }: Props) {
 
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}
+
+        {/* ── GOOGLE TRENDS ── */}
+        {tab === 'trends' && user.role === 'superadmin' && (
+          <div>
+            <h1 className="section-title mb-2">📈 Google Trends Properti</h1>
+            <p className="text-sm text-gray-500 mb-6">
+              Related Queries untuk <strong>Rumah</strong> &amp; <strong>Ruko</strong> — Lokasi: <span className="text-indigo-600 font-semibold">Jawa Timur</span>.
+              Gunakan sebagai referensi saat mengisi slug Clean URL Manager.
+            </p>
+
+            {/* Tombol Cek Trend */}
+            {!trendsData.length && (
+              <button
+                onClick={loadTrends}
+                disabled={trendsLoading}
+                className="btn-primary mb-6 disabled:opacity-50 flex items-center gap-2"
+              >
+                {trendsLoading ? '⏳ Mengambil data...' : '🔍 Cek Google Trends Sekarang'}
+              </button>
+            )}
+
+            {trendsData.length > 0 && (
+              <div className="space-y-5">
+                {/* Header bar */}
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex gap-2">
+                    {(['Rumah', 'Ruko'] as const).map(kw => (
+                      <button key={kw}
+                        onClick={() => setTrendKwTab(kw)}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                          trendKwTab === kw
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >{kw}</button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400">{trendsSource} · ID-JI</span>
+                    <button onClick={loadTrends} disabled={trendsLoading}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40">
+                      {trendsLoading ? '⏳' : '🔄 Refresh'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Data panel */}
+                {trendsData.filter(r => r.keyword === trendKwTab).map(result => (
+                  <div key={result.keyword} className="grid md:grid-cols-2 gap-4">
+
+                    {/* Top Queries */}
+                    <div className="card p-5">
+                      <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                        Top Queries
+                        <span className="text-xs text-gray-400 font-normal ml-auto">stabil &amp; volume tinggi</span>
+                      </h3>
+                      <div className="space-y-2.5">
+                        {result.top.map((item, i) => (
+                          <div key={i} className="group flex items-center gap-3">
+                            <span className="text-xs text-gray-400 w-4 text-right">{i+1}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm text-gray-700 truncate">{item.query}</span>
+                                <span className="text-xs text-gray-400 ml-2 shrink-0">{item.value}</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-400 rounded-full transition-all"
+                                  style={{ width: `${item.value}%` }} />
+                              </div>
+                            </div>
+                            <button onClick={() => copyQuery(item.query)}
+                              className="opacity-0 group-hover:opacity-100 shrink-0 text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all">
+                              {copiedQuery === item.query ? '✓' : 'Copy'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Rising Queries */}
+                    <div className="card p-5">
+                      <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                        Rising Queries
+                        <span className="text-xs text-gray-400 font-normal ml-auto">trending naik</span>
+                      </h3>
+                      <div className="space-y-2.5">
+                        {result.rising.map((item, i) => (
+                          <div key={i} className="group flex items-center gap-3">
+                            <span className="text-xs text-orange-400">↑</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm text-gray-700 truncate">{item.query}</span>
+                                <span className="text-xs text-emerald-500 ml-2 shrink-0 font-medium">
+                                  {item.value >= 5000 ? 'Breakout' : `+${item.value}%`}
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-400 rounded-full transition-all"
+                                  style={{ width: `${Math.min(item.value / (item.value >= 5000 ? 50 : 1), 100)}%` }} />
+                              </div>
+                            </div>
+                            <button onClick={() => copyQuery(item.query)}
+                              className="opacity-0 group-hover:opacity-100 shrink-0 text-xs px-2 py-1 rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all">
+                              {copiedQuery === item.query ? '✓' : 'Copy'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Hint */}
+                <div className="text-xs text-gray-400 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  💡 <strong>Cara pakai:</strong> Hover keyword → klik <em>Copy</em> → paste ke slug Clean URL Manager.
+                  Contoh: <code className="bg-gray-100 px-1 rounded">&quot;rumah dijual surabaya&quot;</code> → slug <code className="bg-gray-100 px-1 rounded">/listings/rumah-dijual-surabaya</code>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── SETTINGS SEO ── */}
         {tab === 'settings' && user.role === 'superadmin' && (
