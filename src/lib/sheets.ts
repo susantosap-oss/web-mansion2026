@@ -327,7 +327,24 @@ export async function getListingById(id: string): Promise<Listing | null> {
 export async function getProjects(): Promise<Project[]> {
   try {
     const rows = await fetchFromGAS<SheetRow[]>('getProjects', 300)
-    return rows.map(mapProject)
+    const all  = rows.map(mapProject)
+
+    // Deduplikasi: jika ada dua project dengan nama sama, ambil yang lebih lengkap
+    // (punya foto > tidak punya foto, atau yang terakhir dibuat)
+    const seen = new Map<string, Project>()
+    for (const p of all) {
+      const key = p.name.toLowerCase().trim()
+      const existing = seen.get(key)
+      if (!existing) {
+        seen.set(key, p)
+      } else {
+        // Ganti dengan yang lebih lengkap (punya coverImage lebih diutamakan)
+        const existingScore = (existing.coverImage ? 2 : 0) + (existing.description ? 1 : 0)
+        const newScore      = (p.coverImage       ? 2 : 0) + (p.description       ? 1 : 0)
+        if (newScore > existingScore) seen.set(key, p)
+      }
+    }
+    return Array.from(seen.values())
   } catch (e) {
     console.error('[getProjects]', e)
     return []

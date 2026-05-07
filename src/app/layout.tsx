@@ -62,6 +62,38 @@ export const metadata: Metadata = {
   },
 }
 
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'RealEstateAgent',
+  name: 'Mansion Properti',
+  alternateName: ['Mansion Realty', 'Mansion Pro', 'Mansionpro'],
+  url: 'https://www.mansionpro.id',
+  logo: 'https://www.mansionpro.id/icons/icon-512x512.png',
+  image: 'https://www.mansionpro.id/icons/icon-512x512.png',
+  description: 'Agen properti terpercaya di Surabaya & Jawa Timur. Spesialis jual beli dan sewa rumah, apartemen, ruko, kavling, dan proyek perumahan baru.',
+  telephone: '+62-31-5116-0260',
+  email: 'info@mansionpro.id',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Surabaya',
+    addressLocality: 'Surabaya',
+    addressRegion: 'Jawa Timur',
+    postalCode: '60000',
+    addressCountry: 'ID',
+  },
+  areaServed: [
+    { '@type': 'City', name: 'Surabaya' },
+    { '@type': 'City', name: 'Sidoarjo' },
+    { '@type': 'City', name: 'Gresik' },
+    { '@type': 'City', name: 'Malang' },
+  ],
+  sameAs: [
+    'https://www.instagram.com/mansion.citraland',
+    'https://www.tiktok.com/@mansionpro.id',
+  ],
+  knowsAbout: ['Properti', 'Real Estate', 'KPR', 'Rumah', 'Apartemen', 'Ruko', 'Kavling', 'Perumahan Baru'],
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="id" className={poppins.variable}>
@@ -71,6 +103,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
         <meta name="format-detection" content="telephone=no"/>
         <link rel="apple-touch-icon" href="/icons/icon-152x152.png"/>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
         <ChunkErrorHandler />
