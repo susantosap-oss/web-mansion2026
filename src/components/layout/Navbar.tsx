@@ -106,18 +106,17 @@ export default function Navbar() {
             if (link.dropdown) {
               const isOpen = openDropdown === link.href
               return (
-                <div key={link.href} className="relative">
-                  <button
-                    onClick={() => setOpenDropdown(isOpen ? null : link.href)}
-                    className={`flex items-center gap-1 text-sm font-semibold transition-colors bg-transparent border-0 p-0 m-0 leading-5 cursor-pointer ${isActive || isOpen ? 'text-gold' : 'text-white/80 hover:text-white'}`}>
-                    {link.label}
-                    <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
+                <button
+                  key={link.href}
+                  onClick={() => setOpenDropdown(isOpen ? null : link.href)}
+                  className={`relative flex items-center gap-1 text-sm font-semibold transition-colors bg-transparent border-0 p-0 m-0 leading-5 cursor-pointer ${isActive || isOpen ? 'text-gold' : 'text-white/80 hover:text-white'}`}>
+                  {link.label}
+                  <svg className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                  </svg>
                   {isOpen && <DropdownMenu items={link.dropdown} />}
-                </div>
+                </button>
               )
             }
             return (
