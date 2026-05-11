@@ -247,7 +247,7 @@ export default async function DaftarHargaPage() {
               className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-xl transition-colors">
               💬 Tanya via WhatsApp
             </a>
-            <Link href="/agents/agen-properti-surabaya"
+            <Link href="/agents"
               className="inline-flex items-center justify-center gap-2 bg-white text-primary-900 font-semibold px-6 py-3 rounded-xl hover:bg-primary-50 transition-colors">
               👤 Temui Agen Kami
             </Link>
