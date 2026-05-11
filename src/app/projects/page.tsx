@@ -92,6 +92,16 @@ export default async function ProjectsPage() {
               <p>Data proyek dari CRM Mansion akan tampil di sini.</p>
             </div>
           )}
+
+          {/* Daftar Harga Banner */}
+          <div className="mt-12 flex justify-center">
+            <Link href="/daftar-harga"
+              className="inline-flex items-center gap-3 bg-primary-900 text-white px-8 py-4 rounded-2xl font-semibold text-sm hover:bg-primary-800 transition-colors shadow-lg">
+              <span className="text-gold text-lg">📋</span>
+              DAFTAR HARGA PROPERTI MANSION
+              <span className="text-gold">→</span>
+            </Link>
+          </div>
         </div>
       </div>
     </>
