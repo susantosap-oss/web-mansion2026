@@ -13,10 +13,11 @@ function gscUrl(pathPrefix: string, slug: string): string {
 
 // ── Konstanta ─────────────────────────────────────────────
 const PATH_PREFIXES: { value: CleanURL['pathPrefix']; label: string; icon: string; desc: string }[] = [
-  { value: 'listings', icon: '🏠', label: 'Listings',  desc: '/listings/{slug}' },
-  { value: 'projects', icon: '🏗️', label: 'Projects',  desc: '/projects/{slug}' },
-  { value: 'agents',   icon: '👤', label: 'Agents',    desc: '/agents/{slug}'   },
-  { value: 'news',     icon: '📰', label: 'News',      desc: '/news/{slug}'     },
+  { value: 'listings',     icon: '🏠', label: 'Listings',     desc: '/listings/{slug}'     },
+  { value: 'projects',     icon: '🏗️', label: 'Projects',     desc: '/projects/{slug}'     },
+  { value: 'agents',       icon: '👤', label: 'Agents',       desc: '/agents/{slug}'       },
+  { value: 'news',         icon: '📰', label: 'News',         desc: '/news/{slug}'         },
+  { value: 'daftar-harga', icon: '📋', label: 'Daftar Harga', desc: '/daftar-harga/{slug}' },
 ]
 
 const PROPERTY_TYPES = ['Rumah', 'Apartemen', 'Ruko', 'Kavling', 'Gudang', 'Gedung']
@@ -93,6 +94,16 @@ function buildAutoSEO(prefix: CleanURL['pathPrefix'], form: Omit<FormState, 'pat
       const title = `${cat} Terkini — Informasi Properti | Mansion Realty`
       const desc  = `Baca artikel & berita ${cat.toLowerCase()} terkini dari Mansion Realty. Tips, analisis pasar, dan panduan properti untuk pembeli & investor.`
       return { slug, label, h1: `${cat} — Berita & Artikel Terbaru`, title, description: desc }
+    }
+
+    case 'daftar-harga': {
+      const prop  = form.propertyType || 'Properti'
+      const slug  = `harga-${toSlug(prop)}-${locSlug}`
+      const label = `Daftar Harga ${prop} ${locText}`
+      const h1    = `Daftar Harga ${prop} ${locText} — Update 2026`
+      const title = `Daftar Harga ${prop} ${locText} — Harga Terbaru 2026 | Mansion Realty`
+      const desc  = `Lihat daftar harga ${prop.toLowerCase()} ${locText} terbaru 2026. Estimasi harga jual & sewa, cicilan KPR, dan info proyek Mansion Realty. Konsultasi gratis.`
+      return { slug, label, h1, title, description: desc }
     }
   }
 }
