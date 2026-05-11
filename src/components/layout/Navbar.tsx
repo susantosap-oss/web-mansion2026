@@ -109,8 +109,8 @@ export default function Navbar() {
                 <button
                   key={link.href}
                   onClick={() => setOpenDropdown(isOpen ? null : link.href)}
-                  style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', lineHeight: 'inherit', position: 'relative', verticalAlign: 'baseline' }}
-                  className={`text-sm font-semibold transition-colors ${isActive || isOpen ? 'text-gold' : 'text-white/80 hover:text-white'}`}>
+                  style={{ background: 'none', border: 'none', padding: 0, margin: 0, cursor: 'pointer', position: 'relative' }}
+                  className={`text-sm font-semibold leading-5 transition-colors ${isActive || isOpen ? 'text-gold' : 'text-white/80 hover:text-white'}`}>
                   {link.label} {isOpen ? '▴' : '▾'}
                   {isOpen && <DropdownMenu items={link.dropdown} />}
                 </button>
