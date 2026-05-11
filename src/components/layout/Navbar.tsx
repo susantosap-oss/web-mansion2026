@@ -106,7 +106,7 @@ export default function Navbar() {
             if (link.dropdown) {
               const isOpen = openDropdown === link.href
               return (
-                <div key={link.href} className="relative">
+                <div key={link.href} className="relative flex items-center">
                   <button
                     onClick={() => setOpenDropdown(isOpen ? null : link.href)}
                     className={`flex items-center gap-1 text-sm font-semibold transition-colors ${isActive || isOpen ? 'text-gold' : 'text-white/80 hover:text-white'}`}>
