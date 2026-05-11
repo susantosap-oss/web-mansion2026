@@ -141,10 +141,10 @@ export default async function DaftarHargaPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600">{p.type}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{p.developer || '—'}</td>
-                      <td className="px-4 py-3 text-right font-bold text-primary-900">
+                      <td className="px-4 py-3 text-right text-xs font-semibold text-primary-900 whitespace-nowrap">
                         {formatPrice(p.priceMin)}
                         {p.priceMax > p.priceMin && (
-                          <span className="text-xs font-normal text-gray-400 block">
+                          <span className="font-normal text-gray-400 block">
                             s/d {formatPrice(p.priceMax)}
                           </span>
                         )}
@@ -174,7 +174,6 @@ export default async function DaftarHargaPage() {
                     <th className="text-left px-4 py-3 rounded-tl-xl font-semibold">Nama Properti</th>
                     <th className="text-left px-4 py-3 font-semibold">Tipe</th>
                     <th className="text-left px-4 py-3 font-semibold">Lokasi</th>
-                    <th className="text-left px-4 py-3 font-semibold">Dimensi</th>
                     <th className="text-right px-4 py-3 rounded-tr-xl font-semibold">Harga</th>
                   </tr>
                 </thead>
@@ -189,17 +188,11 @@ export default async function DaftarHargaPage() {
                           {l.title}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{l.propertyType}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{l.propertyType}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">
                         {[l.location, l.city].filter(Boolean).join(', ') || '—'}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {l.luasTanah > 0 ? `LT ${l.luasTanah}m²` : ''}
-                        {l.luasTanah > 0 && l.luasBangunan > 0 ? ' / ' : ''}
-                        {l.luasBangunan > 0 ? `LB ${l.luasBangunan}m²` : ''}
-                        {!l.luasTanah && !l.luasBangunan ? '—' : ''}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-primary-900">
+                      <td className="px-4 py-3 text-right font-semibold text-primary-900 text-xs whitespace-nowrap">
                         {formatPrice(l.price)}
                       </td>
                     </tr>
