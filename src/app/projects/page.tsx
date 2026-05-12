@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getProjects } from '@/lib/sheets'
-import { ProjectCard } from '@/components/property/PropertyCard'
+import ProjectsClient from './ProjectsClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,16 +82,7 @@ export default async function ProjectsPage() {
             <p className="text-gray-400 mt-2">{projects.length} proyek aktif dari developer terpercaya</p>
           </div>
 
-          {projects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((p, i) => <ProjectCard key={p.id} project={p} priority={i === 0}/>)}
-            </div>
-          ) : (
-            <div className="text-center py-20 text-gray-400">
-              <div className="text-6xl mb-4">🏗</div>
-              <p>Data proyek dari CRM Mansion akan tampil di sini.</p>
-            </div>
-          )}
+          <ProjectsClient projects={projects} />
 
           {/* Daftar Harga Banner */}
           <div className="mt-12 flex justify-center">

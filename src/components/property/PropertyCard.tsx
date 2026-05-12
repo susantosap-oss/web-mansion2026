@@ -165,7 +165,9 @@ export function ProjectCard({ project, className = '', priority = false }: { pro
         </div>
       </div>
       <div className="p-4">
-        <p className="text-xs text-gray-600 mb-1">📍 {project.location}, {project.city}</p>
+        {(project.location || project.city) && (
+          <p className="text-xs text-gray-600 mb-1">📍 {[project.location, project.city].filter(Boolean).join(', ')}</p>
+        )}
         <Link href={`/projects/${project.slug}`}>
           <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors leading-snug mb-2">{project.name}</h3>
         </Link>

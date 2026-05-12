@@ -154,8 +154,8 @@ function mapProject(row: SheetRow): Project {
     slug:        makeSlug(nama, id),
     name:        nama,
     developer:   str(row['Nama_Developer']),
-    location:    '',
-    city:        '',
+    location:    str(row['Kecamatan']),
+    city:        str(row['Kota']),
     province:    '',
     priceMin:    num(row['Harga_Mulai']),
     priceMax:    num(row['Harga_Mulai']),
@@ -329,20 +329,10 @@ export async function getProjects(): Promise<Project[]> {
     const rows = await fetchFromGAS<SheetRow[]>('getProjects', 300)
     const all  = rows.map(mapProject)
 
-    // Deduplikasi: jika ada dua project dengan nama sama, ambil yang lebih lengkap
-    // (punya foto > tidak punya foto, atau yang terakhir dibuat)
+    // Deduplikasi hanya by ID (bukan nama) — proyek berbeda boleh punya nama mirip
     const seen = new Map<string, Project>()
     for (const p of all) {
-      const key = p.name.toLowerCase().trim()
-      const existing = seen.get(key)
-      if (!existing) {
-        seen.set(key, p)
-      } else {
-        // Ganti dengan yang lebih lengkap (punya coverImage lebih diutamakan)
-        const existingScore = (existing.coverImage ? 2 : 0) + (existing.description ? 1 : 0)
-        const newScore      = (p.coverImage       ? 2 : 0) + (p.description       ? 1 : 0)
-        if (newScore > existingScore) seen.set(key, p)
-      }
+      if (p.id && !seen.has(p.id)) seen.set(p.id, p)
     }
     return Array.from(seen.values())
   } catch (e) {

@@ -65,7 +65,7 @@ export default async function ProjectDetailPage({ params }: Props) {
             </div>
 
             <h1 className="text-2xl md:text-3xl font-bold text-primary-900 mb-2">{project.name}</h1>
-            {project.location && (
+            {(project.location || project.city) && (
               <p className="text-gray-400 flex items-center gap-1 mb-2">
                 📍 {[project.location, project.city, project.province].filter(Boolean).join(', ')}
               </p>
