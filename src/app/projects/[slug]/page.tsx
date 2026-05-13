@@ -21,13 +21,30 @@ export default async function ProjectDetailPage({ params }: Props) {
     ? allAgents.find(a => a.id === project.agentId) ?? null
     : null
 
-  // Sisa slot: agen verified lain, sorted by score
-  const restAgents = allAgents
-    .filter(a => a.verified && a.id !== project.agentId)
+  // Sisa slot #2–10: tiered selection sama dengan Top Agen, exclude koordinator
+  const pool    = [...allAgents]
+    .filter(a => a.id !== project.agentId)
     .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
-    .slice(0, koordAgent ? 9 : 10)
+  const maxRest = koordAgent ? 9 : 10
+  const restSelected: typeof allAgents = []
+  const restSeen = new Set<string>()
+  const fillRest = (candidates: typeof allAgents) => {
+    for (const a of candidates) {
+      if (restSelected.length >= maxRest) break
+      if (!restSeen.has(a.id)) { restSelected.push(a); restSeen.add(a.id) }
+    }
+  }
+  fillRest(pool.filter(a => (a.konversiRate ?? 0) > 0))
+  fillRest(pool.filter(a => !!(a.nomerLsp || a.sertifikasi || a.nomerCra)))
+  fillRest(pool.filter(a => a.totalListings > 0))
+  fillRest(pool.filter(a => {
+    const r = (a.role || '').toLowerCase()
+    return r === 'principal' || r === 'koordinator' || r === 'coordinator' || r === 'koord'
+        || r === 'business_manager' || r === 'bm' || r === 'businessmanager'
+        || r === 'business manager' || r === 'manager'
+  }))
 
-  const agents = koordAgent ? [koordAgent, ...restAgents] : restAgents
+  const agents = koordAgent ? [koordAgent, ...restSelected] : restSelected
 
   const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'}`
 
