@@ -14,12 +14,31 @@ export default async function AgentsPage({ searchParams }: Props) {
   let   agents  = await getAgents()
   const weights = await getScoreWeights()
 
-  // Sort by multi-criteria score (7 prioritas)
+  // Top Agen — tiered selection, max 10
   if (sort === 'top') {
-    agents = [...agents]
-      .filter(a => a.verified)
-      .sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
-      .slice(0, 10) // top 10
+    const byScore = [...agents].sort((a, b) => computeAgentScore(b, weights) - computeAgentScore(a, weights))
+    const selected: typeof agents = []
+    const seen = new Set<string>()
+    const fill = (pool: typeof agents) => {
+      for (const a of pool) {
+        if (selected.length >= 10) break
+        if (!seen.has(a.id)) { selected.push(a); seen.add(a.id) }
+      }
+    }
+    // Tier 1: ada konversi (> 0%)
+    fill(byScore.filter(a => (a.konversiRate ?? 0) > 0))
+    // Tier 2: punya sertifikasi
+    fill(byScore.filter(a => !!(a.nomerLsp || a.sertifikasi || a.nomerCra)))
+    // Tier 3: punya listing
+    fill(byScore.filter(a => a.totalListings > 0))
+    // Tier 4: Principal / Koordinator / BM
+    fill(byScore.filter(a => {
+      const r = (a.role || '').toLowerCase()
+      return r === 'principal' || r === 'koordinator' || r === 'coordinator' || r === 'koord'
+          || r === 'business_manager' || r === 'bm' || r === 'businessmanager'
+          || r === 'business manager' || r === 'manager'
+    }))
+    agents = selected
   }
 
   // Agen tanpa foto profile selalu tampil di bawah
@@ -39,7 +58,7 @@ export default async function AgentsPage({ searchParams }: Props) {
           </h1>
           <p className="text-gray-400 mt-1">
             {sort === 'top'
-              ? 'Peringkat agen berdasarkan sertifikasi, listing, aktivitas CRM & leads'
+              ? 'Agen Terbaik berdasarkan Konversi, Sertifikasi, Listing dan Aktifitas'
               : `${agents.length} agen profesional siap membantu Anda`}
           </p>
         </div>
