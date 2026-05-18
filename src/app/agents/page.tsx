@@ -1,9 +1,25 @@
+import type { Metadata } from 'next'
 import { getAgents, computeAgentScore } from '@/lib/sheets'
 import { getScoreWeights } from '@/lib/serverSheets'
 import Link from 'next/link'
 import AgentCard from './AgentCard'
 
 export const dynamic = 'force-dynamic'
+
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
+export const metadata: Metadata = {
+  title: 'Tim Agen Properti Surabaya | Mansion Realty',
+  description: 'Temui agen properti profesional dan bersertifikat BNSP dari Mansion Realty Surabaya. Siap membantu jual, beli, dan sewa properti di Surabaya & Sidoarjo.',
+  alternates: { canonical: `${BASE}/agents` },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: 'Tim Agen Properti Surabaya | Mansion Realty',
+    description: 'Agen properti bersertifikat BNSP siap membantu Anda di Surabaya & Sidoarjo.',
+    url: `${BASE}/agents`,
+    type: 'website',
+  },
+}
 
 interface Props {
   searchParams: { sort?: string }
