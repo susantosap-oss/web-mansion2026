@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getProjects, getListings, getNews } from '@/lib/sheets'
 import { ProjectCard, ListingCard } from '@/components/property/PropertyCard'
 
@@ -142,7 +143,7 @@ export default async function HomePage() {
               {news.map(a => (
                 <Link key={a.id} href={`/news/${a.slug}`} className="card hover:shadow-card-hover transition-all duration-300">
                   <div className="relative h-48 overflow-hidden">
-                    {a.coverImage ? <img src={a.coverImage} alt={a.title} className="object-cover w-full h-full property-image"/> : <div className="w-full h-full bg-primary-100 flex items-center justify-center text-4xl">📰</div>}
+                    {a.coverImage ? <Image src={a.coverImage} alt={a.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/> : <div className="w-full h-full bg-primary-100 flex items-center justify-center text-4xl">📰</div>}
                     <span className="absolute top-3 left-3 badge bg-primary-900 text-white">{a.category}</span>
                   </div>
                   <div className="p-4">

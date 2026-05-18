@@ -49,7 +49,7 @@ export default function ImageGallery({ images, title }: Props) {
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-[1.01]"
             priority={activeIdx === 0}
-            sizes="66vw"
+            sizes="(max-width: 768px) 100vw, 66vw"
           />
           {/* Overlay hint */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
