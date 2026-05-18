@@ -1,3 +1,5 @@
+'use client'
+
 const WA_NUMBER = '6281703133252'
 const WA_TEXT   = 'Halo Mansion Properti, saya tertarik dengan informasi daftar harga/unit di website.'
 const WA_URL    = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_TEXT)}`
