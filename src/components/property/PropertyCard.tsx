@@ -168,7 +168,7 @@ export function ProjectCard({ project, className = '', priority = false }: { pro
         {(project.location || project.city) && (
           <p className="text-xs text-gray-600 mb-1">📍 {[project.location, project.city].filter(Boolean).join(', ')}</p>
         )}
-        <Link href={`/projects/${project.slug}`}>
+        <Link href={`/projects/${project.slug}`} aria-label={`${project.name}${project.location ? ` — ${project.location}` : ''}${project.city ? `, ${project.city}` : ''}`}>
           <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors leading-snug mb-2">{project.name}</h3>
         </Link>
         <p className="text-sm text-gray-600 line-clamp-2 mb-3">{project.description}</p>
