@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getProjects } from '@/lib/sheets'
 import ProjectsClient from './ProjectsClient'
+import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -95,6 +96,8 @@ export default async function ProjectsPage() {
           </div>
         </div>
       </div>
+
+      <WhatsAppButton />
     </>
   )
 }

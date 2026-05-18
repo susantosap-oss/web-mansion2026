@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getListings } from '@/lib/sheets'
 import { ListingCard } from '@/components/property/PropertyCard'
+import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,6 +138,8 @@ export default async function ListingsPage({
           </div>
         </div>
       </div>
+
+      <WhatsAppButton />
     </>
   )
 }

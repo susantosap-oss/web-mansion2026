@@ -2,6 +2,7 @@
 import BackButtonDynamic from '@/components/ui/BackButtonDynamic'
 import { useState, useCallback, useEffect } from 'react'
 import BackButton from '@/components/ui/BackButton'
+import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
 // ── LOGIKA KALKULASI ──────────────────────────────────────
 const CalculatorMansion = {
@@ -486,6 +487,8 @@ export default function CalculatorPage() {
           background:#0a2342; border:3px solid white; cursor:pointer;
         }
       `}</style>
+
+      <WhatsAppButton />
     </div>
   )
 }

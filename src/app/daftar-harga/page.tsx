@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getProjects, getListings, formatPrice } from '@/lib/sheets'
+import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -279,6 +280,8 @@ export default async function DaftarHargaPage() {
         </div>
 
       </div>
+
+      <WhatsAppButton />
     </div>
   )
 }
