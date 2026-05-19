@@ -13,11 +13,12 @@ function gscUrl(pathPrefix: string, slug: string): string {
 
 // ── Konstanta ─────────────────────────────────────────────
 const PATH_PREFIXES: { value: CleanURL['pathPrefix']; label: string; icon: string; desc: string }[] = [
-  { value: 'listings',     icon: '🏠', label: 'Listings',     desc: '/listings/{slug}'     },
-  { value: 'projects',     icon: '🏗️', label: 'Projects',     desc: '/projects/{slug}'     },
-  { value: 'agents',       icon: '👤', label: 'Agents',       desc: '/agents/{slug}'       },
-  { value: 'news',         icon: '📰', label: 'News',         desc: '/news/{slug}'         },
-  { value: 'daftar-harga', icon: '📋', label: 'Daftar Harga', desc: '/daftar-harga/{slug}' },
+  { value: 'listings',      icon: '🏠', label: 'Listings',      desc: '/listings/{slug}'      },
+  { value: 'projects',      icon: '🏗️', label: 'Projects',      desc: '/projects/{slug}'      },
+  { value: 'agents',        icon: '👤', label: 'Agents',        desc: '/agents/{slug}'        },
+  { value: 'news',          icon: '📰', label: 'News',          desc: '/news/{slug}'          },
+  { value: 'daftar-harga',  icon: '📋', label: 'Daftar Harga',  desc: '/daftar-harga/{slug}'  },
+  { value: 'titip-listing', icon: '📝', label: 'Titip Listing', desc: '/titip-listing/{slug}' },
 ]
 
 const PROPERTY_TYPES = ['Rumah', 'Apartemen', 'Ruko', 'Kavling', 'Gudang', 'Gedung']
@@ -103,6 +104,17 @@ function buildAutoSEO(prefix: CleanURL['pathPrefix'], form: Omit<FormState, 'pat
       const h1    = `Daftar Harga ${prop} ${locText} — Update 2026`
       const title = `Daftar Harga ${prop} ${locText} — Harga Terbaru 2026 | Mansion Realty`
       const desc  = `Lihat daftar harga ${prop.toLowerCase()} ${locText} terbaru 2026. Estimasi harga jual & sewa, cicilan KPR, dan info proyek Mansion Realty. Konsultasi gratis.`
+      return { slug, label, h1, title, description: desc }
+    }
+
+    case 'titip-listing': {
+      const prop    = form.propertyType || 'Properti'
+      const propLow = prop.toLowerCase()
+      const slug    = `titip-${toSlug(prop)}-${locSlug}`
+      const label   = `Titip Jual ${prop} ${locText}`
+      const h1      = `Jual atau Sewakan ${prop} Anda ${locText} Lebih Cepat`
+      const title   = `Titip Jual ${prop} ${locText} — Gratis, Cepat Laku | Mansion Properti`
+      const desc    = `Ingin jual atau sewakan ${propLow} ${locText}? Titip listing ke Mansion Properti — gratis biaya promosi, dipasarkan ke ribuan calon pembeli aktif, ditangani agen profesional bersertifikat BNSP.`
       return { slug, label, h1, title, description: desc }
     }
   }
@@ -238,7 +250,7 @@ export default function CleanURLsManager() {
   const preview     = autoSEO(form)
   const curPrefix   = PATH_PREFIXES.find(p => p.value === form.pathPrefix)!
   const liveSlug    = touched.slug ? form.slug : preview.slug
-  const showFilters = form.pathPrefix === 'listings' || form.pathPrefix === 'projects'
+  const showFilters = form.pathPrefix === 'listings' || form.pathPrefix === 'projects' || form.pathPrefix === 'titip-listing'
 
   // Group tabel per prefix
   const grouped = PATH_PREFIXES.map(p => ({
@@ -513,6 +525,7 @@ export default function CleanURLsManager() {
           <li>🏗️ <strong>/projects/</strong> — halaman proyek properti berdasarkan tipe + kota</li>
           <li>👤 <strong>/agents/</strong> — halaman agen properti per kota (contoh: <code className="bg-blue-100 px-1 rounded">agen-properti-surabaya</code>)</li>
           <li>📰 <strong>/news/</strong> — halaman kategori berita & artikel</li>
+          <li>📝 <strong>/titip-listing/</strong> — halaman titip jual per tipe & kota (contoh: <code className="bg-blue-100 px-1 rounded">titip-rumah-surabaya</code>)</li>
         </ul>
       </div>
 

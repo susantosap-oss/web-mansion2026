@@ -13,3 +13,8 @@ export async function findCleanURL(slug: string): Promise<CleanURL | null> {
   const all = await getCleanURLs()
   return all.find(c => c.slug === slug && c.active) ?? null
 }
+
+export async function findCleanURLByPrefix(prefix: CleanURL['pathPrefix'], slug: string): Promise<CleanURL | null> {
+  const all = await getCleanURLs()
+  return all.find(c => c.pathPrefix === prefix && c.slug === slug && c.active) ?? null
+}
