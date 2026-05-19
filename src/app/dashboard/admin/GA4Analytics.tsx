@@ -100,7 +100,7 @@ export default function GA4Analytics() {
             <p>2. Tambahkan service account sebagai <strong>Viewer</strong> di GA4 Property</p>
             <p>3. Download JSON key, lalu set env var:</p>
             <p className="bg-gray-50 p-2 rounded mt-1">GA4_PROPERTY_ID=<em>123456789</em></p>
-            <p className="bg-gray-50 p-2 rounded">GA4_SERVICE_ACCOUNT_JSON=<em>{'{"type":"service_account",...}'}</em></p>
+            <p className="bg-gray-50 p-2 rounded">GA4_SERVICE_ACCOUNT_B64=<em>eyJ0eXBlIjoic2VydmljZV9...</em></p>
             <p>4. Tambahkan di <strong>deploy.sh</strong> bagian <code>--set-env-vars</code></p>
           </div>
         </div>

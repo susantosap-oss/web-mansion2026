@@ -56,11 +56,14 @@ function rowsToMap(report: { rows?: Array<{ dimensionValues: Array<{ value: stri
 
 export async function GET() {
   const propertyId = process.env.GA4_PROPERTY_ID
-  const saJson     = process.env.GA4_SERVICE_ACCOUNT_JSON
+  const saB64      = process.env.GA4_SERVICE_ACCOUNT_B64
 
-  if (!propertyId || !saJson) {
-    return NextResponse.json({ configured: false, message: 'GA4 belum dikonfigurasi. Set GA4_PROPERTY_ID & GA4_SERVICE_ACCOUNT_JSON di env.' })
+  if (!propertyId || !saB64) {
+    return NextResponse.json({ configured: false, message: 'GA4 belum dikonfigurasi. Set GA4_PROPERTY_ID & GA4_SERVICE_ACCOUNT_B64 di env.' })
   }
+
+  // Decode base64 → JSON string (hindari masalah karakter spesial di env var)
+  const saJson = Buffer.from(saB64, 'base64').toString('utf-8')
 
   try {
     const token = await getAccessToken(saJson)
