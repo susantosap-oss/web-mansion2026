@@ -17,12 +17,17 @@ type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scor
 
 export default function AdminDashboardClient({ user }: Props) {
   const router = useRouter()
-  const [tab, setTab]           = useState<Tab>('overview')
-  const [saving, setSaving]     = useState(false)
-  const [success, setSuccess]   = useState('')
+  const [tab, setTab]               = useState<Tab>('overview')
+  const [saving, setSaving]         = useState(false)
+  const [success, setSuccess]       = useState('')
   const [mobileMenu, setMobileMenu] = useState(false)
   const [kontenPreview, setKontenPreview] = useState(false)
   const kontenRef = useRef<HTMLTextAreaElement>(null)
+
+  // Sidebar autohide state
+  const [sidebarPinned,  setSidebarPinned]  = useState(false)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
+  const sidebarVisible = sidebarPinned || sidebarHovered
 
   // Form states (Original GitHub)
   const [newsForm, setNewsForm] = useState({ judul: '', ringkasan: '', konten: '', kategori: 'Berita Properti', foto_url: '', tags: '' })
@@ -355,9 +360,30 @@ export default function AdminDashboardClient({ user }: Props) {
         </div>
       )}
 
-      {/* ── Sidebar desktop ─────────────────────────────────── */}
-      <div className="w-64 bg-primary-900 text-white flex flex-col fixed h-full z-40 hidden md:flex">
-        <div className="p-6 border-b border-white/10">
+      {/* ── Sidebar desktop: autohide overlay ───────────────── */}
+
+      {/* Hover-trigger strip — kiri layar, selalu ada */}
+      <div
+        className="hidden md:block fixed left-0 top-0 h-screen w-3 z-50"
+        onMouseEnter={() => setSidebarHovered(true)}
+      />
+
+      {/* Backdrop — muncul saat sidebar visible & tidak pinned */}
+      {sidebarVisible && !sidebarPinned && (
+        <div
+          className="hidden md:block fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+          onClick={() => setSidebarHovered(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`hidden md:flex w-64 bg-primary-900 text-white flex-col fixed top-0 left-0 h-screen z-50 transition-transform duration-300 ease-in-out shadow-2xl ${sidebarVisible ? 'translate-x-0' : '-translate-x-full'}`}
+        onMouseEnter={() => setSidebarHovered(true)}
+        onMouseLeave={() => { if (!sidebarPinned) setSidebarHovered(false) }}
+      >
+        {/* Header */}
+        <div className="p-5 border-b border-white/10 flex items-center justify-between flex-shrink-0">
           <Link href="/" className="flex items-center gap-3">
             <LogoBadge size="sm" dark={true} />
             <div>
@@ -365,11 +391,20 @@ export default function AdminDashboardClient({ user }: Props) {
               <div className="text-white/50 text-xs capitalize">{user.role}</div>
             </div>
           </Link>
+          {/* Pin button */}
+          <button
+            onClick={() => setSidebarPinned(v => !v)}
+            title={sidebarPinned ? 'Autohide sidebar' : 'Kunci sidebar'}
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-sm ${sidebarPinned ? 'bg-gold text-primary-900' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+          >
+            📌
+          </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Nav — scrollable */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map(item => (
-            <button key={item.id} onClick={() => setTab(item.id)}
+            <button key={item.id} onClick={() => { setTab(item.id); if (!sidebarPinned) setSidebarHovered(false) }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${tab === item.id ? 'bg-gold text-primary-900' : 'text-white/70 hover:text-white hover:bg-white/10'}`}>
               <span>{item.icon}</span>
               {item.label}
@@ -377,14 +412,15 @@ export default function AdminDashboardClient({ user }: Props) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        {/* User info + Logout — always visible at bottom */}
+        <div className="p-4 border-t border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold uppercase">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold uppercase flex-shrink-0">
               {user.name.charAt(0)}
             </div>
-            <div>
-              <p className="text-sm font-semibold">{user.name}</p>
-              <p className="text-xs text-white/40">{user.email}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold truncate">{user.name}</p>
+              <p className="text-xs text-white/40 truncate">{user.email}</p>
             </div>
           </div>
           <button onClick={handleLogout} className="w-full text-xs py-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors uppercase tracking-widest font-bold">
@@ -393,8 +429,20 @@ export default function AdminDashboardClient({ user }: Props) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="md:ml-64 flex-1 p-6 pt-20 md:pt-8">
+      {/* Sidebar peek tab — selalu terlihat di kiri agar user tahu ada sidebar */}
+      {!sidebarVisible && (
+        <button
+          className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 flex-col items-center justify-center gap-0.5 bg-primary-900 text-white/60 hover:text-white rounded-r-xl px-1.5 py-3 shadow-lg transition-colors"
+          onMouseEnter={() => setSidebarHovered(true)}
+          onClick={() => { setSidebarPinned(true); setSidebarHovered(true) }}
+          title="Buka sidebar"
+        >
+          <span className="text-xs">›</span>
+        </button>
+      )}
+
+      {/* Main Content — full width selalu */}
+      <div className="flex-1 p-6 pt-20 md:pt-8">
 
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">
