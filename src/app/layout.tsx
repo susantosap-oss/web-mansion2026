@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
+import { Suspense } from 'react'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ChunkErrorHandler from '@/components/ChunkErrorHandler'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const poppins = Poppins({
   subsets:  ['latin'],
@@ -107,7 +109,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        {/* Google Analytics 4 */}
+        {/* Google Analytics 4 — script loader */}
         {process.env.NEXT_PUBLIC_GA4_ID && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA4_ID}`}/>
@@ -115,13 +117,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${process.env.NEXT_PUBLIC_GA4_ID}', { page_path: window.location.pathname });
+              gtag('config', '${process.env.NEXT_PUBLIC_GA4_ID}', {
+                send_page_view: false,
+                cookie_flags: 'SameSite=None;Secure'
+              });
             `}}/>
           </>
         )}
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
         <ChunkErrorHandler />
+        {/* Enhanced Measurement — fire page_view di setiap navigasi SPA */}
+        {process.env.NEXT_PUBLIC_GA4_ID && (
+          <Suspense fallback={null}>
+            <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA4_ID} />
+          </Suspense>
+        )}
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
