@@ -72,7 +72,7 @@ export default function Navbar() {
             Login
           </Link>
 
-          <Link href="/listings/titip" className="hidden md:inline-flex btn-gold text-sm px-4 py-2">+ Titip Listing</Link>
+          <Link href="/titip-listing" className="hidden md:inline-flex btn-gold text-sm px-4 py-2">+ Titip Listing</Link>
 
           {/* Mobile toggle */}
           <button
@@ -106,7 +106,7 @@ export default function Navbar() {
               👤 Login Agen/Admin
             </Link>
             <div className="mt-2 pt-2 border-t border-white/10">
-              <Link href="/listings/titip" className="btn-gold text-center block" onClick={() => setMenuOpen(false)}>+ Titip Listing</Link>
+              <Link href="/titip-listing" className="btn-gold text-center block" onClick={() => setMenuOpen(false)}>+ Titip Listing</Link>
             </div>
           </div>
         </div>
