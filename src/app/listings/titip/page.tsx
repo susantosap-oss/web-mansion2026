@@ -5,7 +5,7 @@ export default function TitipListingPage() {
   const [form, setForm] = useState({ name:'', phone:'', email:'', propertyType:'Rumah', address:'', price:'', description:'' })
   const [done, setDone] = useState(false)
   const [loading, setLoading] = useState(false)
-  const wa = process.env.NEXT_PUBLIC_WA_OFFICE || '6281234567890'
+  const wa = '6281703133252'
 
   const handleWA = async () => {
     if (!form.name || !form.phone) return
