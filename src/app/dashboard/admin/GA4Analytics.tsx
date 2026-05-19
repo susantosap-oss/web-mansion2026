@@ -56,11 +56,17 @@ export default function GA4Analytics() {
   async function load() {
     setLoading(true)
     try {
-      const res  = await fetch('/api/analytics')
-      const json = await res.json()
-      setData(json)
-    } catch { setData({ configured: false, error: 'Gagal menghubungi server' }) }
-    finally { setLoading(false) }
+      const res = await fetch('/api/analytics', { cache: 'no-store' })
+      const text = await res.text()
+      // Cegah error jika response bukan JSON (misal HTML error dari service worker)
+      if (!text.trim().startsWith('{')) {
+        setData({ configured: true, error: `Server error (${res.status}) — coba refresh halaman.` })
+        return
+      }
+      setData(JSON.parse(text))
+    } catch (e: unknown) {
+      setData({ configured: true, error: `Fetch error: ${e instanceof Error ? e.message : String(e)}` })
+    } finally { setLoading(false) }
   }
 
   const metrics = data?.[period]
@@ -111,7 +117,7 @@ export default function GA4Analytics() {
       )}
 
       {/* Error */}
-      {data?.configured && data.error && (
+      {data?.error && (
         <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
           ❌ {data.error}
         </div>
