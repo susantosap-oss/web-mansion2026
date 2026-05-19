@@ -82,10 +82,14 @@ export default function GA4Analytics() {
 
       {/* Belum dimuat */}
       {!data && !loading && (
-        <div className="card p-8 text-center text-gray-400">
-          <div className="text-5xl mb-3">📈</div>
-          <p className="font-semibold text-primary-900 mb-1">Klik "Muat Data GA4" untuk melihat statistik</p>
-          <p className="text-sm">Data diambil langsung dari Google Analytics 4 via Data API.</p>
+        <div className="card p-10 text-center">
+          <div className="text-6xl mb-4">📊</div>
+          <p className="font-semibold text-primary-900 text-lg mb-2">Lihat Statistik Traffic Website</p>
+          <p className="text-sm text-gray-400 mb-6">Data harian, mingguan, bulanan, kota & tipe properti dari GA4.</p>
+          <button onClick={load}
+            className="btn-primary py-3 px-8 text-base font-bold mx-auto flex items-center gap-2 justify-center">
+            🔄 Muat Data GA4
+          </button>
         </div>
       )}
 
