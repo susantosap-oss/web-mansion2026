@@ -61,16 +61,7 @@ export async function GET() {
   const saB64      = process.env.GA4_SERVICE_ACCOUNT_B64
 
   if (!propertyId || !saB64) {
-    return NextResponse.json({
-      configured: false,
-      message: 'GA4 belum dikonfigurasi. Set GA4_PROPERTY_ID & GA4_SERVICE_ACCOUNT_B64 di env.',
-      debug: {
-        hasPropertyId: !!propertyId,
-        hasB64:        !!saB64,
-        b64Length:     saB64?.length ?? 0,
-        allKeys:       Object.keys(process.env).filter(k => k.includes('GA4')),
-      },
-    })
+    return NextResponse.json({ configured: false, message: 'GA4 belum dikonfigurasi. Set GA4_PROPERTY_ID & GA4_SERVICE_ACCOUNT_B64 di env.' })
   }
 
   // Decode base64 → JSON string (hindari masalah karakter spesial di env var)
