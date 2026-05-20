@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Metadata } from 'next'
 
 // ── Metadata diekspor terpisah agar Next.js bisa baca di server ──
@@ -9,6 +9,21 @@ import type { Metadata } from 'next'
 //  terpisah — sudah dilakukan di metadata.ts di folder yang sama.)
 
 const WA_TITIP = '6281703133252'
+
+const DEFAULT_KOMISI = {
+  jual: [
+    { range: '≤ 1 Miliar',     persen: '3'   },
+    { range: '> 1 – 3 Miliar', persen: '2.5' },
+    { range: '> 3 Miliar',     persen: '2'   },
+  ],
+  sewa: [
+    { range: '≤ 50 Juta', persen: '8' },
+    { range: '> 50 Juta', persen: '5' },
+  ],
+  catatan: 'Komisi dibayarkan setelah transaksi resmi selesai (akad/serah terima kunci). Belum termasuk PPN jika berlaku.',
+}
+
+type KomisiData = typeof DEFAULT_KOMISI
 
 const KOTA = ['Surabaya', 'Gresik', 'Sidoarjo', 'Malang', 'Lainnya']
 const JENIS = ['Rumah', 'Ruko', 'Tanah/Kavling', 'Gudang', 'Apartemen', 'Gedung', 'Lainnya']
@@ -73,6 +88,14 @@ export default function TitipListingPage() {
   const [loading, setLoading] = useState(false)
   const [done,    setDone]    = useState(false)
   const [error,   setError]   = useState('')
+  const [komisi,  setKomisi]  = useState<KomisiData>(DEFAULT_KOMISI)
+
+  useEffect(() => {
+    fetch('/api/config?key=komisi_mansion')
+      .then(r => r.json())
+      .then(j => { if (j.value) setKomisi({ ...DEFAULT_KOMISI, ...JSON.parse(j.value) }) })
+      .catch(() => {})
+  }, [])
 
   const set = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(p => ({ ...p, [k]: e.target.value }))
@@ -313,6 +336,53 @@ export default function TitipListingPage() {
 
         </div>
       </div>
+
+      {/* ── KOMISI STANDAR ───────────────────────────────── */}
+      <section className="bg-primary-900 py-12">
+        <div className="section-wrapper max-w-3xl">
+          <div className="divider-gold mb-3" />
+          <h2 className="text-xl font-bold text-white mb-1">Komisi Standar Mansion Properti</h2>
+          <p className="text-white/60 text-sm mb-8">Transparan & kompetitif — komisi hanya dibayar setelah transaksi resmi selesai.</p>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {/* Komisi Jual */}
+            <div className="bg-white/10 backdrop-blur rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🏷️</span>
+                <h3 className="font-bold text-white text-base">Komisi Jual</h3>
+              </div>
+              <div className="space-y-3">
+                {komisi.jual.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
+                    <span className="text-white/80 text-sm">{item.range}</span>
+                    <span className="text-gold font-bold text-lg">{item.persen}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Komisi Sewa */}
+            <div className="bg-white/10 backdrop-blur rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">🔑</span>
+                <h3 className="font-bold text-white text-base">Komisi Sewa</h3>
+              </div>
+              <div className="space-y-3">
+                {komisi.sewa.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between bg-white/10 rounded-xl px-4 py-3">
+                    <span className="text-white/80 text-sm">{item.range}</span>
+                    <span className="text-gold font-bold text-lg">{item.persen}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {komisi.catatan && (
+            <p className="text-white/50 text-xs mt-5 text-center">* {komisi.catatan}</p>
+          )}
+        </div>
+      </section>
 
       {/* ── FAQ / TRUST ──────────────────────────────────── */}
       <section className="bg-white border-t border-gray-100 py-12">
