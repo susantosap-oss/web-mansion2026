@@ -135,8 +135,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
-        {/* Partytown lib — beforeInteractive agar siap sebelum hydration */}
-        <Script src="/~partytown/partytown.js" strategy="beforeInteractive" />
+        {/* Partytown lib — afterInteractive, tidak blok FCP */}
+        <Script src="/~partytown/partytown.js" strategy="afterInteractive" />
         <ChunkErrorHandler />
         <Navbar />
         <main className="min-h-screen">{children}</main>
