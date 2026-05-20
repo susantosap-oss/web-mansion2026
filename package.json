@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && partytown copylib public/~partytown",
     "start": "next start -p ${PORT:-3000}",
     "lint": "next lint"
   },
   "dependencies": {
+    "@builder.io/partytown": "^0.10.3",
     "axios": "^1.7.2",
     "bcryptjs": "^3.0.3",
     "date-fns": "^3.6.0",
