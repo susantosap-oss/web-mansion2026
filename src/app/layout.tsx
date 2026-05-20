@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import { Suspense } from 'react'
+import Script from 'next/script'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
@@ -109,9 +110,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        {/* Google Analytics 4 — Measurement ID di-hardcode agar tersedia saat build time */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN"/>
-        <script dangerouslySetInnerHTML={{ __html: `
+      </head>
+      <body className="font-sans bg-white text-gray-900 antialiased">
+        <ChunkErrorHandler />
+
+        {/* Google Analytics 4 — afterInteractive agar tidak blok LCP/FCP */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
@@ -119,10 +127,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             send_page_view: false,
             cookie_flags: 'SameSite=None;Secure'
           });
-        `}}/>
-      </head>
-      <body className="font-sans bg-white text-gray-900 antialiased">
-        <ChunkErrorHandler />
+        `}</Script>
+
         {/* Enhanced Measurement — fire page_view di setiap navigasi SPA */}
         <Suspense fallback={null}>
           <GoogleAnalytics measurementId="G-F0G6ZM1GHN" />
