@@ -5,7 +5,6 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ChunkErrorHandler from '@/components/ChunkErrorHandler'
-import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 const poppins = Poppins({
   subsets:  ['latin'],
@@ -124,12 +123,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('js', new Date());
           gtag('config', 'G-F0G6ZM1GHN', {
             send_page_view: true,
-            cookie_flags: 'SameSite=None;Secure'
+            cookie_flags: 'SameSite=None;Secure',
+            page_path: window.location.pathname
           });
         `}</Script>
 
-        {/* SPA page_view tracking — pathname only, no Suspense needed */}
-        <GoogleAnalytics measurementId="G-F0G6ZM1GHN" />
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
