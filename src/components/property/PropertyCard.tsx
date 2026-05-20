@@ -127,7 +127,7 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
           {listing.kamarMandi > 0 && <span>🚿 {listing.kamarMandi}</span>}
         </div>
         <div className="flex gap-2">
-          <Link href={`/listings/${listing.slug}`} className="flex-1 text-center py-2 text-sm font-semibold text-primary-900 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors">Detail</Link>
+          <Link href={`/listings/${listing.slug}`} aria-label={`Detail ${listing.title}`} className="flex-1 text-center py-2 text-sm font-semibold text-primary-900 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors">Detail</Link>
           <WaLeadButton
             waHref={wa}
             agentId={listing.agentId}
