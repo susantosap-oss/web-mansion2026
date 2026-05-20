@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
-import { Suspense } from 'react'
 import Script from 'next/script'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
@@ -114,25 +113,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans bg-white text-gray-900 antialiased">
         <ChunkErrorHandler />
 
-        {/* Google Analytics 4 — afterInteractive agar tidak blok LCP/FCP */}
+        {/* Google Analytics 4 — lazyOnload: load setelah semua resource selesai */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="ga4-init" strategy="afterInteractive">{`
+        <Script id="ga4-init" strategy="lazyOnload">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'G-F0G6ZM1GHN', {
-            send_page_view: false,
+            send_page_view: true,
             cookie_flags: 'SameSite=None;Secure'
           });
         `}</Script>
 
-        {/* Enhanced Measurement — fire page_view di setiap navigasi SPA */}
-        <Suspense fallback={null}>
-          <GoogleAnalytics measurementId="G-F0G6ZM1GHN" />
-        </Suspense>
+        {/* SPA page_view tracking — pathname only, no Suspense needed */}
+        <GoogleAnalytics measurementId="G-F0G6ZM1GHN" />
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
