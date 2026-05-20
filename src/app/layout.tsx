@@ -109,34 +109,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
 
-        {/* Partytown config — GA4 dijalankan di Web Worker, zero TBT */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          partytown = {
-            forward: ['dataLayer.push', 'gtag'],
-            resolveUrl: function(url) {
-              var h = ['www.googletagmanager.com','www.google-analytics.com','analytics.google.com','region1.google-analytics.com'];
-              if (h.indexOf(url.hostname) > -1) {
-                var p = new URL('https://www.mansionpro.id/api/partytown-proxy');
-                p.searchParams.append('url', url.href);
-                return p;
-              }
-              return url;
-            }
-          }
-        `}} />
-
-        {/* GA4 scripts — type=text/partytown → dieksekusi di Web Worker */}
-        <script async type="text/partytown" src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN" />
-        <script type="text/partytown" dangerouslySetInnerHTML={{ __html: `
-          window.dataLayer = window.dataLayer || [];
-          window.gtag = function(){dataLayer.push(arguments)};
-          gtag('js', new Date());
-          gtag('config', 'G-F0G6ZM1GHN', { send_page_view: true });
-        `}} />
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
-        {/* Partytown lib — afterInteractive, tidak blok FCP */}
-        <Script src="/~partytown/partytown.js" strategy="afterInteractive" />
+        {/* Google Analytics 4 — lazyOnload: load setelah semua resource selesai */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN" strategy="lazyOnload" />
+        <Script id="ga4-init" strategy="lazyOnload">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-F0G6ZM1GHN', { send_page_view: true });
+        `}</Script>
         <ChunkErrorHandler />
         <Navbar />
         <main className="min-h-screen">{children}</main>

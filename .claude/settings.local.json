@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh run *)",
+      "Bash(findstr /i \"deploy\\\\|cloud\\\\|gcloud\\\\|run\\\\|script\")",
+      "Bash(bash deploy.sh)",
+      "Bash(gcloud run *)",
+      "Bash(git commit -m 'fix: tambah '\\\\''use client'\\\\'' di WhatsAppButton untuk event handler *)",
+      "Bash(git commit -m 'fix: tambah aria-label unik di ProjectCard link — fix Lighthouse identical links *)",
+      "Bash(git commit -m 'perf: optimasi LCP mobile — fix Image sizes & ganti img ke Image di news homepage *)",
+      "Bash(git commit -m 'fix: ganti nomor WA titip listing ke 6281703133252 *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\mansion\\\\web-mansion2026\\\\.claude\\\\worktrees\\\\dreamy-blackwell-052651\\\\src\\\\app\\\\titip-listing\\\\[slug]\")",
+      "Bash(git commit -m 'feat: GA4 Enhanced Measurement — page_view SPA tracking via usePathname *)",
+      "Bash(git commit -m 'fix: GA4 service account pakai base64 — hindari env var corruption *)",
+      "Bash(git commit -m 'fix: tombol Muat Data GA4 dipindah ke dalam card agar mudah diklik *)",
+      "Bash(python3 -c ' *)",
+      "Bash(git commit -m 'fix: tambah force-dynamic + debug info di analytics API route *)",
+      "Bash(curl -v \"https://www.mansionpro.id/api/analytics\")",
+      "Bash(curl -s \"https://www.mansionpro.id\")",
+      "Bash(git commit -m 'fix: hardcode GA4 ID G-F0G6ZM1GHN di layout — NEXT_PUBLIC_ tidak tersedia saat build time *)",
+      "Bash(git pull *)",
+      "Bash(git commit -m 'feat: Komisi Standar di titip-listing + tab Komisi Mansion di dashboard *)",
+      "Bash(git commit -m 'fix: GA4 header cleanup + Refresh Data button + fix dashboard pt-24 *)",
+      "Bash(git commit -m 'perf: GA4 script pakai afterInteractive — tidak blok LCP/FCP mobile *)",
+      "Bash(git commit -m 'perf: GA4 lazyOnload + hapus useSearchParams — pulihkan LCP/FCP/TBT mobile *)",
+      "Bash(git commit -m 'perf: hapus GoogleAnalytics client component — kurangi hydration overhead mobile *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('partytown' in str\\(d\\)\\)\")",
+      "Bash(python3 -c \"import json; d=json.load\\(open\\('package.json'\\)\\); print\\(d.get\\('scripts',{}\\)\\); print\\('version:', d.get\\('version'\\)\\); print\\('deps:', list\\(d.get\\('dependencies',{}\\).keys\\(\\)\\)[:10]\\)\")",
+      "Bash(npm install *)",
+      "Bash(git commit -m 'perf: Partytown — GA4 dijalankan di Web Worker, eliminasi TBT sepenuhnya *)",
+      "Bash(git commit -m 'fix: aria-label ProjectCard tambah slug suffix — hapus identical links warning *)",
+      "Bash(git commit -m 'fix: aria-label tombol Lihat Detail Proyek tambah slug suffix — hapus identical links *)",
+      "Bash(git commit -m 'fix: aria-label '\\\\''Detail'\\\\'' ListingCard — hapus identical links warning Lighthouse *)"
+    ]
+  }
+}
