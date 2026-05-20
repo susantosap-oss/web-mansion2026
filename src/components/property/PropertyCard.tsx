@@ -176,7 +176,7 @@ export function ProjectCard({ project, className = '', priority = false }: { pro
           <p className="text-xs text-gray-700">Mulai dari</p>
           <p className="price-display text-lg">{formatPrice(project.priceMin)}</p>
         </div>
-        <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm" aria-label={`Lihat Detail Proyek ${project.name}`}>Lihat Detail Proyek</Link>
+        <Link href={`/projects/${project.slug}`} className="block w-full text-center btn-primary py-2.5 text-sm" aria-label={`Lihat Detail Proyek ${project.name} (${project.slug.slice(-6)})`}>Lihat Detail Proyek</Link>
       </div>
     </div>
   )
