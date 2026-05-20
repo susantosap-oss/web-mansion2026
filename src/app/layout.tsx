@@ -109,30 +109,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        {/* Google Analytics 4 — script loader */}
-        {process.env.NEXT_PUBLIC_GA4_ID && (
-          <>
-            <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA4_ID}`}/>
-            <script dangerouslySetInnerHTML={{ __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${process.env.NEXT_PUBLIC_GA4_ID}', {
-                send_page_view: false,
-                cookie_flags: 'SameSite=None;Secure'
-              });
-            `}}/>
-          </>
-        )}
+        {/* Google Analytics 4 — Measurement ID di-hardcode agar tersedia saat build time */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-F0G6ZM1GHN"/>
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-F0G6ZM1GHN', {
+            send_page_view: false,
+            cookie_flags: 'SameSite=None;Secure'
+          });
+        `}}/>
       </head>
       <body className="font-sans bg-white text-gray-900 antialiased">
         <ChunkErrorHandler />
         {/* Enhanced Measurement — fire page_view di setiap navigasi SPA */}
-        {process.env.NEXT_PUBLIC_GA4_ID && (
-          <Suspense fallback={null}>
-            <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA4_ID} />
-          </Suspense>
-        )}
+        <Suspense fallback={null}>
+          <GoogleAnalytics measurementId="G-F0G6ZM1GHN" />
+        </Suspense>
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
