@@ -70,14 +70,20 @@ export async function GET() {
   try {
     const token = await getAccessToken(saJson)
 
-    // ── Debug: cek apakah service account bisa akses property ──
+    // Cek permission terlebih dahulu dengan test report kecil
     const testReport = await runReport(token, propertyId, {
       dateRanges: [{ startDate: '2024-01-01', endDate: 'today' }],
       metrics:    [{ name: 'activeUsers' }],
       metricAggregations: ['TOTAL'],
     })
     if (testReport.error) {
-      return NextResponse.json({ configured: true, error: `GA4 API Error: ${testReport.error.message} (code: ${testReport.error.code})` }, { status: 500 })
+      return NextResponse.json({
+        configured: true,
+        error: `GA4: ${testReport.error.message}`,
+        hint: testReport.error.code === 403
+          ? 'Tambahkan service account mansion-ga4-dashboard@web-mansion2026.iam.gserviceaccount.com sebagai Viewer di GA4 Property Access Management.'
+          : undefined,
+      }, { status: 500 })
     }
 
     // ── 3 periode traffic ─────────────────────────────────
