@@ -70,6 +70,16 @@ export async function GET() {
   try {
     const token = await getAccessToken(saJson)
 
+    // ── Debug: cek apakah service account bisa akses property ──
+    const testReport = await runReport(token, propertyId, {
+      dateRanges: [{ startDate: '2024-01-01', endDate: 'today' }],
+      metrics:    [{ name: 'activeUsers' }],
+      metricAggregations: ['TOTAL'],
+    })
+    if (testReport.error) {
+      return NextResponse.json({ configured: true, error: `GA4 API Error: ${testReport.error.message} (code: ${testReport.error.code})` }, { status: 500 })
+    }
+
     // ── 3 periode traffic ─────────────────────────────────
     const today  = new Date()
     const fmt    = (d: Date) => d.toISOString().split('T')[0]
