@@ -75,27 +75,28 @@ export async function GET() {
     const fmt    = (d: Date) => d.toISOString().split('T')[0]
     const sub    = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() - n); return x }
 
+    const METRIC_REPORT = (startDate: string) => ({
+      dateRanges:         [{ startDate, endDate: 'today' }],
+      metrics:            [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }],
+      metricAggregations: ['TOTAL'],          // wajib agar totals terisi
+    })
+
     const [daily, weekly, monthly] = await Promise.all([
-      runReport(token, propertyId, {
-        dateRanges: [{ startDate: fmt(sub(today, 1)), endDate: 'today' }],
-        metrics:    [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }],
-      }),
-      runReport(token, propertyId, {
-        dateRanges: [{ startDate: fmt(sub(today, 7)), endDate: 'today' }],
-        metrics:    [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }],
-      }),
-      runReport(token, propertyId, {
-        dateRanges: [{ startDate: fmt(sub(today, 30)), endDate: 'today' }],
-        metrics:    [{ name: 'activeUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }],
-      }),
+      runReport(token, propertyId, METRIC_REPORT(fmt(sub(today, 1)))),
+      runReport(token, propertyId, METRIC_REPORT(fmt(sub(today, 7)))),
+      runReport(token, propertyId, METRIC_REPORT(fmt(sub(today, 30)))),
     ])
 
-    function extractMetrics(r: { totals?: Array<{ metricValues: Array<{ value: string }> }> }) {
-      const t = r.totals?.[0]?.metricValues ?? []
+    // Baca dari totals (jika ada) ATAU rows[0] (tanpa dimensi, semua data di row pertama)
+    function extractMetrics(r: {
+      totals?: Array<{ metricValues: Array<{ value: string }> }>
+      rows?:   Array<{ metricValues: Array<{ value: string }> }>
+    }) {
+      const t = r.totals?.[0]?.metricValues ?? r.rows?.[0]?.metricValues ?? []
       return {
-        activeUsers:     parseInt(t[0]?.value ?? '0', 10),
-        sessions:        parseInt(t[1]?.value ?? '0', 10),
-        pageViews:       parseInt(t[2]?.value ?? '0', 10),
+        activeUsers: parseInt(t[0]?.value ?? '0', 10),
+        sessions:    parseInt(t[1]?.value ?? '0', 10),
+        pageViews:   parseInt(t[2]?.value ?? '0', 10),
       }
     }
 
