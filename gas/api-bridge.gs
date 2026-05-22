@@ -157,6 +157,9 @@ function doGet(e) {
         saveLead(e.parameter)
         return resp({ success: true, message: 'Lead berhasil disimpan' })
 
+      case 'getGA4Stats':
+        return resp(getGA4Stats())
+
       case 'getHeaders':
         var sheetName = e.parameter.sheet || SHEETS.LISTINGS
         var ss4   = SpreadsheetApp.openById(SHEET_ID)
@@ -209,6 +212,98 @@ function doPost(e) {
     }
   } catch(err) {
     return resp({ success: false, error: err.message })
+  }
+}
+
+// ── GA4: ambil stats via GA4 Data API pakai token GAS ────
+function getGA4Stats() {
+  var GA4_PROPERTY = '538234936'
+  var token = ScriptApp.getOAuthToken()
+
+  var today  = new Date()
+  var fmtDt  = function(d) { return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd') }
+  var subDay = function(n) { var d = new Date(today); d.setDate(d.getDate() - n); return d }
+
+  function runReport(startDate, dims, metrics, orderBys, limit) {
+    var body = {
+      dateRanges:         [{ startDate: startDate, endDate: 'today' }],
+      metrics:            metrics.map(function(m) { return { name: m } }),
+      metricAggregations: ['TOTAL'],
+    }
+    if (dims)     body.dimensions = dims.map(function(d) { return { name: d } })
+    if (orderBys) body.orderBys   = orderBys
+    if (limit)    body.limit      = limit
+    var res = UrlFetchApp.fetch(
+      'https://analyticsdata.googleapis.com/v1beta/properties/' + GA4_PROPERTY + ':runReport',
+      {
+        method: 'post', contentType: 'application/json',
+        headers: { Authorization: 'Bearer ' + token },
+        payload: JSON.stringify(body), muteHttpExceptions: true,
+      }
+    )
+    return JSON.parse(res.getContentText())
+  }
+
+  // Cek permission
+  var test = runReport(fmtDt(subDay(7)), null, ['activeUsers'], null, null)
+  if (test.error) {
+    return { success: false, error: 'GA4 Error: ' + test.error.message, code: test.error.code }
+  }
+
+  function extractMetrics(r) {
+    var t = (r.totals && r.totals[0] && r.totals[0].metricValues) ||
+            (r.rows   && r.rows[0]   && r.rows[0].metricValues)   || []
+    return {
+      activeUsers: parseInt((t[0] && t[0].value) || '0', 10),
+      sessions:    parseInt((t[1] && t[1].value) || '0', 10),
+      pageViews:   parseInt((t[2] && t[2].value) || '0', 10),
+    }
+  }
+
+  var daily   = runReport(fmtDt(subDay(1)),  null, ['activeUsers','sessions','screenPageViews'], null, null)
+  var weekly  = runReport(fmtDt(subDay(7)),  null, ['activeUsers','sessions','screenPageViews'], null, null)
+  var monthly = runReport(fmtDt(subDay(30)), null, ['activeUsers','sessions','screenPageViews'], null, null)
+
+  // Top cities
+  var cityRpt = runReport(
+    fmtDt(subDay(30)), ['city'], ['activeUsers'],
+    [{ metric: { metricName: 'activeUsers' }, desc: true }], 20
+  )
+  var cityMap = {}
+  ;(cityRpt.rows || []).forEach(function(r) {
+    cityMap[r.dimensionValues[0].value] = parseInt(r.metricValues[0].value, 10)
+  })
+  var targetCities = ['Surabaya','Gresik','Sidoarjo','Malang','Mojokerto','Lamongan']
+  var cities = targetCities.map(function(c) { return { city: c, users: cityMap[c] || 0 } })
+
+  // Top pages
+  var pageRpt = runReport(
+    fmtDt(subDay(30)), ['pagePath'], ['screenPageViews'],
+    [{ metric: { metricName: 'screenPageViews' }, desc: true }], 50
+  )
+  var propTypes = ['Rumah','Ruko','Kavling','Gudang','Apartemen','Gedung']
+  var typeCounts = propTypes.map(function(pt) {
+    var kw = pt.toLowerCase()
+    var cnt = (pageRpt.rows || []).reduce(function(s, r) {
+      return (r.dimensionValues[0].value || '').toLowerCase().indexOf(kw) >= 0
+        ? s + parseInt(r.metricValues[0].value || '0', 10) : s
+    }, 0)
+    return { type: pt, views: cnt }
+  }).sort(function(a, b) { return b.views - a.views })
+
+  var topPages = (pageRpt.rows || []).slice(0, 10).map(function(r) {
+    return { path: r.dimensionValues[0].value, views: parseInt(r.metricValues[0].value, 10) }
+  })
+
+  return {
+    success:    true,
+    daily:      extractMetrics(daily),
+    weekly:     extractMetrics(weekly),
+    monthly:    extractMetrics(monthly),
+    cities:     cities,
+    typeCounts: typeCounts,
+    topPages:   topPages,
+    updatedAt:  new Date().toISOString(),
   }
 }
 
