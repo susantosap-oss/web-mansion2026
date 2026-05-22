@@ -11,6 +11,7 @@ interface AnalyticsData {
   error?:               string
   hint?:                string
   serviceAccountEmail?: string
+  propertyId?:          string
   message?:             string
   daily?:               Metrics
   weekly?:              Metrics
@@ -122,15 +123,34 @@ export default function GA4Analytics() {
 
       {/* Error */}
       {data?.error && (
-        <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm space-y-2">
-          <p>❌ {data.error}</p>
+        <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm space-y-3">
+          <p className="font-semibold">❌ {data.error}</p>
           {data.hint && (
-            <p className="text-red-600 font-medium">💡 {data.hint}</p>
+            <p className="text-red-600">💡 {data.hint}</p>
           )}
-          {data.serviceAccountEmail && (
-            <div className="bg-red-100 rounded p-2 font-mono text-xs break-all">
-              <span className="text-red-500 font-semibold">Service Account: </span>
-              {data.serviceAccountEmail}
+          {(data.serviceAccountEmail || data.propertyId) && (
+            <div className="bg-red-100 rounded-lg p-3 space-y-2 font-mono text-xs break-all">
+              {data.serviceAccountEmail && (
+                <div>
+                  <span className="text-red-500 font-semibold not-italic">Service Account Email: </span>
+                  <span className="select-all">{data.serviceAccountEmail}</span>
+                </div>
+              )}
+              {data.propertyId && (
+                <div>
+                  <span className="text-red-500 font-semibold not-italic">GA4 Property ID: </span>
+                  <span className="select-all">{data.propertyId}</span>
+                </div>
+              )}
+            </div>
+          )}
+          {data.serviceAccountEmail && data.propertyId && (
+            <div className="bg-white rounded-lg p-3 text-xs text-gray-700 space-y-1.5 border border-red-200">
+              <p className="font-semibold text-gray-800">Cara memperbaiki:</p>
+              <p>1. Buka <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">analytics.google.com</a></p>
+              <p>2. Pilih property dengan ID <strong>{data.propertyId}</strong></p>
+              <p>3. Klik <strong>Admin</strong> (ikon roda gigi) → <strong>Property Access Management</strong></p>
+              <p>4. Klik <strong>+ Add users</strong> → masukkan email service account → pilih role <strong>Viewer</strong> → Save</p>
             </div>
           )}
         </div>

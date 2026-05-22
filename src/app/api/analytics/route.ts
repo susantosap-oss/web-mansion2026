@@ -84,8 +84,9 @@ export async function GET() {
         configured: true,
         error: `GA4: ${testReport.error.message}`,
         serviceAccountEmail,
+        propertyId,
         hint: testReport.error.code === 403
-          ? `Tambahkan service account "${serviceAccountEmail}" sebagai Viewer di GA4 → Admin → Property Access Management.`
+          ? `Tambahkan "${serviceAccountEmail}" sebagai Viewer di GA4 → Admin → Property Access Management (Property ID: ${propertyId}).`
           : undefined,
       }, { status: 500 })
     }
