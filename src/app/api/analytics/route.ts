@@ -67,6 +67,9 @@ export async function GET() {
   // Decode base64 → JSON string (hindari masalah karakter spesial di env var)
   const saJson = Buffer.from(saB64, 'base64').toString('utf-8')
 
+  const sa = JSON.parse(saJson)
+  const serviceAccountEmail = sa.client_email ?? '(email tidak ditemukan di credential)'
+
   try {
     const token = await getAccessToken(saJson)
 
@@ -80,8 +83,9 @@ export async function GET() {
       return NextResponse.json({
         configured: true,
         error: `GA4: ${testReport.error.message}`,
+        serviceAccountEmail,
         hint: testReport.error.code === 403
-          ? 'Tambahkan service account mansion-ga4-dashboard@web-mansion2026.iam.gserviceaccount.com sebagai Viewer di GA4 Property Access Management.'
+          ? `Tambahkan service account "${serviceAccountEmail}" sebagai Viewer di GA4 → Admin → Property Access Management.`
           : undefined,
       }, { status: 500 })
     }
