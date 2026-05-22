@@ -7,16 +7,18 @@ interface TypeData  { type: string; views: number }
 interface PageData  { path: string; views: number }
 
 interface AnalyticsData {
-  configured: boolean
-  error?:     string
-  message?:   string
-  daily?:     Metrics
-  weekly?:    Metrics
-  monthly?:   Metrics
-  cities?:    CityData[]
-  typeCounts?: TypeData[]
-  topPages?:  PageData[]
-  updatedAt?: string
+  configured:           boolean
+  error?:               string
+  hint?:                string
+  serviceAccountEmail?: string
+  message?:             string
+  daily?:               Metrics
+  weekly?:              Metrics
+  monthly?:             Metrics
+  cities?:              CityData[]
+  typeCounts?:          TypeData[]
+  topPages?:            PageData[]
+  updatedAt?:           string
 }
 
 function fmt(n: number): string {
@@ -120,8 +122,17 @@ export default function GA4Analytics() {
 
       {/* Error */}
       {data?.error && (
-        <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm">
-          ❌ {data.error}
+        <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm space-y-2">
+          <p>❌ {data.error}</p>
+          {data.hint && (
+            <p className="text-red-600 font-medium">💡 {data.hint}</p>
+          )}
+          {data.serviceAccountEmail && (
+            <div className="bg-red-100 rounded p-2 font-mono text-xs break-all">
+              <span className="text-red-500 font-semibold">Service Account: </span>
+              {data.serviceAccountEmail}
+            </div>
+          )}
         </div>
       )}
 
