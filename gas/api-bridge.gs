@@ -215,39 +215,32 @@ function doPost(e) {
   }
 }
 
-// ── GA4: ambil stats via GA4 Data API pakai token GAS ────
+// ── GA4: pakai Advanced Service "Google Analytics Data API" ──
+// Aktifkan dulu: GAS Editor → Services (+) → Google Analytics Data API → Add
 function getGA4Stats() {
-  var GA4_PROPERTY = '538234936'
-  var token = ScriptApp.getOAuthToken()
+  var PROPERTY = 'properties/538234936'
 
   var today  = new Date()
   var fmtDt  = function(d) { return Utilities.formatDate(d, 'UTC', 'yyyy-MM-dd') }
   var subDay = function(n) { var d = new Date(today); d.setDate(d.getDate() - n); return d }
 
-  function runReport(startDate, dims, metrics, orderBys, limit) {
-    var body = {
+  function runReport(startDate, dims, metricNames, orderBys, limit) {
+    var req = {
       dateRanges:         [{ startDate: startDate, endDate: 'today' }],
-      metrics:            metrics.map(function(m) { return { name: m } }),
+      metrics:            metricNames.map(function(m) { return { name: m } }),
       metricAggregations: ['TOTAL'],
     }
-    if (dims)     body.dimensions = dims.map(function(d) { return { name: d } })
-    if (orderBys) body.orderBys   = orderBys
-    if (limit)    body.limit      = limit
-    var res = UrlFetchApp.fetch(
-      'https://analyticsdata.googleapis.com/v1beta/properties/' + GA4_PROPERTY + ':runReport',
-      {
-        method: 'post', contentType: 'application/json',
-        headers: { Authorization: 'Bearer ' + token },
-        payload: JSON.stringify(body), muteHttpExceptions: true,
-      }
-    )
-    return JSON.parse(res.getContentText())
+    if (dims)     req.dimensions = dims.map(function(d) { return { name: d } })
+    if (orderBys) req.orderBys   = orderBys
+    if (limit)    req.limit      = limit
+    return AnalyticsData.Properties.runReport(req, PROPERTY)
   }
 
-  // Cek permission
-  var test = runReport(fmtDt(subDay(7)), null, ['activeUsers'], null, null)
-  if (test.error) {
-    return { success: false, error: 'GA4 Error: ' + test.error.message, code: test.error.code }
+  // Cek akses
+  try {
+    runReport(fmtDt(subDay(1)), null, ['activeUsers'], null, 1)
+  } catch (err) {
+    return { success: false, error: 'GA4 Error: ' + err.message }
   }
 
   function extractMetrics(r) {
