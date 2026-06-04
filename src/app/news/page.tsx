@@ -3,7 +3,14 @@ import Link from 'next/link'
 import { getNews } from '@/lib/sheets'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Berita Properti | Mansion Realty' }
+
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
+export const metadata: Metadata = {
+  title: 'Berita Properti | Mansion Realty',
+  description: 'Tips, berita pasar, dan informasi properti terkini dari Mansion Realty Surabaya.',
+  alternates: { canonical: `${BASE}/news` },
+}
 
 function formatDate(ts: string): string {
   if (!ts) return ''

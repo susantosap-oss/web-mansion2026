@@ -2,7 +2,12 @@ import { Metadata } from 'next'
 import ContentPage, { getContentConfig } from '../ContentPage'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Kebijakan Privasi' }
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+export const metadata: Metadata = {
+  title: 'Kebijakan Privasi',
+  alternates: { canonical: `${BASE}/privacy` },
+  robots: { index: false, follow: false },
+}
 
 export default async function PrivacyPage() {
   const content = await getContentConfig('kebijakan_privasi')

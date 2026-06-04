@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import ImageGallery from '@/components/property/ImageGallery'
@@ -9,6 +10,35 @@ import ProjectDetailClient from './ProjectDetailClient'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
+
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const slug = decodeURIComponent(params.slug)
+  const projects = await getProjects()
+  const project = projects.find(p => p.slug === slug || p.id === slug)
+  if (!project) return { title: 'Proyek Tidak Ditemukan' }
+
+  const location = [project.location, project.city].filter(Boolean).join(', ') || 'Surabaya'
+  const title = `${project.name} — ${project.type} di ${location} | Mansion Realty`
+  const description = project.description
+    ? project.description.slice(0, 160)
+    : `${project.name}, proyek ${project.type} di ${location}. Mulai dari ${formatPrice(project.priceMin)}. Hubungi Mansion Realty untuk info lebih lanjut.`
+  const url = `${BASE}/projects/${project.slug || project.id}`
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      ...(project.coverImage ? { images: [{ url: project.coverImage, alt: project.name }] } : {}),
+    },
+  }
+}
 
 export default async function ProjectDetailPage({ params }: Props) {
   const slug     = decodeURIComponent(params.slug)

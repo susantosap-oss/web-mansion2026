@@ -2,7 +2,11 @@ import { Metadata } from 'next'
 import ContentPage, { getContentConfig } from '../ContentPage'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Karir' }
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+export const metadata: Metadata = {
+  title: 'Karir',
+  alternates: { canonical: `${BASE}/career` },
+}
 
 export default async function CareerPage() {
   const content = await getContentConfig('karir')

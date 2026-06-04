@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
@@ -9,12 +10,37 @@ import RelatedProperties from '@/components/property/RelatedProperties'
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const slug = decodeURIComponent(params.slug)
+  const news = await getNews()
+  const item = news.find(n => n.slug === slug)
+  if (!item) return { title: 'Artikel Tidak Ditemukan' }
+
+  const title = `${item.title} | Mansion Realty`
+  const description = item.summary || `${item.title} — berita dan tips properti dari Mansion Realty Surabaya.`
+  const url = `${BASE}/news/${item.slug}`
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'article',
+      ...(item.coverImage ? { images: [{ url: item.coverImage, alt: item.title }] } : {}),
+    },
+  }
+}
+
 function formatDate(ts: string): string {
   if (!ts) return ''
   try { return new Date(ts).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) }
   catch { return ts }
 }
-
 
 export default async function NewsDetailPage({ params }: Props) {
   const slug = decodeURIComponent(params.slug)
