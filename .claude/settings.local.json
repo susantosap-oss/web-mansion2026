@@ -57,7 +57,16 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('success:', d.get\\('success'\\)\\); print\\('total projects:', len\\(d.get\\('data',[]\\)\\)\\)\")",
       "Skill(schedule)",
       "Bash(python3 *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(git commit *)",
+      "Read(//c/Users/mansion/**)",
+      "Bash(bash web-mansion2026/deploy.sh)",
+      "Bash(xargs cat *)",
+      "Bash(git rm *)",
+      "Bash(git reset *)",
+      "Bash(npx clasp *)",
+      "Bash(curl -sL \"https://script.google.com/macros/s/AKfycbzOBNzrW0lOpT1J0ZkMbydfTq42SaSQiIOuV15njyCIBp6P0Grl3GQpjhVE8K_vSzROeg/exec?action=getGA4Stats&secret=mansion2026\")",
+      "Bash(curl -sL \"https://script.google.com/macros/s/AKfycbxK7R5QM3H_4G97UfwHmwL2LmZrXVYggoY3I6VTCfG8RwIC6wRmacwNnOeptMU_X2O65A/exec?action=getGA4Stats&secret=mansion2026\")"
     ]
   }
 }
