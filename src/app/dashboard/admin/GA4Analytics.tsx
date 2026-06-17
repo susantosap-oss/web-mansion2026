@@ -89,10 +89,19 @@ export default function GA4Analytics() {
     setExporting(format)
     setIsPrinting(true)
     try {
-      await new Promise(r => setTimeout(r, 180))
+      // Scroll elemen ke atas viewport agar html2canvas tidak salah hitung offset
+      printRef.current.scrollIntoView({ block: 'start', behavior: 'instant' })
+      await new Promise(r => setTimeout(r, 220))
       const html2canvas = (await import('html2canvas')).default
       const canvas = await html2canvas(printRef.current, {
-        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth:  document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
       })
       const dateStr  = fmtDate(data.updatedAt).replace(/\//g, '-')
       const filename = `ga4-${period}-${dateStr}`
@@ -258,7 +267,7 @@ export default function GA4Analytics() {
               <MetricCard icon="📄" label="Halaman Dilihat" value={metrics.pageViews}  />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 px-1">
+            <div className={`grid gap-6 px-1 ${isPrinting ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
               {/* Top Kota */}
               <div className="card p-5">
                 <h3 className="font-semibold text-primary-900 mb-4 flex items-center gap-2">
