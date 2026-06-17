@@ -89,20 +89,33 @@ export default function GA4Analytics() {
     setExporting(format)
     setIsPrinting(true)
     try {
-      // Scroll elemen ke atas viewport agar html2canvas tidak salah hitung offset
-      printRef.current.scrollIntoView({ block: 'start', behavior: 'instant' })
-      await new Promise(r => setTimeout(r, 220))
+      await new Promise(r => setTimeout(r, 200)) // tunggu isPrinting re-render
+
       const html2canvas = (await import('html2canvas')).default
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth:  document.documentElement.scrollWidth,
-        windowHeight: document.documentElement.scrollHeight,
+
+      // Clone ke div bersih di luar layout — hindari overflow:hidden dari parent cards
+      const wrapper = document.createElement('div')
+      wrapper.style.cssText = 'position:fixed;top:0;left:0;z-index:99999;background:white;width:760px;padding:28px;box-sizing:border-box;'
+
+      const clone = printRef.current.cloneNode(true) as HTMLElement
+      // Override semua overflow constraint agar konten tidak terpotong
+      ;[clone, ...Array.from(clone.querySelectorAll<HTMLElement>('*'))].forEach(el => {
+        el.style.setProperty('overflow',   'visible', 'important')
+        el.style.setProperty('overflow-x', 'visible', 'important')
+        el.style.setProperty('overflow-y', 'visible', 'important')
       })
+      wrapper.appendChild(clone)
+      document.body.appendChild(wrapper)
+
+      await new Promise(r => setTimeout(r, 80))
+
+      const canvas = await html2canvas(wrapper, {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
+        scrollX: 0, scrollY: 0,
+      })
+
+      document.body.removeChild(wrapper)
+
       const dateStr  = fmtDate(data.updatedAt).replace(/\//g, '-')
       const filename = `ga4-${period}-${dateStr}`
 
