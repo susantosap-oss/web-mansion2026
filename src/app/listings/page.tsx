@@ -20,11 +20,15 @@ const PROP_TYPE_LABELS: Record<string, string> = {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { type?: string; propertyType?: string }
+  searchParams: { type?: string; propertyType?: string; priceRange?: string }
 }): Promise<Metadata> {
-  const { type, propertyType } = searchParams
-  const listings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
-  const count = listings.length
+  const { type, propertyType, priceRange } = searchParams
+  const allListings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
+  const count = priceRange === 'below'
+    ? allListings.filter(l => l.price < 1_000_000_000).length
+    : priceRange === 'above'
+    ? allListings.filter(l => l.price >= 1_000_000_000).length
+    : allListings.length
 
   const typeLabel = type === 'Sale' ? 'Dijual' : type === 'Rent' ? 'Disewa' : 'Dijual & Disewa'
   const propLabel = propertyType ? (PROP_TYPE_LABELS[propertyType] ?? propertyType) : 'Properti'
@@ -43,7 +47,7 @@ export async function generateMetadata({
   // Specific category targeting is handled by cleanURL pages (/listings/jual-rumah-surabaya).
   const canonical = `${BASE}/listings`
 
-  const hasFilter = !!(type || propertyType)
+  const hasFilter = !!(type || propertyType || priceRange)
 
   return {
     title,
@@ -57,11 +61,30 @@ export async function generateMetadata({
 export default async function ListingsPage({
   searchParams,
 }: {
-  searchParams: { type?: string; propertyType?: string }
+  searchParams: { type?: string; propertyType?: string; priceRange?: string }
 }) {
-  const { type, propertyType } = searchParams
-  const listings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
+  const { type, propertyType, priceRange } = searchParams
+  const allListings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
+
+  const listings = priceRange === 'below'
+    ? allListings.filter(l => l.price < 1_000_000_000)
+    : priceRange === 'above'
+    ? allListings.filter(l => l.price >= 1_000_000_000)
+    : allListings
+
+  const belowCount = allListings.filter(l => l.price < 1_000_000_000).length
+  const aboveCount = allListings.filter(l => l.price >= 1_000_000_000).length
+
   const title = type === 'Sale' ? 'Properti Dijual' : type === 'Rent' ? 'Properti Disewa' : 'Semua Listing'
+
+  function priceUrl(pr?: string) {
+    const p = new URLSearchParams()
+    if (type) p.set('type', type)
+    if (propertyType) p.set('propertyType', propertyType)
+    if (pr) p.set('priceRange', pr)
+    const q = p.toString()
+    return q ? `/listings?${q}` : '/listings'
+  }
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -102,7 +125,9 @@ export default async function ListingsPage({
             <h1 className="section-title">{title}</h1>
             <p className="text-gray-500 mt-2">{listings.length} properti ditemukan</p>
           </div>
-          <div className="flex flex-wrap gap-3 mb-8">
+
+          {/* Type Tabs: Semua / Dijual / Disewa */}
+          <div className="flex flex-wrap gap-3 mb-3">
             {[['Semua', '/listings'], ['Dijual', '/listings?type=Sale'], ['Disewa', '/listings?type=Rent']].map(([label, href]) => (
               <Link key={href as string} href={href as string}
                 className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${(href === '/listings' && !type) || (href as string).includes(type || 'XX') ? 'bg-primary-900 text-white border-primary-900' : 'border-gray-200 text-gray-600 hover:border-primary-300 bg-white'}`}>
@@ -116,6 +141,34 @@ export default async function ListingsPage({
               </Link>
             ))}
           </div>
+
+          {/* Price Range Tabs */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            {([
+              ['', 'Semua Harga', allListings.length],
+              ['below', '< 1 Milyar', belowCount],
+              ['above', '> 1 Milyar', aboveCount],
+            ] as [string, string, number][]).map(([value, label, count]) => {
+              const href = priceUrl(value || undefined)
+              const isActive = value === '' ? !priceRange : priceRange === value
+              return (
+                <Link key={value || 'semua'} href={href}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-gold text-primary-900 border-gold'
+                      : 'border-gray-200 text-gray-600 hover:border-gold bg-white'
+                  }`}>
+                  {label}
+                  <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-primary-900/20 text-primary-900' : 'bg-gray-100 text-gray-500'
+                  }`}>
+                    {count}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+
           {listings.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0}/>)}
