@@ -39,17 +39,17 @@ export async function generateMetadata({
     ? `Daftar ${propLabel.toLowerCase()} ${typeLabel.toLowerCase()} di Surabaya: harga, lokasi, dan spesifikasi lengkap. ${count} pilihan tersedia, konsultasi agen gratis.`
     : `${count} listing properti dijual dan disewa di Surabaya. Rumah, ruko, apartemen, kavling & gudang dari agen terpercaya Mansion Realty.`
 
-  const canonical = propertyType
-    ? `${BASE}/listings?${type ? `type=${type}&` : ''}propertyType=${propertyType}`
-    : type
-    ? `${BASE}/listings?type=${type}`
-    : `${BASE}/listings`
+  // Query param pages (filtered views) consolidate to /listings.
+  // Specific category targeting is handled by cleanURL pages (/listings/jual-rumah-surabaya).
+  const canonical = `${BASE}/listings`
+
+  const hasFilter = !!(type || propertyType)
 
   return {
     title,
     description,
     alternates: { canonical },
-    robots: { index: true, follow: true },
+    robots: { index: !hasFilter, follow: true },
     openGraph: { title, description, url: canonical, type: 'website' },
   }
 }
