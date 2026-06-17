@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getListings, getProjects, getAgents, getNews } from '@/lib/sheets'
+import { getCleanURLs } from '@/lib/cleanUrls'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
@@ -14,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const [listings, projects, agents, news] = await Promise.all([getListings(), getProjects(), getAgents(), getNews()])
+    const [listings, projects, agents, news, cleanURLs] = await Promise.all([getListings(), getProjects(), getAgents(), getNews(), getCleanURLs()])
 
     const listingPages = listings.map(l => ({
       url:             `${BASE}/listings/${l.slug}`,
@@ -46,7 +47,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified:    n.publishedAt ? new Date(n.publishedAt) : new Date(),
       }))
 
-    return [...staticPages, ...listingPages, ...projectPages, ...agentPages, ...newsPages]
+    const calculatorCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'calculator' && c.active)
+      .map(c => ({
+        url:             `${BASE}/calculator/${c.slug}`,
+        priority:        0.7,
+        changeFrequency: 'monthly' as const,
+      }))
+
+    return [...staticPages, ...listingPages, ...projectPages, ...agentPages, ...newsPages, ...calculatorCleanURLPages]
   } catch {
     return staticPages
   }
