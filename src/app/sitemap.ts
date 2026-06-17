@@ -47,6 +47,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified:    n.publishedAt ? new Date(n.publishedAt) : new Date(),
       }))
 
+    const listingCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'listings' && c.active)
+      .map(c => ({
+        url:             `${BASE}/listings/${c.slug}`,
+        priority:        0.8,
+        changeFrequency: 'weekly' as const,
+      }))
+
+    const newsCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'news' && c.active)
+      .map(c => ({
+        url:             `${BASE}/news/${c.slug}`,
+        priority:        0.6,
+        changeFrequency: 'monthly' as const,
+      }))
+
     const calculatorCleanURLPages = cleanURLs
       .filter(c => c.pathPrefix === 'calculator' && c.active)
       .map(c => ({
@@ -55,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'monthly' as const,
       }))
 
-    return [...staticPages, ...listingPages, ...projectPages, ...agentPages, ...newsPages, ...calculatorCleanURLPages]
+    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages]
   } catch {
     return staticPages
   }
