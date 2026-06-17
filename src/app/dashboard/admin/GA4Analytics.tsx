@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 interface Metrics   { activeUsers: number; sessions: number; pageViews: number }
 interface CityData  { city: string; users: number }
@@ -28,6 +28,12 @@ function fmt(n: number): string {
   return String(n)
 }
 
+function fmtDate(iso?: string): string {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`
+}
+
 function MetricCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
     <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
@@ -51,17 +57,23 @@ function BarRow({ label, value, max, color }: { label: string; value: number; ma
   )
 }
 
+const PERIOD_LABEL: Record<string, string> = {
+  daily: 'Harian', weekly: 'Mingguan', monthly: 'Bulanan',
+}
+
 export default function GA4Analytics() {
-  const [data,    setData]    = useState<AnalyticsData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [period,  setPeriod]  = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [data,       setData]       = useState<AnalyticsData | null>(null)
+  const [loading,    setLoading]    = useState(false)
+  const [period,     setPeriod]     = useState<'daily' | 'weekly' | 'monthly'>('weekly')
+  const [exporting,  setExporting]  = useState<'jpg' | 'pdf' | null>(null)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const printRef = useRef<HTMLDivElement>(null)
 
   async function load() {
     setLoading(true)
     try {
-      const res = await fetch('/api/analytics', { cache: 'no-store' })
+      const res  = await fetch('/api/analytics', { cache: 'no-store' })
       const text = await res.text()
-      // Cegah error jika response bukan JSON (misal HTML error dari service worker)
       if (!text.trim().startsWith('{')) {
         setData({ configured: true, error: `Server error (${res.status}) — coba refresh halaman.` })
         return
@@ -72,26 +84,72 @@ export default function GA4Analytics() {
     } finally { setLoading(false) }
   }
 
-  const metrics = data?.[period]
-  const maxCity = Math.max(...(data?.cities?.map(c => c.users) ?? [1]))
-  const maxType = Math.max(...(data?.typeCounts?.map(t => t.views) ?? [1]))
+  const exportAs = useCallback(async (format: 'jpg' | 'pdf') => {
+    if (!printRef.current || !data) return
+    setExporting(format)
+    setIsPrinting(true)
+    try {
+      await new Promise(r => setTimeout(r, 180))
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(printRef.current, {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
+      })
+      const dateStr  = fmtDate(data.updatedAt).replace(/\//g, '-')
+      const filename = `ga4-${period}-${dateStr}`
+
+      if (format === 'jpg') {
+        const link    = document.createElement('a')
+        link.download = `${filename}.jpg`
+        link.href     = canvas.toDataURL('image/jpeg', 0.95)
+        link.click()
+      } else {
+        const { jsPDF } = await import('jspdf')
+        const imgData   = canvas.toDataURL('image/jpeg', 0.95)
+        const pdf       = new jsPDF({ orientation: 'p', unit: 'px', format: [canvas.width / 2, canvas.height / 2] })
+        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2)
+        pdf.save(`${filename}.pdf`)
+      }
+    } finally {
+      setIsPrinting(false)
+      setExporting(null)
+    }
+  }, [data, period])
+
+  const metrics  = data?.[period]
+  const maxCity  = Math.max(...(data?.cities?.map(c => c.users)      ?? [1]))
+  const maxType  = Math.max(...(data?.typeCounts?.map(t => t.views)  ?? [1]))
 
   return (
     <div className="space-y-6">
+      {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="section-title mb-1">📊 Google Analytics 4</h1>
           <p className="text-sm text-gray-500">Traffic website Mansion Properti — data realtime dari GA4.</p>
         </div>
-        {data && (
-          <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
-            {loading ? '⏳' : '🔄'} Refresh Data
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {data?.configured && !data.error && metrics && (
+            <>
+              <button onClick={() => exportAs('jpg')} disabled={!!exporting}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                {exporting === 'jpg' ? '⏳' : '🖼'} JPG
+              </button>
+              <button onClick={() => exportAs('pdf')} disabled={!!exporting}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                {exporting === 'pdf' ? '⏳' : '📄'} PDF
+              </button>
+            </>
+          )}
+          {data && (
+            <button onClick={load} disabled={loading || !!exporting}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-colors">
+              {loading ? '⏳' : '🔄'} Refresh Data
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Belum dimuat */}
+      {/* ── Belum dimuat ── */}
       {!data && !loading && (
         <div className="card p-10 text-center">
           <div className="text-6xl mb-4">📊</div>
@@ -104,7 +162,7 @@ export default function GA4Analytics() {
         </div>
       )}
 
-      {/* Belum dikonfigurasi */}
+      {/* ── Belum dikonfigurasi ── */}
       {data && !data.configured && (
         <div className="card p-6 border-l-4 border-amber-400 bg-amber-50">
           <p className="font-semibold text-amber-800 mb-2">⚙️ GA4 Belum Dikonfigurasi</p>
@@ -121,13 +179,11 @@ export default function GA4Analytics() {
         </div>
       )}
 
-      {/* Error */}
+      {/* ── Error ── */}
       {data?.error && (
         <div className="card p-4 bg-red-50 border-l-4 border-red-400 text-red-700 text-sm space-y-3">
           <p className="font-semibold">❌ {data.error}</p>
-          {data.hint && (
-            <p className="text-red-600">💡 {data.hint}</p>
-          )}
+          {data.hint && <p className="text-red-600">💡 {data.hint}</p>}
           {(data.serviceAccountEmail || data.propertyId) && (
             <div className="bg-red-100 rounded-lg p-3 space-y-2 font-mono text-xs break-all">
               {data.serviceAccountEmail && (
@@ -149,94 +205,123 @@ export default function GA4Analytics() {
               <p className="font-semibold text-gray-800">Cara memperbaiki:</p>
               <p>1. Buka <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">analytics.google.com</a></p>
               <p>2. Pilih property dengan ID <strong>{data.propertyId}</strong></p>
-              <p>3. Klik <strong>Admin</strong> (ikon roda gigi) → <strong>Property Access Management</strong></p>
-              <p>4. Klik <strong>+ Add users</strong> → masukkan email service account → pilih role <strong>Viewer</strong> → Save</p>
+              <p>3. Klik <strong>Admin</strong> → <strong>Property Access Management</strong></p>
+              <p>4. Klik <strong>+ Add users</strong> → masukkan email service account → role <strong>Viewer</strong> → Save</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Data tersedia */}
+      {/* ── Data tersedia ── */}
       {data?.configured && !data.error && metrics && (
         <>
-          {/* Period selector */}
-          <div className="flex gap-2">
-            {(['daily', 'weekly', 'monthly'] as const).map(p => (
-              <button key={p} onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${period === p ? 'bg-primary-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                {p === 'daily' ? '📅 Harian' : p === 'weekly' ? '📆 Mingguan' : '🗓 Bulanan'}
-              </button>
-            ))}
-            {data.updatedAt && (
-              <span className="ml-auto self-center text-xs text-gray-400">
-                Update: {new Date(data.updatedAt).toLocaleTimeString('id-ID')}
-              </span>
-            )}
-          </div>
-
-          {/* Metrik utama */}
-          <div className="grid grid-cols-3 gap-4">
-            <MetricCard icon="👥" label="Pengguna Aktif" value={metrics.activeUsers} />
-            <MetricCard icon="🖱️" label="Sesi"           value={metrics.sessions}   />
-            <MetricCard icon="📄" label="Halaman Dilihat" value={metrics.pageViews}  />
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Top Kota */}
-            <div className="card p-5">
-              <h3 className="font-semibold text-primary-900 mb-4 flex items-center gap-2">
-                📍 Traffic per Kota
-                <span className="text-xs font-normal text-gray-400 ml-auto">30 hari terakhir</span>
-              </h3>
-              <div className="space-y-3">
-                {(data.cities ?? []).map(c => (
-                  <BarRow key={c.city} label={c.city} value={c.users} max={maxCity} color="bg-blue-400" />
-                ))}
-              </div>
-            </div>
-
-            {/* Tipe properti */}
-            <div className="card p-5">
-              <h3 className="font-semibold text-primary-900 mb-4 flex items-center gap-2">
-                🏠 Tipe Properti Dicari
-                <span className="text-xs font-normal text-gray-400 ml-auto">30 hari terakhir</span>
-              </h3>
-              <div className="space-y-3">
-                {(data.typeCounts ?? []).map(t => (
-                  <BarRow key={t.type} label={t.type} value={t.views} max={maxType} color="bg-emerald-400" />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Top Pages */}
-          {(data.topPages ?? []).length > 0 && (
-            <div className="card p-5">
-              <h3 className="font-semibold text-primary-900 mb-4">🔝 Halaman Terpopuler (30 hari)</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
-                      <th className="pb-2">#</th>
-                      <th className="pb-2">Halaman</th>
-                      <th className="pb-2 text-right">Views</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {(data.topPages ?? []).map((p, i) => (
-                      <tr key={p.path}>
-                        <td className="py-2 text-gray-400 text-xs w-6">{i + 1}</td>
-                        <td className="py-2 font-mono text-xs text-primary-700 truncate max-w-[280px]">{p.path}</td>
-                        <td className="py-2 text-right font-semibold text-gray-700 text-xs">{fmt(p.views)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          {/* Period selector — di luar printRef, tidak ikut diekspor */}
+          {!isPrinting && (
+            <div className="flex gap-2">
+              {(['daily', 'weekly', 'monthly'] as const).map(p => (
+                <button key={p} onClick={() => setPeriod(p)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${period === p ? 'bg-primary-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  {p === 'daily' ? '📅 Harian' : p === 'weekly' ? '📆 Mingguan' : '🗓 Bulanan'}
+                </button>
+              ))}
+              {data.updatedAt && (
+                <span className="ml-auto self-center text-xs text-gray-400">
+                  Update: {new Date(data.updatedAt).toLocaleTimeString('id-ID')}
+                </span>
+              )}
             </div>
           )}
 
-          {/* Link ke GA4 */}
+          {/* ── Area yang diekspor ── */}
+          <div ref={printRef} className="space-y-6 bg-white rounded-2xl p-1">
+
+            {/* Header ekspor — hanya muncul saat cetak */}
+            {isPrinting && (
+              <div className="px-4 pt-4 pb-3 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-bold text-primary-900">Mansion Realty</p>
+                    <p className="text-xs text-gray-500">Laporan Traffic Website — Google Analytics 4</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-primary-900">Periode: {PERIOD_LABEL[period]}</p>
+                    <p className="text-xs text-gray-500">Update: {fmtDate(data.updatedAt)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Metrik utama */}
+            <div className="grid grid-cols-3 gap-4 px-1">
+              <MetricCard icon="👥" label="Pengguna Aktif" value={metrics.activeUsers} />
+              <MetricCard icon="🖱️" label="Sesi"           value={metrics.sessions}   />
+              <MetricCard icon="📄" label="Halaman Dilihat" value={metrics.pageViews}  />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 px-1">
+              {/* Top Kota */}
+              <div className="card p-5">
+                <h3 className="font-semibold text-primary-900 mb-4 flex items-center gap-2">
+                  📍 Traffic per Kota
+                  <span className="text-xs font-normal text-gray-400 ml-auto">30 hari terakhir</span>
+                </h3>
+                <div className="space-y-3">
+                  {(data.cities ?? []).map(c => (
+                    <BarRow key={c.city} label={c.city} value={c.users} max={maxCity} color="bg-blue-400" />
+                  ))}
+                </div>
+              </div>
+
+              {/* Tipe properti */}
+              <div className="card p-5">
+                <h3 className="font-semibold text-primary-900 mb-4 flex items-center gap-2">
+                  🏠 Tipe Properti Dicari
+                  <span className="text-xs font-normal text-gray-400 ml-auto">30 hari terakhir</span>
+                </h3>
+                <div className="space-y-3">
+                  {(data.typeCounts ?? []).map(t => (
+                    <BarRow key={t.type} label={t.type} value={t.views} max={maxType} color="bg-emerald-400" />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Top Pages */}
+            {(data.topPages ?? []).length > 0 && (
+              <div className="card p-5 mx-1">
+                <h3 className="font-semibold text-primary-900 mb-4">🔝 Halaman Terpopuler (30 hari)</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-gray-400 border-b border-gray-100">
+                        <th className="pb-2">#</th>
+                        <th className="pb-2">Halaman</th>
+                        <th className="pb-2 text-right">Views</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {(data.topPages ?? []).map((p, i) => (
+                        <tr key={p.path}>
+                          <td className="py-2 text-gray-400 text-xs w-6">{i + 1}</td>
+                          <td className="py-2 font-mono text-xs text-primary-700 truncate max-w-[280px]">{p.path}</td>
+                          <td className="py-2 text-right font-semibold text-gray-700 text-xs">{fmt(p.views)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Footer ekspor */}
+            {isPrinting && (
+              <div className="px-4 pb-4 text-center text-xs text-gray-400">
+                mansionpro.id · Dicetak {new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })}
+              </div>
+            )}
+          </div>
+
+          {/* Link ke GA4 — di luar printRef */}
           <div className="bg-blue-50 rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
             <p className="text-sm text-blue-700 font-medium">📊 Lihat laporan lengkap di Google Analytics 4</p>
             <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer"
