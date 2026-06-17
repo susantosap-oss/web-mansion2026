@@ -19,6 +19,7 @@ const PATH_PREFIXES: { value: CleanURL['pathPrefix']; label: string; icon: strin
   { value: 'news',          icon: '📰', label: 'News',          desc: '/news/{slug}'          },
   { value: 'daftar-harga',  icon: '📋', label: 'Daftar Harga',  desc: '/daftar-harga/{slug}'  },
   { value: 'titip-listing', icon: '📝', label: 'Titip Listing', desc: '/titip-listing/{slug}' },
+  { value: 'calculator',   icon: '🧮', label: 'Kalkulator',    desc: '/calculator/{slug}'   },
 ]
 
 const PROPERTY_TYPES = ['Rumah', 'Apartemen', 'Ruko', 'Kavling', 'Gudang', 'Gedung']
@@ -115,6 +116,17 @@ function buildAutoSEO(prefix: CleanURL['pathPrefix'], form: Omit<FormState, 'pat
       const h1      = `Jual atau Sewakan ${prop} Anda ${locText} Lebih Cepat`
       const title   = `Titip Jual ${prop} ${locText} — Gratis, Cepat Laku | Mansion Properti`
       const desc    = `Ingin jual atau sewakan ${propLow} ${locText}? Titip listing ke Mansion Properti — gratis biaya promosi, dipasarkan ke ribuan calon pembeli aktif, ditangani agen profesional bersertifikat BNSP.`
+      return { slug, label, h1, title, description: desc }
+    }
+
+    case 'calculator': {
+      const prop    = form.propertyType || 'Rumah'
+      const propLow = prop.toLowerCase()
+      const slug    = `simulasi-kpr-${toSlug(prop)}-${locSlug}`
+      const label   = `Simulasi KPR ${prop} ${locText}`
+      const h1      = `Simulasi KPR & Cicilan ${prop} ${locText}`
+      const title   = `Simulasi KPR ${prop} ${locText} 2026 — Hitung Cicilan Online | Mansion Realty`
+      const desc    = `Hitung simulasi KPR ${propLow} ${locText}: cicilan bulanan, DP minimum, tenor 5–30 tahun, bunga bank terbaru 2026. Konvensional & syariah. Konsultasi gratis bersama agen Mansion Realty.`
       return { slug, label, h1, title, description: desc }
     }
   }
@@ -250,7 +262,7 @@ export default function CleanURLsManager() {
   const preview     = autoSEO(form)
   const curPrefix   = PATH_PREFIXES.find(p => p.value === form.pathPrefix)!
   const liveSlug    = touched.slug ? form.slug : preview.slug
-  const showFilters = form.pathPrefix === 'listings' || form.pathPrefix === 'projects' || form.pathPrefix === 'titip-listing'
+  const showFilters = form.pathPrefix === 'listings' || form.pathPrefix === 'projects' || form.pathPrefix === 'titip-listing' || form.pathPrefix === 'calculator'
 
   // Group tabel per prefix
   const grouped = PATH_PREFIXES.map(p => ({

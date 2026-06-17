@@ -100,7 +100,7 @@ const DEFAULT_DISCLAIMER = [
 
 
 
-export default function CalculatorPage() {
+export default function CalculatorPage({ customH1 }: { customH1?: string } = {}) {
   const [tab, setTab]           = useState<Tab>('konven')
   const [BANKS, setBANKS]       = useState(DEFAULT_BANKS)
   const [disclaimers, setDisclaimers] = useState(DEFAULT_DISCLAIMER)
@@ -198,7 +198,7 @@ export default function CalculatorPage() {
         <div className="absolute inset-0 opacity-5" style={{backgroundImage:'repeating-linear-gradient(45deg,#c9a84c 0,#c9a84c 1px,transparent 0,transparent 50%)',backgroundSize:'20px 20px'}}/>
         <div className="section-wrapper relative z-10">
           <div className="divider-gold mb-3 mt-3"/>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Kalkulator KPR & Pembiayaan</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{customH1 || 'Kalkulator KPR & Pembiayaan'}</h1>
           <p className="text-white/60 text-sm">Simulasi real-time · 4 skema pembiayaan · Biaya-biaya lengkap</p>
         </div>
       </div>
