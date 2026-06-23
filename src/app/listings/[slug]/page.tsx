@@ -248,7 +248,7 @@ export default async function ListingDetailPage({ params }: Props) {
                 </p>
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl md:text-4xl font-bold text-primary-900">{formatPrice(listing.price)}</span>
-                  {listing.priceUnit !== 'Jual' && <span className="text-gray-400">/ {listing.priceUnit.replace('Sewa/','')}</span>}
+                  {listing.priceUnit === 'Sewa/Tahun' && <span className="text-gray-400">/ Tahun</span>}
                 </div>
               </div>
 
