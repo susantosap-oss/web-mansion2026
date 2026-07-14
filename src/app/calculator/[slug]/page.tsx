@@ -12,7 +12,7 @@ interface Props { params: { slug: string } }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cleanURL = await findCleanURL(params.slug)
   if (!cleanURL || cleanURL.pathPrefix !== 'calculator') {
-    return { title: 'Simulasi KPR — Mansion Realty' }
+    return { title: 'Simulasi KPR — Mansion Realty', robots: { index: false, follow: false } }
   }
   return {
     title: cleanURL.title,

@@ -15,9 +15,12 @@ const shuffleDaily = (arr: any[]) => {
 };
 export const dynamic = "force-dynamic"
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
 export const metadata: Metadata = {
   title: 'Mansion Realty | Properti Impian Anda, Investasi Terbaik Anda',
   description: 'Temukan proyek perumahan, rumah dijual, dan properti premium bersama agen terpercaya Mansion Realty.',
+  alternates: { canonical: BASE },
 }
 
 export default async function HomePage() {
