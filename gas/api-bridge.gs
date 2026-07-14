@@ -545,7 +545,7 @@ function onSheetChange(e) {
   notifyRevalidate(action)
 }
 
-// Jalankan SEKALI dari GAS editor: Run → createEditTrigger
+// Jalankan SEKALI dari GAS editor: Run → createAllTriggers
 // PENTING: pakai onEdit() bukan onChange() — onChange hanya fire saat struktur sheet berubah,
 // bukan saat isi sel diedit (= input listing baru dari CRM)
 function createChangeTrigger() {
@@ -556,6 +556,38 @@ function createChangeTrigger() {
   })
   ScriptApp.newTrigger('onSheetChange').forSpreadsheet(ss).onEdit().create()
   Logger.log('✅ Trigger onEdit → onSheetChange berhasil dipasang')
+}
+
+// Trigger harian: revalidate semua data agar cache web selalu segar
+// Dipasang oleh createAllTriggers() — tidak perlu dijalankan manual
+function dailyRevalidate() {
+  Logger.log('[Daily] Revalidate semua data...')
+  notifyRevalidate('all')
+}
+
+// ── SETUP SEMUA TRIGGER — Jalankan SEKALI dari GAS editor ────
+// Run → createAllTriggers
+// Memasang: (1) onEdit trigger untuk perubahan sheet real-time
+//           (2) time-based daily trigger sebagai backup jaga-jaga
+function createAllTriggers() {
+  // 1. Hapus semua trigger lama yang dikelola script ini
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    var fn = t.getHandlerFunction()
+    if (fn === 'onSheetChange' || fn === 'dailyRevalidate') {
+      ScriptApp.deleteTrigger(t)
+    }
+  })
+
+  // 2. onEdit trigger — fire setiap ada perubahan di sheet
+  var ss = SpreadsheetApp.openById(SHEET_ID)
+  ScriptApp.newTrigger('onSheetChange').forSpreadsheet(ss).onEdit().create()
+  Logger.log('✅ onEdit trigger → onSheetChange terpasang')
+
+  // 3. Time-based trigger — revalidate setiap hari pukul 06.00
+  ScriptApp.newTrigger('dailyRevalidate').timeBased().everyDays(1).atHour(6).create()
+  Logger.log('✅ Daily trigger → dailyRevalidate pukul 06.00 terpasang')
+
+  Logger.log('🎉 Semua trigger aktif — tidak perlu redeploy manual lagi')
 }
 
 // ── TEST (jalankan manual di GAS editor) ─────────────────
