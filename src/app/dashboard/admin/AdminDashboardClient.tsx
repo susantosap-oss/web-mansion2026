@@ -12,11 +12,11 @@ import { AuthUser } from '@/lib/auth'
 import { DEFAULT_SCORE_WEIGHTS, AgentScoreWeights } from '@/types'
 import { markdownToHtml } from '@/lib/markdownToHtml'
 
-interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number } }
+interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number; leads: number } }
 
 type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring' | 'cleanurls' | 'trends' | 'analytics' | 'komisi'
 
-export default function AdminDashboardClient({ user }: Props) {
+export default function AdminDashboardClient({ user, stats }: Props) {
   const router = useRouter()
   const [tab, setTab]               = useState<Tab>('overview')
   const [saving, setSaving]         = useState(false)
@@ -458,10 +458,10 @@ export default function AdminDashboardClient({ user }: Props) {
             <h1 className="section-title mb-6">Dashboard Admin</h1>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { icon:'🏠', label:'Total Listing',  value:'7', color:'bg-blue-50 text-blue-700' },
-                { icon:'👤', label:'Total Agen',      value:'24', color:'bg-green-50 text-green-700' },
-                { icon:'📩', label:'Total Leads',    value:'0', color:'bg-purple-50 text-purple-700' },
-                { icon:'📰', label:'Total Berita',   value:'0', color:'bg-amber-50 text-amber-700' },
+                { icon:'🏠', label:'Total Listing',  value: stats?.listings ?? 0, color:'bg-blue-50 text-blue-700' },
+                { icon:'👤', label:'Total Agen',      value: stats?.agents   ?? 0, color:'bg-green-50 text-green-700' },
+                { icon:'📩', label:'Total Leads',    value: stats?.leads    ?? 0, color:'bg-purple-50 text-purple-700' },
+                { icon:'📰', label:'Total Berita',   value: stats?.news     ?? 0, color:'bg-amber-50 text-amber-700' },
               ].map(s => (
                 <div key={s.label} className={`rounded-2xl p-5 ${s.color}`}>
                   <div className="text-2xl mb-2">{s.icon}</div>

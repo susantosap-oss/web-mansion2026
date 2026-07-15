@@ -8,5 +8,6 @@ export default async function AdminDashboardPage() {
   if (!session) redirect('/login')
   if (session.role === 'agent') redirect('/dashboard/agent')
     const [listings, agents, news] = await Promise.all([getListings(), getAgents(), getNews()]);
-  return <AdminDashboardClient user={session} stats={{ listings: listings.length, agents: agents.length, news: news.length }} />
+  const totalLeads = agents.reduce((sum, a) => sum + (a.leadsCount ?? 0), 0)
+  return <AdminDashboardClient user={session} stats={{ listings: listings.length, agents: agents.length, news: news.length, leads: totalLeads }} />
 }

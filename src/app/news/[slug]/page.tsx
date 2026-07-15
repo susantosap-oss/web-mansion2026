@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
+import { findCleanURLByPrefix } from '@/lib/cleanUrls'
 import { markdownToHtml } from '@/lib/markdownToHtml'
 import BackButton from '@/components/ui/BackButton'
 import RelatedProperties from '@/components/property/RelatedProperties'
@@ -14,6 +15,18 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug = decodeURIComponent(params.slug)
+
+  // CleanURL check — halaman kategori berita
+  const cleanURL = await findCleanURLByPrefix('news', slug)
+  if (cleanURL) {
+    return {
+      title:       cleanURL.title,
+      description: cleanURL.description,
+      alternates:  { canonical: `${BASE}/news/${slug}` },
+      openGraph:   { title: cleanURL.title, description: cleanURL.description, url: `${BASE}/news/${slug}`, type: 'website' },
+    }
+  }
+
   const news = await getNews()
   const item = news.find(n => n.slug === slug)
   if (!item) return { title: 'Artikel Tidak Ditemukan' }
@@ -44,6 +57,87 @@ function formatDate(ts: string): string {
 
 export default async function NewsDetailPage({ params }: Props) {
   const slug = decodeURIComponent(params.slug)
+
+  // ── CleanURL: halaman kategori berita ─────────────────────
+  const cleanURL = await findCleanURLByPrefix('news', slug)
+  if (cleanURL) {
+    const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+    const allNews = await getNews()
+    const filtered = allNews.filter(n => slugify(n.category) === slug)
+
+    const jsonLd = {
+      '@context':    'https://schema.org',
+      '@type':       'ItemList',
+      name:          cleanURL.h1,
+      numberOfItems: filtered.length,
+      url:           `${BASE}/news/${slug}`,
+      itemListElement: filtered.slice(0, 20).map((n, i) => ({
+        '@type':   'ListItem',
+        position:  i + 1,
+        item: { '@type': 'NewsArticle', name: n.title, url: `${BASE}/news/${n.slug}`, ...(n.coverImage ? { image: n.coverImage } : {}) },
+      })),
+    }
+
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type':    'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda', item: BASE },
+        { '@type': 'ListItem', position: 2, name: 'Berita',  item: `${BASE}/news` },
+        { '@type': 'ListItem', position: 3, name: cleanURL.label, item: `${BASE}/news/${slug}` },
+      ],
+    }
+
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}/>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}/>
+        <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
+          <div className="section-wrapper">
+            <nav aria-label="Breadcrumb" className="text-sm text-gray-400 mb-6 flex items-center gap-2">
+              <Link href="/" className="hover:text-primary-900">Beranda</Link>
+              <span>/</span>
+              <Link href="/news" className="hover:text-primary-900">Berita</Link>
+              <span>/</span>
+              <span className="text-primary-900 font-medium">{cleanURL.label}</span>
+            </nav>
+            <div className="mb-8">
+              <div className="divider-gold mb-3"/>
+              <h1 className="section-title">{cleanURL.h1}</h1>
+              <p className="text-gray-500 mt-2">{filtered.length} artikel ditemukan</p>
+            </div>
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filtered.map(n => (
+                  <Link key={n.slug} href={`/news/${n.slug}`}
+                    className="card overflow-hidden group hover:shadow-lg transition-shadow">
+                    {n.coverImage && (
+                      <div className="relative h-48 bg-gray-100">
+                        <Image src={n.coverImage} alt={n.title} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="33vw"/>
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <span className="badge bg-primary-900 text-white text-xs mb-2">{n.category}</span>
+                      <h2 className="font-bold text-primary-900 line-clamp-2 mb-2 group-hover:text-gold transition-colors">{n.title}</h2>
+                      {n.summary && <p className="text-gray-500 text-sm line-clamp-2">{n.summary}</p>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <div className="text-5xl mb-4">📰</div>
+                <p>Belum ada artikel untuk kategori ini.</p>
+                <Link href="/news" className="btn-primary mt-6">Lihat Semua Berita</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Artikel individual ─────────────────────────────────────
   const news = await getNews()
   const item = news.find(n => n.slug === slug)
   if (!item) notFound()
