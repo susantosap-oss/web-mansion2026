@@ -5,7 +5,7 @@
 
 var SHEET_ID      = '1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI'
 var API_SECRET    = 'mansion2026'
-var NEXT_SITE_URL = 'https://mansionrealty.co.id'
+var NEXT_SITE_URL = 'https://web-mansion2026-cb5stice7a-et.a.run.app'
 
 var SHEETS = {
   LISTINGS:        'LISTING',
@@ -17,6 +17,7 @@ var SHEETS = {
   TEAMS:           'TEAMS',
   CONFIG:          'CONFIG',
   LISTING_AGENTS:  'LISTING_AGENTS',
+  ASSETS:          'ASSETS',
 }
 
 // ── ENTRY POINT GET ───────────────────────────────────────
@@ -156,6 +157,14 @@ function doGet(e) {
         // Terima via GET params (hindari masalah POST redirect body hilang)
         saveLead(e.parameter)
         return resp({ success: true, message: 'Lead berhasil disimpan' })
+
+      case 'getAssets':
+        var assets = getSheet(SHEETS.ASSETS)
+        var activeAssets = assets.filter(function(r) {
+          var tampil = r['Tampilkan_di_Web']
+          return tampil !== false && String(tampil).toUpperCase() !== 'FALSE'
+        })
+        return resp({ success: true, data: activeAssets, total: activeAssets.length })
 
       case 'getGA4Stats':
         return resp(getGA4Stats())
@@ -542,6 +551,7 @@ function onSheetChange(e) {
   else if (sheetName === SHEETS.PROJECTS) action = 'getProjects'
   else if (sheetName === SHEETS.AGENTS)   action = 'getAgents'
   else if (sheetName === SHEETS.NEWS)     action = 'getNews'
+  else if (sheetName === SHEETS.ASSETS)   action = 'getAssets'
   notifyRevalidate(action)
 }
 

@@ -7,11 +7,20 @@ SERVICE_NAME="web-mansion2026"
 REPO_NAME="mansion-repo"
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/web"
 
+GAS_DEPLOYMENT_ID="AKfycbxK7R5QM3H_4G97UfwHmwL2LmZrXVYggoY3I6VTCfG8RwIC6wRmacwNnOeptMU_X2O65A"
+
 echo "🚀 Deploy Mansion Realty ke Cloud Run"
 echo "   Project : ${PROJECT_ID}"
 echo "   Region  : ${REGION}"
 echo "   Service : ${SERVICE_NAME}"
 echo "=================================="
+
+# ── 1. Update GAS (push kode + buat versi baru) ──────────
+echo "📤 Push & Deploy Google Apps Script..."
+cd ~/web-mansion2026
+npx @google/clasp push --force 2>/dev/null && \
+npx @google/clasp deploy --deploymentId ${GAS_DEPLOYMENT_ID} --description "auto-deploy $(date +%Y-%m-%d)" 2>/dev/null && \
+echo "✅ GAS updated!" || echo "⚠️  GAS deploy skip (clasp tidak login / tidak ada perubahan)"
 
 gcloud config set project ${PROJECT_ID}
 

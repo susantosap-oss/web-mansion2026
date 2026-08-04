@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Beranda',          href: '/' },
   { label: 'Proyek Baru',      href: '/projects' },
   { label: 'Jual-Sewa',        href: '/listings' },
+  { label: 'Asset Bank',       href: '/asset-bank' },
   { label: '🔍 Cari Properti', href: '/cari' },
   { label: 'KPR & Pembiayaan', href: '/calculator' },
   { label: 'Agen',             href: '/agents' },

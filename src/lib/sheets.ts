@@ -1,4 +1,4 @@
-import { Project, Listing, Agent, News, SheetRow, AgentScoreWeights, DEFAULT_SCORE_WEIGHTS } from '@/types'
+import { Project, Listing, Agent, News, AssetBank, SheetRow, AgentScoreWeights, DEFAULT_SCORE_WEIGHTS } from '@/types'
 import { getCached, setCached } from '@/lib/gasCache'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL!
@@ -443,6 +443,71 @@ export async function getNews(limit?: number): Promise<News[]> {
   }
 }
 
+// ── Mapper: ASSET → AssetBank ─────────────────────────────
+// Kolom CRM Tab Asset (flexible — handle variasi nama kolom):
+// ID | Nama_Bank | Jenis_Asset | Judul/Nama_Properti | Alamat | Kecamatan |
+// Kota | Harga/Harga_Limit | Luas_Tanah | Luas_Bangunan |
+// Foto_URL/Foto_1_URL | Deskripsi/Keterangan | Tanggal_Lelang | Status | Sertifikat
+function mapAsset(row: SheetRow): AssetBank {
+  // Jenis asset: baca labelAsset dari Source_Data JSON
+  let labelAsset = str(row[''] || '')  // kolom tanpa header = labelAsset
+  if (!labelAsset) {
+    try {
+      const sd = JSON.parse(str(row['Source_Data'] || '{}'))
+      labelAsset = str(sd.labelAsset || '')
+    } catch { /* skip */ }
+  }
+  const labelLower = labelAsset.toLowerCase()
+  const jenis: AssetBank['jenisAsset'] =
+    labelLower.includes('lelang') ? 'Lelang'
+    : labelLower.includes('cassie') || labelLower.includes('cessie') ? 'Cessie'
+    : labelLower.includes('ayda') ? 'AYDA'
+    : 'Lainnya'
+
+  return {
+    id:            str(row['ID']),
+    kodeAsset:     str(row['Kode_Asset'] || ''),
+    namaBank:      str(row['Bank_Kreditur'] || row['Nama_Bank'] || row['Bank'] || ''),
+    jenisAsset:    jenis,
+    tipeProperti:  str(row['Tipe_Properti'] || ''),
+    judul:         (() => {
+      const stripNo = (s: string) => s
+        .replace(/\bno\.?\s*\d+[a-z]?\b/gi, '')
+        .replace(/\bnomor\s*\d+[a-z]?\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
+      const nama = str(row['Nama_Asset'] || row['Judul'] || row['Nama_Properti'] || '')
+      if (nama) return stripNo(nama)
+      // Fallback: Alamat tanpa nomor + Kota
+      const namaJalan = stripNo(str(row['Alamat'] || ''))
+      const kota      = str(row['Kota'] || '')
+      return [namaJalan, kota].filter(Boolean).join(', ')
+    })(),
+    alamat:        str(row['Alamat'] || ''),
+    kecamatan:     str(row['Kecamatan'] || ''),
+    kota:          str(row['Kota'] || ''),
+    harga:         num(row['Harga_Limit_Lelang'] || row['Harga'] || row['Harga_Limit'] || 0),
+    luasTanah:     num(row['Luas_Tanah'] || 0),
+    luasBangunan:  num(row['Luas_Bangunan'] || 0),
+    coverImage:    str(row['Foto_1_URL'] || row['Foto_URL'] || row['Foto_Utama_URL'] || ''),
+    deskripsi:     str(row['Keterangan_Debitur'] || row['Deskripsi'] || row['Keterangan'] || ''),
+    tanggalLelang: str(row['Tanggal_Lelang'] || row['Tanggal'] || ''),
+    status:        str(row['Status'] || row['STATUS'] || ''),
+    sertifikat:    str(row['Sertifikat'] || ''),
+    mapsUrl:       str(row['Gmaps_link'] || row['GMaps_Link'] || row['Maps_URL'] || row['Maps_Link'] || row['Google_Maps'] || ''),
+  }
+}
+
+export async function getAssets(): Promise<AssetBank[]> {
+  try {
+    const rows = await fetchFromGAS<SheetRow[]>('getAssets', 120)
+    return rows.map(mapAsset).filter(a => a.judul || a.namaBank)
+  } catch (e) {
+    console.error('[getAssets]', e)
+    return []
+  }
+}
+
 // ── Utilities ─────────────────────────────────────────────
 
 export function formatPrice(price: number): string {
@@ -465,6 +530,6 @@ export function buildWALink(phone: string, message: string): string {
   return `https://wa.me/${normalized}?text=${encodeURIComponent(message)}`
 }
 
-export type { Listing, Project, Agent, News }
+export type { Listing, Project, Agent, News, AssetBank }
 export type { AgentScoreWeights }
 export { DEFAULT_SCORE_WEIGHTS }

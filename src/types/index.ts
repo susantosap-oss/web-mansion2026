@@ -49,6 +49,27 @@ export interface News {
   author: string; publishedAt: string; tags: string[]; viewCount: number
 }
 
+export interface AssetBank {
+  id: string
+  namaBank: string
+  jenisAsset: 'Lelang' | 'Cessie' | 'AYDA' | 'Lainnya'
+  judul: string
+  alamat: string
+  kecamatan: string
+  kota: string
+  harga: number
+  luasTanah: number
+  luasBangunan: number
+  coverImage: string
+  deskripsi: string
+  kodeAsset: string
+  tipeProperti: string
+  tanggalLelang: string
+  status: string
+  sertifikat: string
+  mapsUrl: string
+}
+
 export interface Lead {
   id?: string; listingId: string; listingTitle: string; agentId: string
   name: string; phone: string; email?: string; message: string

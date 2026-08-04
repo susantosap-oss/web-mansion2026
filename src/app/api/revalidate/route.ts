@@ -10,7 +10,8 @@ const ACTION_PATHS: Record<string, string[]> = {
   getProjects: ['/', '/projects'],
   getAgents:   ['/agents'],
   getNews:     ['/', '/news'],
-  all:         ['/', '/listings', '/projects', '/agents', '/news'],
+  getAssets:   ['/asset-bank'],
+  all:         ['/', '/listings', '/projects', '/agents', '/news', '/asset-bank'],
 }
 
 // Tags fetch cache di sheets.ts: `gas:${action}`
@@ -19,7 +20,8 @@ const ACTION_TAGS: Record<string, string[]> = {
   getProjects: ['gas:getProjects'],
   getAgents:   ['gas:getAgents'],
   getNews:     ['gas:getNews'],
-  all:         ['gas:getListings', 'gas:getListingAgents', 'gas:getProjects', 'gas:getAgents', 'gas:getNews'],
+  getAssets:   ['gas:getAssets'],
+  all:         ['gas:getListings', 'gas:getListingAgents', 'gas:getProjects', 'gas:getAgents', 'gas:getNews', 'gas:getAssets'],
 }
 
 export async function POST(request: Request) {
