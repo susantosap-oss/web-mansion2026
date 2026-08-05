@@ -11,7 +11,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/projects`, priority: 0.9,  changeFrequency: 'weekly'  as const },
     { url: `${BASE}/agents`,   priority: 0.7,  changeFrequency: 'weekly'  as const },
     { url: `${BASE}/news`,     priority: 0.7,  changeFrequency: 'weekly'  as const },
-    { url: `${BASE}/calculator`,priority: 0.6, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/calculator`,  priority: 0.6, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/asset-bank`,  priority: 0.8, changeFrequency: 'weekly'  as const },
   ]
 
   try {
@@ -71,7 +72,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'monthly' as const,
       }))
 
-    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages]
+    const assetBankCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'asset-bank' && c.active)
+      .map(c => ({
+        url:             `${BASE}/asset-bank/${c.slug}`,
+        priority:        0.8,
+        changeFrequency: 'weekly' as const,
+      }))
+
+    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages]
   } catch {
     return staticPages
   }
