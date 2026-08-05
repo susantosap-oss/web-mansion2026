@@ -45,7 +45,7 @@ export interface Agent {
 export interface News {
   id: string; slug: string; title: string; summary: string
   content: string; coverImage: string
-  category: 'Berita Properti' | 'Tips & Trik' | 'Regulasi' | 'KPR & Pembiayaan' | 'Investasi'
+  category: 'Berita Properti' | 'Tips & Trik' | 'Regulasi' | 'KPR & Pembiayaan' | 'Investasi' | 'Aset Lelang'
   author: string; publishedAt: string; tags: string[]; viewCount: number
 }
 

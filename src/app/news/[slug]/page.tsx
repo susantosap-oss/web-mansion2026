@@ -67,6 +67,7 @@ export default async function NewsDetailPage({ params }: Props) {
       'regulasi':        'Regulasi',
       'kpr-pembiayaan':  'KPR & Pembiayaan',
       'investasi':       'Investasi',
+      'aset-lelang':     'Aset Lelang',
     }
     const targetCategory = CATEGORY_SLUG_MAP[slug]
     const allNews = await getNews()

@@ -34,7 +34,7 @@ const CITIES = [
   'Pasuruan','Bangkalan','Probolinggo','Jombang','Kediri','Blitar',
   'Madiun','Banyuwangi','Jember','Tuban','Bojonegoro','Nganjuk',
 ]
-const NEWS_CATEGORIES = ['Berita Properti','Tips KPR','Investasi','Regulasi','Pasar Properti','Wawasan Agen']
+const NEWS_CATEGORIES = ['Berita Properti','Tips & Trik','Investasi','Regulasi','KPR & Pembiayaan','Aset Lelang']
 
 // ── Helpers ───────────────────────────────────────────────
 function toSlug(text: string): string {

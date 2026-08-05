@@ -495,7 +495,7 @@ export default function AdminDashboardClient({ user, stats }: Props) {
                 <div>
                   <label className="label-field">Kategori</label>
                   <select className="input-field" value={newsForm.kategori} onChange={e => setNewsForm(p => ({...p, kategori: e.target.value}))}>
-                    {['Berita Properti','Tips & Trik','Regulasi','KPR & Pembiayaan','Investasi'].map(k => <option key={k}>{k}</option>)}
+                    {['Berita Properti','Tips & Trik','Regulasi','KPR & Pembiayaan','Investasi','Aset Lelang'].map(k => <option key={k}>{k}</option>)}
                   </select>
                 </div>
                 <div>
