@@ -92,7 +92,7 @@ export interface SheetRow { [key: string]: string | number | boolean | null }
 
 export interface CleanURL {
   id: string
-  pathPrefix: 'listings' | 'projects' | 'agents' | 'news' | 'daftar-harga' | 'titip-listing' | 'calculator'
+  pathPrefix: 'listings' | 'projects' | 'agents' | 'news' | 'daftar-harga' | 'titip-listing' | 'calculator' | 'asset-bank'
   slug: string
   label: string
   filterType?: 'Sale' | 'Rent'

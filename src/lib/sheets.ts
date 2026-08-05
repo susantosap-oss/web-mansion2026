@@ -289,11 +289,6 @@ export async function getListings(filter?: {
       })
 
     let listings = rows
-      .filter(r => {
-        const v = r['Tampilkan_di_Web']
-        // Tampilkan kecuali eksplisit FALSE — row tanpa nilai = tetap tampil
-        return v !== false && String(v).toUpperCase() !== 'FALSE'
-      })
       .map(row => {
         // Join data owner (agen utama)
         const agent = agentMap.get(str(row['Agen_ID']))

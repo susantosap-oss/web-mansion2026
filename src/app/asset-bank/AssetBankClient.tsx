@@ -21,7 +21,7 @@ function getFallbackImg(tipe: string): string {
 const WA_ADMIN = '6281703133252'
 
 function buildWAAsset(asset: AssetBank): string {
-  const msg = `Halo Admin Mansion Realty, saya tertarik dengan Asset Bank berikut:\n\n🏦 *${asset.namaBank}*\n🏠 ${asset.judul}\n📍 ${[asset.kecamatan, asset.kota].filter(Boolean).join(', ')}\n💰 ${formatPrice(asset.harga)}\n\nMohon info lebih lanjut. Terima kasih.`
+  const msg = `Halo Admin Mansion Realty, saya tertarik dengan Aset Bank berikut:\n\n🏦 *${asset.namaBank}*\n🏠 ${asset.judul}\n📍 ${[asset.kecamatan, asset.kota].filter(Boolean).join(', ')}\n💰 ${formatPrice(asset.harga)}\n\nMohon info lebih lanjut. Terima kasih.`
   return `https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(msg)}`
 }
 
@@ -29,7 +29,7 @@ const JENIS_BADGE: Record<AssetBank['jenisAsset'], { label: string; cls: string 
   'Lelang':  { label: '🔨 Lelang',  cls: 'bg-red-600 text-white' },
   'Cessie':  { label: '🏦 Cessie',  cls: 'bg-blue-700 text-white' },
   'AYDA':    { label: '🏦 AYDA',    cls: 'bg-indigo-700 text-white' },
-  'Lainnya': { label: 'Asset Bank', cls: 'bg-gray-700 text-white' },
+  'Lainnya': { label: 'Aset Bank', cls: 'bg-gray-700 text-white' },
 }
 
 function AssetCard({ asset }: { asset: AssetBank }) {
@@ -115,10 +115,28 @@ function AssetCard({ asset }: { asset: AssetBank }) {
 
 const PER_PAGE = 24
 
+const HARGA_RANGES = [
+  { value: '',       label: 'Semua Harga' },
+  { value: '<500',   label: '< 500 Jt' },
+  { value: '500-1M', label: '500 Jt – 1 M' },
+  { value: '1-3M',   label: '1 M – 3 M' },
+  { value: '>3M',    label: '> 3 M' },
+]
+
+function matchHarga(harga: number, range: string): boolean {
+  if (!range) return true
+  if (range === '<500')   return harga < 500_000_000
+  if (range === '500-1M') return harga >= 500_000_000 && harga < 1_000_000_000
+  if (range === '1-3M')   return harga >= 1_000_000_000 && harga < 3_000_000_000
+  if (range === '>3M')    return harga >= 3_000_000_000
+  return true
+}
+
 export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
   const [filterKota,  setFilterKota]  = useState('')
   const [filterBank,  setFilterBank]  = useState('')
   const [filterJenis, setFilterJenis] = useState('')
+  const [filterHarga, setFilterHarga] = useState('')
   const [page, setPage] = useState(1)
 
   const resetPage = () => setPage(1)
@@ -132,8 +150,9 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
     if (filterKota  && a.kota       !== filterKota)  return false
     if (filterBank  && a.namaBank   !== filterBank)  return false
     if (filterJenis && a.jenisAsset !== filterJenis) return false
+    if (filterHarga && !matchHarga(a.harga, filterHarga)) return false
     return true
-  }), [assets, filterKota, filterBank, filterJenis])
+  }), [assets, filterKota, filterBank, filterJenis, filterHarga])
 
   const sorted = useMemo(() =>
     [...filtered].sort((a, b) => {
@@ -145,7 +164,7 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
 
   const totalPages = Math.ceil(sorted.length / PER_PAGE)
   const paginated  = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE)
-  const hasFilter  = filterKota || filterBank || filterJenis
+  const hasFilter  = filterKota || filterBank || filterJenis || filterHarga
 
   return (
     <>
@@ -188,10 +207,21 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
             </select>
           </div>
 
+          {/* Filter Harga */}
+          <div className="flex-1 min-w-[150px]">
+            <label className="block text-xs text-gray-500 font-medium mb-1">Harga</label>
+            <select
+              value={filterHarga}
+              onChange={e => { setFilterHarga(e.target.value); resetPage() }}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400">
+              {HARGA_RANGES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+
           {/* Reset */}
           {hasFilter && (
             <button
-              onClick={() => { setFilterKota(''); setFilterBank(''); setFilterJenis(''); resetPage() }}
+              onClick={() => { setFilterKota(''); setFilterBank(''); setFilterJenis(''); setFilterHarga(''); resetPage() }}
               className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors whitespace-nowrap">
               ✕ Reset
             </button>
@@ -249,7 +279,7 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
         <div className="text-center py-20">
           <div className="text-6xl mb-4">🏦</div>
           <h3 className="font-display font-bold text-primary-900 text-xl mb-2">
-            {assets.length === 0 ? 'Belum ada Asset Bank tersedia' : 'Asset tidak ditemukan'}
+            {assets.length === 0 ? 'Belum ada Aset Bank tersedia' : 'Asset tidak ditemukan'}
           </h3>
           <p className="text-gray-500 text-sm mb-4">
             {assets.length === 0
@@ -276,7 +306,7 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
           Tim kami siap membantu proses pengecekan, negosiasi, dan administrasi asset bank.
         </p>
         <a
-          href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Halo Admin Mansion Realty, saya ingin tanya mengenai Asset Bank yang tersedia. Mohon informasinya. Terima kasih.')}`}
+          href={`https://wa.me/${WA_ADMIN}?text=${encodeURIComponent('Halo Admin Mansion Realty, saya ingin tanya mengenai Aset Bank yang tersedia. Mohon informasinya. Terima kasih.')}`}
           target="_blank" rel="noopener noreferrer"
           className="inline-flex items-center gap-2 bg-[#25D366] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#1ebd5a] transition-colors text-sm">
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

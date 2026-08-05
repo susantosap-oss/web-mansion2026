@@ -5,7 +5,7 @@
 
 var SHEET_ID      = '1iHIGVPl7l7dDEVpqHGvZxFVIL8nqUx3G_skBPzFimzI'
 var API_SECRET    = 'mansion2026'
-var NEXT_SITE_URL = 'https://web-mansion2026-cb5stice7a-et.a.run.app'
+var NEXT_SITE_URL = 'https://www.mansionpro.id'
 
 var SHEETS = {
   LISTINGS:        'LISTING',

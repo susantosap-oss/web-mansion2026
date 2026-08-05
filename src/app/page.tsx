@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getProjects, getListings, getNews } from '@/lib/sheets'
+import { getProjects, getListings, getNews, getAssets, formatPrice } from '@/lib/sheets'
 import { ProjectCard, ListingCard } from '@/components/property/PropertyCard'
 
 const shuffleDaily = (arr: any[]) => { 
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
 }
 
 export default async function HomePage() {
-  const [projects, saleListings, rentListings, news] = await Promise.all([
-    getProjects(), getListings({ type: "Sale" }), getListings({ type: "Rent" }), getNews(3),
+  const [projects, saleListings, rentListings, news, assets] = await Promise.all([
+    getProjects(), getListings({ type: "Sale" }), getListings({ type: "Rent" }), getNews(3), getAssets(),
   ]);
   const allListings = shuffleDaily([...saleListings, ...rentListings]).slice(0, 3);
   const wa = process.env.NEXT_PUBLIC_WA_OFFICE || "6281234567890"
@@ -48,14 +48,14 @@ export default async function HomePage() {
               Temukan rumah, apartemen, kavling, dan properti komersial premium dengan bantuan agen berpengalaman Mansion Realty.
             </p>
             <div className="flex flex-wrap gap-4 mb-14">
-              <Link href="/listings" className="btn-gold px-8 py-4 text-base"><span aria-hidden="true">🏠</span> Cari Properti Dijual &amp; Disewa</Link>
+              <Link href="/listings" className="btn-gold px-8 py-4 text-base"><span aria-hidden="true">🏠</span> Cari Properti</Link>
               <a href={`https://wa.me/${wa}?text=Halo%20Mansion%20Realty%2C%20saya%20ingin%20konsultasi`} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-primary-900 transition-all text-base">
                 💬 Konsultasi Gratis
               </a>
             </div>
             <div className="flex flex-wrap gap-8">
-              {[{n:`${projects.length}+`,l:'Proyek Aktif'},{n:`${saleListings.length}+`,l:'Dijual'}, {n:`${rentListings.length}+`,l:'Disewa'},{n:'50+',l:'Agen'},{n:'1.000+',l:'Transaksi Sukses'}].map(s => (
+              {[{n:`${projects.length}+`,l:'Proyek Aktif'},{n:`${saleListings.length}+`,l:'Dijual'},{n:`${rentListings.length}+`,l:'Disewa'},{n:'50+',l:'Agen'},{n:'100+',l:'Aset Bank'},{n:'1.000+',l:'Transaksi Sukses'}].map(s => (
                 <div key={s.l}><div className="text-3xl font-display font-bold text-gold">{s.n}</div><div className="text-sm text-white/60 mt-0.5">{s.l}</div></div>
               ))}
             </div>
@@ -96,6 +96,41 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Aset Bank */}
+      {assets.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="section-wrapper">
+            <div className="flex items-end justify-between mb-10">
+              <div>
+                <div className="divider-gold mb-3"/>
+                <h2 className="section-title">Aset Bank</h2>
+                <p className="section-subtitle">Properti Lelang &amp; Cessie/AYDA dari berbagai bank</p>
+              </div>
+              <Link href="/asset-bank" className="btn-outline text-sm">Lihat Semua Aset →</Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {assets.filter(a => a.coverImage?.startsWith('http')).slice(0, 3).map((a, i) => (
+                <div key={a.id || i} className="card">
+                  <div className="relative h-48 overflow-hidden">
+                    <Image src={a.coverImage} alt={a.judul} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw"/>
+                    <span className={`absolute top-3 left-3 badge text-xs font-bold ${a.jenisAsset === 'Lelang' ? 'bg-red-600 text-white' : 'bg-blue-700 text-white'}`}>
+                      {a.jenisAsset === 'Lelang' ? '🔨 Lelang' : `🏦 ${a.jenisAsset}`}
+                    </span>
+                    {a.namaBank && <span className="absolute top-3 right-3 badge bg-white/90 text-primary-900 text-xs font-semibold">{a.namaBank}</span>}
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 mb-1">📍 {[a.kecamatan, a.kota].filter(Boolean).join(', ') || '-'}</p>
+                    <h3 className="font-display font-semibold text-primary-900 line-clamp-2 leading-snug">{a.judul}</h3>
+                    <p className="price-display mt-2">{formatPrice(a.harga)}</p>
+                    <Link href="/asset-bank" className="btn-primary w-full text-center mt-3 block text-sm">Lihat Aset Bank →</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Titip Listing CTA */}
       <section className="py-20 bg-primary-900 relative overflow-hidden">
