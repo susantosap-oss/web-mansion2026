@@ -407,7 +407,7 @@ function mapNews(row: SheetRow): News {
   // Buat slug dari judul + timestamp
   const slug  = makeSlug(judul, ts.replace(/\D/g,'').slice(0,8) || String(Date.now()))
   const validCategories = ['Berita Properti','Tips & Trik','Regulasi','KPR & Pembiayaan','Investasi'] as const
-  const rawCat = str(row['Kategori'] || 'Berita Properti')
+  const rawCat = str(row['Kategori'] || 'Berita Properti').trim()
   const category = (validCategories.includes(rawCat as typeof validCategories[number])
     ? rawCat : 'Berita Properti') as News['category']
   return {

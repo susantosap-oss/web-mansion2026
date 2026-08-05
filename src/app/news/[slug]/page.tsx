@@ -61,9 +61,18 @@ export default async function NewsDetailPage({ params }: Props) {
   // ── CleanURL: halaman kategori berita ─────────────────────
   const cleanURL = await findCleanURLByPrefix('news', slug)
   if (cleanURL) {
-    const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+    const CATEGORY_SLUG_MAP: Record<string, string> = {
+      'berita-properti': 'Berita Properti',
+      'tips-trik':       'Tips & Trik',
+      'regulasi':        'Regulasi',
+      'kpr-pembiayaan':  'KPR & Pembiayaan',
+      'investasi':       'Investasi',
+    }
+    const targetCategory = CATEGORY_SLUG_MAP[slug]
     const allNews = await getNews()
-    const filtered = allNews.filter(n => slugify(n.category) === slug)
+    const filtered = targetCategory
+      ? allNews.filter(n => n.category === targetCategory)
+      : allNews
 
     const jsonLd = {
       '@context':    'https://schema.org',
