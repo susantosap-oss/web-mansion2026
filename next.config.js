@@ -20,6 +20,16 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'mansionpro.id' }],
+        destination: 'https://www.mansionpro.id/:path*',
+        permanent: true,
+      },
+    ]
+  },
   typescript:   { ignoreBuildErrors: true },
   eslint:       { ignoreDuringBuilds: true },
   images: {

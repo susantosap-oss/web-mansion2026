@@ -6,7 +6,7 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 export const metadata: Metadata = {
   title: 'Kebijakan Privasi',
   alternates: { canonical: `${BASE}/privacy` },
-  robots: { index: false, follow: false },
+  robots: { index: true, follow: true },
 }
 
 export default async function PrivacyPage() {
