@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mind Map — Website Mansion Properti 2026</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #070D1A; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+
+  #canvas { width: 100vw; height: 100vh; }
+
+  .node circle {
+    stroke-width: 2.5;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+  }
+  .node circle:hover { opacity: 0.82; }
+  .node text {
+    font-size: 11px;
+    fill: #fff;
+    pointer-events: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+  }
+  .node.root circle { filter: drop-shadow(0 0 18px #C9A84C88); }
+  .node.root text  { font-size: 13px; font-weight: 700; }
+  .node.l1 text    { font-size: 11px; font-weight: 600; }
+  .node.l2 text    { font-size: 10px; }
+  .node.l3 text    { font-size: 9px; fill: #ddd; }
+
+  .link { fill: none; stroke-width: 1.5; stroke-opacity: 0.4; }
+
+  #legend {
+    position: fixed; bottom: 20px; left: 20px;
+    background: rgba(8,18,42,0.93);
+    border: 1px solid #C9A84C44;
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #ccc; font-size: 12px;
+    backdrop-filter: blur(8px);
+  }
+  #legend h4 { color: #C9A84C; margin-bottom: 10px; font-size: 13px; letter-spacing: 1px; }
+  .leg-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+  .leg-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  #info {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(8,18,42,0.93);
+    border: 1px solid #C9A84C44;
+    border-radius: 10px;
+    padding: 10px 24px;
+    color: #aaa; font-size: 12px; text-align: center;
+    backdrop-filter: blur(8px); pointer-events: none;
+  }
+  #info strong { color: #C9A84C; }
+
+  #title {
+    position: fixed; top: 20px; left: 20px;
+    color: #C9A84C; font-size: 18px; font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  #title span { display: block; color: #556; font-size: 11px; font-weight: 400; margin-top: 2px; }
+
+  #controls { position: fixed; top: 20px; right: 20px; display: flex; gap: 8px; }
+  .btn {
+    background: rgba(8,18,42,0.93);
+    border: 1px solid #C9A84C55;
+    color: #C9A84C; padding: 7px 14px;
+    border-radius: 7px; cursor: pointer;
+    font-size: 12px; backdrop-filter: blur(8px);
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #C9A84C22; }
+
+  #tooltip {
+    position: fixed;
+    background: rgba(8,18,42,0.97);
+    border: 1px solid #C9A84C77;
+    border-radius: 8px; padding: 10px 14px;
+    color: #ddd; font-size: 12px;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s;
+    max-width: 290px; line-height: 1.6; z-index: 999;
+  }
+  #tooltip .tt-title { color: #C9A84C; font-weight: 600; margin-bottom: 4px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div id="title">Website Mansion Properti 2026<span>Mind Map Arsitektur — klik node untuk expand/collapse</span></div>
+<div id="info"><strong>Scroll</strong> untuk zoom &nbsp;|&nbsp; <strong>Drag</strong> untuk pan &nbsp;|&nbsp; <strong>Klik node</strong> untuk buka/tutup cabang</div>
+<div id="controls">
+  <button class="btn" onclick="expandAll()">Expand Semua</button>
+  <button class="btn" onclick="collapseAll()">Collapse Semua</button>
+  <button class="btn" onclick="resetView()">Reset View</button>
+</div>
+
+<svg id="canvas"></svg>
+
+<div id="legend">
+  <h4>KATEGORI</h4>
+  <div class="leg-row"><div class="leg-dot" style="background:#C9A84C"></div> Root</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#2980B9"></div> Pages & Routes</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#16A085"></div> API Routes</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#8E44AD"></div> Components</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#27AE60"></div> Library / Utils</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#E67E22"></div> Data Layer</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#E74C3C"></div> Auth & Config</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#2C3E50"></div> Deploy & Infra</div>
+  <div class="leg-row"><div class="leg-dot" style="background:#1ABC9C"></div> SEO & PWA</div>
+</div>
+
+<div id="tooltip"><div class="tt-title" id="tt-title"></div><div id="tt-body"></div></div>
+
+<script>
+const data = {
+  name: "Website Mansion\nProperti 2026",
+  desc: "Next.js 14 App Router + TypeScript\nmansionpro.id\nGCP Cloud Run asia-southeast2",
+  color: "#C9A84C",
+  level: "root",
+  children: [
+    // 1. PAGES & ROUTES
+    {
+      name: "PAGES &\nROUTES",
+      desc: "Next.js App Router\nsrc/app/ — file-based routing\nSSR + ISR + Client Components",
+      color: "#2980B9", level: "l1",
+      children: [
+        {
+          name: "Halaman Publik",
+          desc: "Semua bisa diakses tanpa login",
+          color: "#2980B9", level: "l2",
+          children: [
+            { name: "/  (Home)", desc: "Hero section, unggulan proyek,\nlisting terbaru, berita carousel", color: "#2980B9", level: "l3" },
+            { name: "/listings", desc: "Daftar listing (filter tipe,\nkota, harga, jual/sewa)", color: "#2980B9", level: "l3" },
+            { name: "/listings/[slug]", desc: "Detail listing: galeri foto,\nspesifikasi, form lead, agen", color: "#2980B9", level: "l3" },
+            { name: "/listings/titip", desc: "Listing titip jual/sewa\ndari pemilik langsung", color: "#2980B9", level: "l3" },
+            { name: "/projects", desc: "Daftar proyek pengembang:\nperumahan, apartemen, ruko", color: "#2980B9", level: "l3" },
+            { name: "/projects/[slug]", desc: "Detail proyek: spesifikasi,\nfasilitas, harga, lokasi", color: "#2980B9", level: "l3" },
+            { name: "/agents", desc: "Direktori agen aktif\n+ kartu profil", color: "#2980B9", level: "l3" },
+            { name: "/agents/[id]", desc: "Profil agen: bio, listing,\nstatistik, kontak WA", color: "#2980B9", level: "l3" },
+            { name: "/news + /news/[slug]", desc: "Artikel berita properti\n(markdown → HTML)", color: "#2980B9", level: "l3" },
+            { name: "/calculator", desc: "Kalkulator KPR:\nKonvensional & Syariah", color: "#2980B9", level: "l3" },
+            { name: "/daftar-harga/[slug]", desc: "Daftar harga per proyek", color: "#2980B9", level: "l3" },
+            { name: "/favourites", desc: "Listing favorit user\n(data di localStorage)", color: "#2980B9", level: "l3" },
+          ]
+        },
+        {
+          name: "Content Pages",
+          desc: "Route group (content)/\nTemplate ContentPage.tsx",
+          color: "#1A6FA0", level: "l2",
+          children: [
+            { name: "/about", desc: "Tentang Mansion Properti", color: "#1A6FA0", level: "l3" },
+            { name: "/career", desc: "Rekrut agen baru", color: "#1A6FA0", level: "l3" },
+            { name: "/contact", desc: "Kontak & lokasi kantor", color: "#1A6FA0", level: "l3" },
+            { name: "/privacy", desc: "Kebijakan privasi", color: "#1A6FA0", level: "l3" },
+            { name: "/terms", desc: "Syarat & ketentuan", color: "#1A6FA0", level: "l3" },
+          ]
+        },
+        {
+          name: "Dashboard\n(Protected)",
+          desc: "Perlu login JWT",
+          color: "#1A6FA0", level: "l2",
+          children: [
+            { name: "/dashboard/admin", desc: "Kelola clean URLs,\nsetting KPR, upload logo,\nCleanURLsManager.tsx", color: "#1A6FA0", level: "l3" },
+            { name: "/dashboard/agent", desc: "Statistik agen,\nlisting aktif, lead masuk", color: "#1A6FA0", level: "l3" },
+          ]
+        },
+        { name: "/login", desc: "Login email + password\n→ set JWT cookie\n'mansion_session'", color: "#2980B9", level: "l2" },
+      ]
+    },
+
+    // 2. API ROUTES
+    {
+      name: "API ROUTES\n(/api/)",
+      desc: "src/app/api/ — Next.js route handlers\nSemua dalam route.ts",
+      color: "#16A085", level: "l1",
+      children: [
+        { name: "/api/auth", desc: "POST: Login\nCari di AGENTS sheet\nvalidasi bcrypt → JWT cookie", color: "#16A085", level: "l2" },
+        { name: "/api/auth/set-password", desc: "POST: Set/reset password\nhash bcrypt → update Sheets", color: "#0E7D68", level: "l2" },
+        { name: "/api/config", desc: "GET: Ambil konfigurasi dinamis\nlogo URL, clean URLs,\nagent score weights", color: "#16A085", level: "l2" },
+        { name: "/api/sheets", desc: "GET: Proxy ke GAS api-bridge.gs\ngetListings, getProjects,\ngetAgents, getNews", color: "#0E7D68", level: "l2" },
+        { name: "/api/leads", desc: "POST: Simpan inquiry/lead\ndari form kontak di listing\n→ LEADS sheet via GAS", color: "#16A085", level: "l2" },
+        { name: "/api/favourite", desc: "POST/DELETE: Favorit listing\n(localStorage-backed)", color: "#0E7D68", level: "l2" },
+        { name: "/api/listing-events", desc: "POST: Track event view & share\nper listing (analytics)", color: "#16A085", level: "l2" },
+        { name: "/api/news", desc: "GET: Fetch artikel berita\ndari Sheets via GAS", color: "#0E7D68", level: "l2" },
+        { name: "/api/trends", desc: "GET: Google Trends API\npopularitas kata kunci properti", color: "#16A085", level: "l2" },
+        { name: "/api/icon/[size]", desc: "GET: Generate PWA icon dinamis\ndari Cloudinary (berbagai ukuran)", color: "#0E7D68", level: "l2" },
+        { name: "/api/revalidate", desc: "POST: Trigger ISR revalidation\ninvalidate cache halaman tertentu", color: "#16A085", level: "l2" },
+        { name: "/api/debug/score", desc: "GET: Debug kalkulasi\nskor agen (untuk admin)", color: "#0E7D68", level: "l2" },
+      ]
+    },
+
+    // 3. COMPONENTS
+    {
+      name: "COMPONENTS\nsrc/components/",
+      desc: "Reusable React components\n10 file total",
+      color: "#8E44AD", level: "l1",
+      children: [
+        {
+          name: "Layout",
+          desc: "Pembungkus halaman",
+          color: "#8E44AD", level: "l2",
+          children: [
+            { name: "Navbar.tsx", desc: "Top nav: logo, links menu,\ntombol WA, hamburger mobile", color: "#8E44AD", level: "l3" },
+            { name: "Footer.tsx", desc: "Info perusahaan, link sosmed,\nkontak, copyright", color: "#8E44AD", level: "l3" },
+          ]
+        },
+        {
+          name: "Property",
+          desc: "Komponen properti",
+          color: "#7D3C98", level: "l2",
+          children: [
+            { name: "PropertyCard.tsx", desc: "Kartu properti reusable (183 baris):\nfoto, harga, spesifikasi,\nbadge status, link detail", color: "#7D3C98", level: "l3" },
+            { name: "ImageGallery.tsx", desc: "Carousel / lightbox\ngaleri foto listing", color: "#7D3C98", level: "l3" },
+            { name: "RelatedProperties.tsx", desc: "Listing serupa\ndi bawah halaman detail", color: "#7D3C98", level: "l3" },
+          ]
+        },
+        {
+          name: "UI",
+          desc: "Komponen antarmuka",
+          color: "#6C3483", level: "l2",
+          children: [
+            { name: "BackButton.tsx", desc: "Tombol kembali generik", color: "#6C3483", level: "l3" },
+            { name: "BackButtonDynamic.tsx", desc: "Deteksi history browser\nvs direct link", color: "#6C3483", level: "l3" },
+            { name: "FavButton.tsx", desc: "Toggle favorit (ikon hati)\nupdate localStorage", color: "#6C3483", level: "l3" },
+            { name: "LogoBadge.tsx", desc: "Badge logo perusahaan\n(responsive berbagai ukuran)", color: "#6C3483", level: "l3" },
+            { name: "ChunkErrorHandler.tsx", desc: "Error boundary khusus\nNext.js chunk loading failure", color: "#6C3483", level: "l3" },
+          ]
+        },
+      ]
+    },
+
+    // 4. LIBRARY / UTILS
+    {
+      name: "LIBRARY &\nUTILS",
+      desc: "src/lib/ — 9 file\nServer & client utilities",
+      color: "#27AE60", level: "l1",
+      children: [
+        { name: "auth.ts", desc: "Custom JWT: create/verify token\nHMAC-SHA256, 7 hari expiry\ncookie: mansion_session", color: "#27AE60", level: "l2" },
+        { name: "sheets.ts", desc: "Fetch data publik dari GAS\n(listings, projects, agents, news)\n+ in-memory cache", color: "#1E8449", level: "l2" },
+        { name: "serverSheets.ts", desc: "SERVER ONLY: googleapis\nservice account → baca Sheets\nlangsung (config & auth)", color: "#27AE60", level: "l2" },
+        { name: "gasCache.ts", desc: "In-memory cache response GAS\ngetCached() / setCached()\ndengan TTL", color: "#1E8449", level: "l2" },
+        { name: "serverConfig.ts", desc: "Baca CONFIG sheet:\nlogo URL, clean URLs,\nagent score weights", color: "#27AE60", level: "l2" },
+        { name: "calculator.ts", desc: "KPR Konvensional (anuitas)\n& Syariah (flat)\nangsuran + breakdown bulanan", color: "#1E8449", level: "l2" },
+        { name: "cleanUrls.ts", desc: "Kelola SEO-friendly URL\ngetCleanURLs()\nfindCleanURL()", color: "#27AE60", level: "l2" },
+        { name: "markdownToHtml.ts", desc: "Convert artikel markdown\nmenjadi HTML\nuntuk halaman news", color: "#1E8449", level: "l2" },
+        { name: "imageLoader.ts", desc: "Custom Next.js image loader\nfallback ke Cloudinary CDN\njika gambar gagal", color: "#27AE60", level: "l2" },
+      ]
+    },
+
+    // 5. DATA LAYER
+    {
+      name: "DATA LAYER\n(Google Sheets)",
+      desc: "Single Source of Truth (SSoT)\nDiakses via 2 jalur:\nGAS (publik) + googleapis (config)",
+      color: "#E67E22", level: "l1",
+      children: [
+        {
+          name: "GAS api-bridge.gs",
+          desc: "Google Apps Script Web App\nProxy antara Next.js & Sheets\nvalidasi API_SECRET",
+          color: "#E67E22", level: "l2",
+          children: [
+            { name: "getListings", desc: "Return listing aktif saja\nstrip kolom sensitif", color: "#E67E22", level: "l3" },
+            { name: "getProjects", desc: "Return proyek non-inactive", color: "#E67E22", level: "l3" },
+            { name: "getAgents", desc: "Return agen aktif\nstrip Password_Hash & Telegram_ID", color: "#E67E22", level: "l3" },
+            { name: "getNews", desc: "Return artikel berita", color: "#E67E22", level: "l3" },
+          ]
+        },
+        {
+          name: "Sheet Tabs",
+          desc: "Data yang diakses",
+          color: "#D35400", level: "l2",
+          children: [
+            { name: "LISTING", desc: "Properti jual & sewa", color: "#D35400", level: "l3" },
+            { name: "PROJECTS", desc: "Proyek pengembang", color: "#D35400", level: "l3" },
+            { name: "AGENTS", desc: "Profil agen (pass di-strip)", color: "#D35400", level: "l3" },
+            { name: "NEWS", desc: "Artikel berita properti", color: "#D35400", level: "l3" },
+            { name: "LEADS", desc: "Inquiry dari form kontak", color: "#D35400", level: "l3" },
+            { name: "CONFIG", desc: "Logo, clean URLs,\nscore weights", color: "#D35400", level: "l3" },
+            { name: "LISTING_AGENTS", desc: "Mapping co-owner\nlisting ke agen", color: "#D35400", level: "l3" },
+            { name: "TEAMS", desc: "Struktur tim agen", color: "#D35400", level: "l3" },
+          ]
+        },
+        {
+          name: "Cache Strategy\n(3 Lapis)",
+          desc: "Mencegah quota limit & lambat",
+          color: "#E67E22", level: "l2",
+          children: [
+            { name: "gasCache.ts", desc: "In-memory per Cloud Run\ninstance, TTL configurable", color: "#E67E22", level: "l3" },
+            { name: "Next.js ISR", desc: "Incremental Static Regen\nrevalidate per route config", color: "#E67E22", level: "l3" },
+            { name: "Cloudflare Edge", desc: "Cache static assets\nglobal CDN nodes", color: "#E67E22", level: "l3" },
+          ]
+        },
+      ]
+    },
+
+    // 6. AUTH & CONFIG
+    {
+      name: "AUTH &\nCONFIG",
+      desc: "Custom JWT — bukan NextAuth\nBcrypt password hash\n2 role: admin + agen",
+      color: "#E74C3C", level: "l1",
+      children: [
+        { name: "Login Flow", desc: "POST /api/auth\n→ cari email di AGENTS sheet\n→ bcrypt verify\n→ set cookie mansion_session", color: "#E74C3C", level: "l2" },
+        { name: "JWT (jose)", desc: "HMAC-SHA256 (HS256)\n7 hari expiry\npayload: id, email, nama, role", color: "#C0392B", level: "l2" },
+        { name: "Role: admin", desc: "Akses dashboard admin:\nkelola clean URLs,\nupload logo, setting KPR", color: "#E74C3C", level: "l2" },
+        { name: "Role: agen", desc: "Akses dashboard agent:\nlihat statistik & lead", color: "#C0392B", level: "l2" },
+        { name: "serverConfig.ts", desc: "Baca CONFIG sheet:\nlogo URL dinamis,\nclean URL mapping,\nagent score weights", color: "#E74C3C", level: "l2" },
+        {
+          name: "Agent Scoring",
+          desc: "Rumus ranking agen\nAgentScoreWeights type",
+          color: "#C0392B", level: "l2",
+          children: [
+            { name: "LSP cert", desc: "Bobot sertifikasi", color: "#C0392B", level: "l3" },
+            { name: "Listings aktif", desc: "Jumlah listing agen", color: "#C0392B", level: "l3" },
+            { name: "Hits / views", desc: "Traffic profil agen", color: "#C0392B", level: "l3" },
+            { name: "Leads diterima", desc: "Jumlah inquiry masuk", color: "#C0392B", level: "l3" },
+            { name: "Login aktif", desc: "Keaktifan agen", color: "#C0392B", level: "l3" },
+          ]
+        },
+      ]
+    },
+
+    // 7. DEPLOY & INFRA
+    {
+      name: "DEPLOY &\nINFRA",
+      desc: "Docker multi-stage build\nGCP Cloud Run\nnode:20-alpine standalone",
+      color: "#546E7A", level: "l1",
+      children: [
+        { name: "Dockerfile", desc: "Multi-stage: deps → builder → runner\nnode:20-alpine, PORT=8080\nnext output: standalone", color: "#546E7A", level: "l2" },
+        { name: "GCP Cloud Run", desc: "Project: web-mansion2026\nRegion: asia-southeast2\nDomain: mansionpro.id", color: "#37474F", level: "l2" },
+        { name: "Cloud Build", desc: "CI/CD: build Docker image\npush ke Artifact Registry\nbash deploy.sh", color: "#546E7A", level: "l2" },
+        { name: "Cloudflare CDN", desc: "mansionpro.id\n→ GCP Load Balancer\nProxy + cache static", color: "#37474F", level: "l2" },
+        { name: "next.config.js", desc: "standalone output, next-pwa,\nCloudinary image domains,\ncustom imageLoader.ts", color: "#546E7A", level: "l2" },
+        { name: "TypeScript Config", desc: "tsconfig.json:\nES2017, strict, path alias\n@/* → ./src/*", color: "#37474F", level: "l2" },
+        { name: ".env Variables", desc: "GAS_API_URL, GAS_API_SECRET\nNEXTAUTH_SECRET, JWT_SECRET\nCLOUDINARY_*, company info", color: "#546E7A", level: "l2" },
+      ]
+    },
+
+    // 8. SEO & PWA
+    {
+      name: "SEO & PWA",
+      desc: "Optimasi mesin pencari\n+ Progressive Web App",
+      color: "#1ABC9C", level: "l1",
+      children: [
+        {
+          name: "SEO",
+          desc: "Search Engine Optimization",
+          color: "#1ABC9C", level: "l2",
+          children: [
+            { name: "generateMetadata()", desc: "Dynamic meta per halaman:\ntitle, description,\nOG image, OG tags", color: "#1ABC9C", level: "l3" },
+            { name: "sitemap.ts", desc: "Auto-generate sitemap.xml\ndari data listing & project", color: "#1ABC9C", level: "l3" },
+            { name: "robots.ts", desc: "Allow semua kecuali\n/dashboard & /api/*", color: "#1ABC9C", level: "l3" },
+            { name: "cleanUrls.ts", desc: "SEO-friendly slug mapping\ndikelola dari CONFIG sheet", color: "#1ABC9C", level: "l3" },
+            { name: "Google Trends API", desc: "/api/trends — insight\npopularitas keyword properti", color: "#1ABC9C", level: "l3" },
+            { name: "Google Search Console", desc: "Verifikasi via\npublic/google2243*.html", color: "#1ABC9C", level: "l3" },
+            { name: "docs/PANDUAN-SEO.md", desc: "Panduan SEO lengkap\n529 baris untuk tim konten", color: "#1ABC9C", level: "l3" },
+          ]
+        },
+        {
+          name: "PWA",
+          desc: "Progressive Web App",
+          color: "#148F77", level: "l2",
+          children: [
+            { name: "app/manifest.ts", desc: "Generate manifest.json dinamis:\nikon, tema, nama app", color: "#148F77", level: "l3" },
+            { name: "next-pwa + Workbox", desc: "Service worker otomatis\ncache strategi stale-while-revalidate", color: "#148F77", level: "l3" },
+            { name: "public/icons/", desc: "8 ukuran PWA icon:\n72px hingga 512px", color: "#148F77", level: "l3" },
+            { name: "/api/icon/[size]", desc: "Dynamic icon dari Cloudinary\n(logo bisa diganti dari admin)", color: "#148F77", level: "l3" },
+          ]
+        },
+        {
+          name: "TypeScript Types\nsrc/types/index.ts",
+          desc: "117 baris — semua type definitions",
+          color: "#1ABC9C", level: "l2",
+          children: [
+            { name: "Listing", desc: "id, slug, title, type, price,\nluasTanah, agent, status, featured", color: "#1ABC9C", level: "l3" },
+            { name: "Project", desc: "id, slug, name, developer,\npriceMin/Max, specs, facilities", color: "#1ABC9C", level: "l3" },
+            { name: "Agent", desc: "id, name, photo, phone, bio,\nspecializations, areas, stats", color: "#1ABC9C", level: "l3" },
+            { name: "News", desc: "slug, title, content,\ncategory, author, tags", color: "#1ABC9C", level: "l3" },
+            { name: "KPRParams/Result", desc: "Input/output kalkulator\nangsuran + breakdown", color: "#1ABC9C", level: "l3" },
+            { name: "CleanURL", desc: "originalSlug, cleanSlug,\ntype (listing|project)", color: "#1ABC9C", level: "l3" },
+          ]
+        },
+      ]
+    },
+
+    // 9. HOOKS
+    {
+      name: "HOOKS &\nINTEGRASI",
+      desc: "Custom React hooks\n+ layanan eksternal",
+      color: "#2C3E50", level: "l1",
+      children: [
+        { name: "useFavourite.ts", desc: "Kelola favorit di localStorage:\ntoggle(), isFavourite(),\nclearAll(), total count", color: "#2C3E50", level: "l2" },
+        { name: "useLogo.ts", desc: "Fetch URL logo dari /api/config\ncache di React state\ndipakai Navbar & LogoBadge", color: "#34495E", level: "l2" },
+        { name: "Cloudinary", desc: "Host foto listing & project\ncustom imageLoader.ts\nfallback CDN global", color: "#2C3E50", level: "l2" },
+        { name: "Google Font Poppins", desc: "Brand font via next/font\noptimasi load otomatis", color: "#34495E", level: "l2" },
+        { name: "Tailwind CSS", desc: "Tema: navy #0a2342\ngold #c9a84c\nfont Poppins\nutility-first styling", color: "#2C3E50", level: "l2" },
+        { name: "WhatsApp Button", desc: "Tombol WA di Navbar\n& halaman detail listing\nuntuk kontak agen langsung", color: "#34495E", level: "l2" },
+        { name: "docs/PANDUAN-\nPENULISAN-ARTIKEL.md", desc: "Panduan nulis artikel berita\n137 baris untuk tim konten", color: "#2C3E50", level: "l2" },
+      ]
+    },
+  ]
+};
+
+// ── D3 SETUP ─────────────────────────────────────────────────────────────
+const svg  = d3.select("#canvas");
+const W = window.innerWidth, H = window.innerHeight;
+svg.attr("width", W).attr("height", H);
+
+const g = svg.append("g");
+
+const zoom = d3.zoom()
+  .scaleExtent([0.12, 3])
+  .on("zoom", e => g.attr("transform", e.transform));
+svg.call(zoom);
+
+const tooltip = document.getElementById("tooltip");
+const ttTitle  = document.getElementById("tt-title");
+const ttBody   = document.getElementById("tt-body");
+
+function showTooltip(event, d) {
+  if (!d.data.desc) return;
+  ttTitle.textContent = d.data.name.replace(/\n/g, " ");
+  ttBody.innerHTML    = d.data.desc.replace(/\n/g, "<br>");
+  tooltip.style.opacity = 1;
+  moveTooltip(event);
+}
+function moveTooltip(event) {
+  const x = event.clientX + 14, y = event.clientY - 10;
+  tooltip.style.left = (x + 300 > W ? x - 315 : x) + "px";
+  tooltip.style.top  = (y + 130 > H ? y - 130  : y) + "px";
+}
+function hideTooltip() { tooltip.style.opacity = 0; }
+
+const RADIUS = Math.min(W, H) * 0.43;
+
+function buildTree() {
+  const root   = d3.hierarchy(data);
+  root.each(d => { d._children = d.children; if (d.depth > 1) d.children = null; });
+  const layout = d3.tree()
+    .size([2 * Math.PI, RADIUS])
+    .separation((a, b) => (a.parent === b.parent ? 1 : 2) / a.depth);
+  return { root, layout };
+}
+
+let { root, layout } = buildTree();
+layout(root);
+
+const linkGen = d3.linkRadial().angle(d => d.x).radius(d => d.y);
+
+const linkGroup = g.append("g").attr("class", "links");
+const nodeGroup = g.append("g").attr("class", "nodes");
+
+svg.call(zoom.transform, d3.zoomIdentity.translate(W / 2, H / 2));
+
+function update() {
+  layout(root);
+
+  // links
+  const links = linkGroup.selectAll(".link")
+    .data(root.links(), d => d.target.data.name + d.target.depth);
+
+  links.enter().append("path")
+    .attr("class", "link")
+    .attr("stroke", d => d.target.data.color || "#555")
+    .attr("d", linkGen)
+    .style("opacity", 0)
+    .transition().duration(450).style("opacity", 1);
+
+  links.transition().duration(450).attr("d", linkGen);
+  links.exit().transition().duration(300).style("opacity", 0).remove();
+
+  // nodes
+  const nodes = nodeGroup.selectAll(".node")
+    .data(root.descendants(), d => d.data.name + d.depth);
+
+  const r = d => d.depth === 0 ? 38 : d.depth === 1 ? 22 : d.depth === 2 ? 14 : 9;
+
+  const nodeEnter = nodes.enter().append("g")
+    .attr("class", d => `node ${d.data.level || "l2"}`)
+    .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
+    .style("opacity", 0)
+    .on("click", (event, d) => {
+      event.stopPropagation();
+      if (d._children) { d.children = d._children; d._children = null; }
+      else              { d._children = d.children; d.children = null; }
+      update();
+    })
+    .on("mouseover", showTooltip)
+    .on("mousemove", moveTooltip)
+    .on("mouseout",  hideTooltip);
+
+  nodeEnter.append("circle")
+    .attr("r", r)
+    .attr("fill",   d => d.data.color || "#333")
+    .attr("stroke", d => d3.color(d.data.color || "#333").brighter(0.8));
+
+  nodeEnter.each(function(d) {
+    const node   = d3.select(this);
+    const angle  = d.x * 180 / Math.PI;
+    const flip   = angle > 90 && angle < 270;
+    const lines  = d.data.name.split("\n");
+    const anchor = d.depth === 0 ? "middle" : flip ? "end" : "start";
+    const dx     = d.depth === 0 ? 0 : (flip ? -(r(d) + 6) : (r(d) + 6));
+
+    const text = node.append("text")
+      .attr("text-anchor", anchor)
+      .attr("transform",   `rotate(${flip && d.depth > 0 ? 180 : 0})`)
+      .attr("dy", lines.length > 1 ? "-0.4em" : "0.35em")
+      .attr("dx", dx);
+
+    lines.forEach((line, i) => {
+      text.append("tspan")
+        .attr("x",  dx)
+        .attr("dy", i === 0 ? 0 : "1.2em")
+        .text(line);
+    });
+  });
+
+  // collapse dot indicator
+  nodeEnter.filter(d => d._children)
+    .append("circle")
+    .attr("r", 4)
+    .attr("cx", d => {
+      const flip = d.x * 180 / Math.PI > 90 && d.x * 180 / Math.PI < 270;
+      return flip ? -(r(d) - 4) : (r(d) - 4);
+    })
+    .attr("fill", "#fff").attr("opacity", 0.7);
+
+  nodeEnter.transition().duration(450).style("opacity", 1);
+
+  nodes.transition().duration(450)
+    .attr("transform", d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
+    .style("opacity", 1);
+
+  nodes.exit().transition().duration(300).style("opacity", 0).remove();
+}
+
+update();
+
+function expandAll() {
+  root.each(d => { if (d._children) { d.children = d._children; d._children = null; } });
+  update();
+}
+function collapseAll() {
+  root.each(d => { if (d.depth > 0 && d.children) { d._children = d.children; d.children = null; } });
+  update();
+}
+function resetView() {
+  svg.transition().duration(600)
+    .call(zoom.transform, d3.zoomIdentity.translate(W / 2, H / 2));
+}
+
+window.addEventListener("resize", () => {
+  svg.attr("width", window.innerWidth).attr("height", window.innerHeight);
+});
+</script>
+</body>
+</html>
