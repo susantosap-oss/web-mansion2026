@@ -5,6 +5,7 @@
 - **Container:** Docker (node:20-alpine)
 - **Registry:** Google Artifact Registry
 - **Hosting:** Google Cloud Run (`asia-southeast2`)
+- **CDN/Proxy:** Cloudflare (Free Plan) — **tanpa GCP Load Balancer**
 - **Domain:** https://www.mansionpro.id
 
 ---
@@ -114,15 +115,44 @@ gcloud run services logs tail web-mansion2026 --region=asia-southeast2
 
 ---
 
-## Domain Mapping
+## Arsitektur Domain (Tanpa Load Balancer)
 
-Domain `www.mansionpro.id` sudah terhubung ke Cloud Run service.
-Tidak perlu konfigurasi ulang setiap deploy — revisi baru otomatis menerima traffic.
+> **PENTING:** GCP Load Balancer sudah dihapus untuk efisiensi biaya.
+> Jangan buat ulang Load Balancer. Gunakan arsitektur Cloudflare Worker di bawah.
 
-Untuk cek mapping:
-```bash
-gcloud run domain-mappings list --region=asia-southeast2
+### Alur Traffic
 ```
+User → Cloudflare → Cloudflare Worker → Cloud Run (web-mansion2026)
+mansionpro.id → 301 redirect → www.mansionpro.id (via Cloudflare Redirect Rule)
+```
+
+### Konfigurasi Cloudflare (jangan diubah)
+
+**DNS Records:**
+| Name | Type | Content | Proxy |
+|------|------|---------|-------|
+| `@` (mansionpro.id) | CNAME | `web-mansion2026-cb5stice7a-et.a.run.app` | Proxied ☁️ |
+| `www` | CNAME | `web-mansion2026-cb5stice7a-et.a.run.app` | Proxied ☁️ |
+| `crm` | CNAME | `crm-broker-properti-vnd6joen4a-et.a.run.app` | Proxied ☁️ |
+
+**Cloudflare Worker** (`cold-wildflower-0c6f`):
+- Route: `www.mansionpro.id/*`
+- Fungsi: reverse proxy ke Cloud Run, menggantikan Load Balancer
+- SSL Mode: Full (bukan Strict)
+
+**Cloudflare Redirect Rule** (`apex to www`):
+- Kondisi: `Hostname equals mansionpro.id`
+- Action: 301 redirect ke `https://www.mansionpro.id`
+
+### Jika Cloud Run URL Berubah Setelah Redeploy
+Cloud Run URL **tidak berubah** selama service name dan region sama. Jika karena sesuatu hal URL berubah, update CNAME di Cloudflare DNS + kode Worker:
+1. Cloudflare DNS → update CNAME content ke URL baru
+2. Workers & Pages → `cold-wildflower-0c6f` → Edit Code → update `targetUrl`
+
+### Kenapa Tidak Pakai GCP Load Balancer
+- Load Balancer GCP biaya ~$18-25/bulan (forwarding rule + SSL cert)
+- Cloudflare Worker Free Plan: 100.000 request/hari, gratis
+- Cloud Run domain mapping tidak tersedia di region `asia-southeast2`
 
 ---
 
@@ -144,5 +174,7 @@ Deploy ke Cloud Run selalu melalui Cloud Build di GCP.
 | `gcloud` tidak login | `gcloud auth login` |
 | Build gagal di Cloud Build | Cek log di GCP Console → Cloud Build |
 | Service tidak bisa akses Google Sheet | Cek `GOOGLE_PRIVATE_KEY` sudah di-set di Cloud Run env vars |
-| Domain tidak terarah | Cek Cloud Run → Domain Mappings, pastikan `mansionpro.id` terdaftar |
+| Domain tidak terarah | Cek Cloudflare DNS (CNAME proxied) + Worker route `www.mansionpro.id/*` aktif |
+| Error 525 SSL Handshake | Pastikan Cloudflare SSL mode = **Full** (bukan Strict). JANGAN pakai Load Balancer lagi |
+| Apex domain 404 | Pastikan Redirect Rule `apex to www` aktif di Cloudflare. Hapus Worker route untuk `mansionpro.id/*` jika ada |
 | Container crash saat start | `gcloud run services logs tail web-mansion2026 --region=asia-southeast2` |
