@@ -12,8 +12,8 @@ import { useState, useEffect, useCallback, useRef, useTransition } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { ListingCard } from '@/components/property/PropertyCard'
 import {
-  searchListings, aiSearchListings, mapCrmToListing, formatPriceShort,
-  type SearchOptions, type SearchParams, type SearchResult, type AiSearchResponse,
+  searchListings, mapCrmToListing,
+  type SearchOptions, type SearchParams, type SearchResult,
 } from '@/lib/searchApi'
 import type { Listing } from '@/types'
 
@@ -68,13 +68,6 @@ export default function SearchEngine({ initialOptions }: Props) {
   const [listings,  setListings]  = useState<Listing[]>([])
   const [loading,   setLoading]   = useState(false)
   const [error,     setError]     = useState<string | null>(null)
-
-  // AI Search mode
-  const [aiMode,    setAiMode]    = useState(false)
-  const [aiQuery,   setAiQuery]   = useState('')
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError,   setAiError]   = useState<string | null>(null)
-  const [aiResult,  setAiResult]  = useState<AiSearchResponse['ai'] | null>(null)
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -171,135 +164,36 @@ export default function SearchEngine({ initialOptions }: Props) {
   const hasFilters = !!(keyword || propType || txType || city || area ||
     priceMin || priceMax || bedroomMin || bathroomMin || ltMin || ltMax || lbMin || lbMax)
 
-  // ── AI Search handler ────────────────────────────────────
-  const runAiSearch = async () => {
-    if (!aiQuery.trim()) return
-    setAiLoading(true)
-    setAiError(null)
-    setAiResult(null)
-    setError(null)
-    try {
-      const res = await aiSearchListings(aiQuery.trim(), { page, limit: 12, sort })
-      setResult(res)
-      setListings((res.results || []).map(mapCrmToListing))
-      setAiResult(res.ai)
-    } catch (e: any) {
-      setAiError(e.message || 'AI Search gagal')
-      setResult(null)
-      setListings([])
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
-  const handleAiModeToggle = () => {
-    setAiMode(v => !v)
-    setAiResult(null)
-    setAiError(null)
-  }
-
   // ── Render ─────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto">
 
-      {/* ── AI / Normal mode toggle ── */}
-      <div className="flex items-center gap-2 mb-3">
-        <button
-          onClick={handleAiModeToggle}
-          className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${aiMode ? 'bg-gold text-primary-900 border-gold shadow-gold' : 'bg-white text-gray-500 border-gray-200 hover:border-gold hover:text-gold'}`}>
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-          </svg>
-          {aiMode ? 'Mode AI Aktif' : 'Cari dengan AI'}
-        </button>
-        {aiMode && (
-          <span className="text-xs text-gray-400">Deskripsikan properti yang Anda inginkan dengan bahasa natural</span>
+      {/* ── Search Bar ── */}
+      <div className="relative mb-4">
+        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          value={keyword}
+          onChange={e => handleKeywordChange(e.target.value)}
+          placeholder="Cari properti, area, tipe... (cth: rumah Citraland 3 kamar)"
+          className="w-full pl-12 pr-10 py-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-all"
+        />
+        {keyword && (
+          <button
+            onClick={() => { setKeyword(''); setPage(1); triggerSearch(true) }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            aria-label="Hapus pencarian">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
         )}
       </div>
 
-      {/* ── AI Search Bar ── */}
-      {aiMode ? (
-        <div className="mb-4">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gold pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-              </svg>
-              <input
-                type="text"
-                value={aiQuery}
-                onChange={e => setAiQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') runAiSearch() }}
-                placeholder='cth: "rumah 3 kamar di Citraland harga di bawah 3 M"'
-                className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-gold/40 bg-white shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold transition-all"
-              />
-            </div>
-            <button
-              onClick={runAiSearch}
-              disabled={aiLoading || !aiQuery.trim()}
-              className="px-6 py-4 rounded-2xl bg-gold text-primary-900 font-semibold text-sm hover:bg-gold-light disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 whitespace-nowrap">
-              {aiLoading ? (
-                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-              )}
-              Cari
-            </button>
-          </div>
-
-          {/* Extracted filter pills (transparency) */}
-          {aiResult && !aiResult.fallback && Object.keys(aiResult.extracted_filter).length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-gray-400 font-medium">Filter terdeteksi:</span>
-              {Object.entries(aiResult.extracted_filter).map(([k, v]) => (
-                <span key={k} className="inline-flex items-center gap-1 text-xs bg-gold/10 text-primary-900 border border-gold/40 px-2.5 py-1 rounded-full font-medium">
-                  {k.replace(/_/g, ' ')}: {String(v)}
-                </span>
-              ))}
-            </div>
-          )}
-          {aiResult?.fallback && (
-            <p className="mt-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg inline-block">
-              AI tidak tersedia — menggunakan pencarian kata kunci biasa
-            </p>
-          )}
-          {aiError && (
-            <p className="mt-2 text-xs text-red-600">{aiError}</p>
-          )}
-        </div>
-      ) : (
-        /* ── Normal Search Bar ── */
-        <div className="relative mb-4">
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          <input
-            type="text"
-            value={keyword}
-            onChange={e => handleKeywordChange(e.target.value)}
-            placeholder="Cari properti, area, tipe... (cth: rumah Citraland 3 kamar)"
-            className="w-full pl-12 pr-10 py-4 rounded-2xl border border-gray-200 bg-white shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 transition-all"
-          />
-          {keyword && (
-            <button
-              onClick={() => { setKeyword(''); setPage(1); triggerSearch(true) }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label="Hapus pencarian">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── Quick Filters (hidden in AI mode) ── */}
-      {!aiMode && <div className="flex flex-wrap gap-2 mb-3">
+      {/* ── Quick Filters ── */}
+      <div className="flex flex-wrap gap-2 mb-3">
         <select value={propType} onChange={e => { setPropType(e.target.value); setPage(1) }}
           className="text-sm border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 min-w-[120px]">
           <option value="">Semua Tipe</option>
@@ -334,10 +228,10 @@ export default function SearchEngine({ initialOptions }: Props) {
             Reset
           </button>
         )}
-      </div>}
+      </div>
 
       {/* ── Advanced Filter Panel ── */}
-      {!aiMode && showAdvanced && (
+      {showAdvanced && (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-4 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 

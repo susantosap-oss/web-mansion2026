@@ -168,31 +168,6 @@ export async function getSearchOptions(): Promise<SearchOptions> {
   return json.data as SearchOptions
 }
 
-export interface AiSearchResponse extends SearchResult {
-  ai: {
-    raw_query:        string
-    extracted_filter: Partial<SearchParams>
-    ai_raw:           Record<string, unknown> | null
-    fallback:         boolean
-  }
-}
-
-export async function aiSearchListings(
-  query: string,
-  opts: { page?: number; limit?: number; sort?: string } = {}
-): Promise<AiSearchResponse> {
-  const res = await fetch('/api/ai-search', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, ...opts }),
-    cache: 'no-store',
-  })
-  if (!res.ok) throw new Error(`AI Search error ${res.status}`)
-  const json = await res.json()
-  if (!json.success) throw new Error(json.message || 'AI Search gagal')
-  return json as AiSearchResponse
-}
-
 // ── Formatting Helpers ─────────────────────────────────────
 
 export function formatPriceShort(price: number): string {

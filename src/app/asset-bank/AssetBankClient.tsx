@@ -154,16 +154,8 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
     return true
   }), [assets, filterKota, filterBank, filterJenis, filterHarga])
 
-  const sorted = useMemo(() =>
-    [...filtered].sort((a, b) => {
-      const aHasPhoto = a.coverImage?.startsWith('http') ? 1 : 0
-      const bHasPhoto = b.coverImage?.startsWith('http') ? 1 : 0
-      return bHasPhoto - aHasPhoto
-    })
-  , [filtered])
-
-  const totalPages = Math.ceil(sorted.length / PER_PAGE)
-  const paginated  = sorted.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
   const hasFilter  = filterKota || filterBank || filterJenis || filterHarga
 
   return (

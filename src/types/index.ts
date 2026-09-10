@@ -68,6 +68,7 @@ export interface AssetBank {
   status: string
   sertifikat: string
   mapsUrl: string
+  createdAt?: string
 }
 
 export interface Lead {

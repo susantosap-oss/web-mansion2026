@@ -40,6 +40,10 @@ async function fetchFromGAS<T>(action: string, ttl = 300): Promise<T> {
 function str(v: unknown): string  { return v !== undefined && v !== null ? String(v) : '' }
 function num(v: unknown): number  { return Number(v) || 0 }
 function bool(v: unknown): boolean { return v === true || v === 'TRUE' || v === 'true' || v === 1 || v === '1' }
+function dateTs(d: string | undefined): number { return d ? new Date(d).getTime() || 0 : 0 }
+function newestFirst<T extends { updatedAt?: string; createdAt?: string }>(a: T, b: T): number {
+  return (dateTs(b.updatedAt) || dateTs(b.createdAt)) - (dateTs(a.updatedAt) || dateTs(a.createdAt))
+}
 
 function parseImages(row: SheetRow): string[] {
   const utama   = str(row['Foto_Utama_URL'])
@@ -309,7 +313,7 @@ export async function getListings(filter?: {
     if (filter?.propertyType) listings = listings.filter(l => l.propertyType === filter.propertyType)
     if (filter?.featured)     listings = listings.filter(l => l.featured)
 
-    return listings
+    return listings.sort(newestFirst)
   } catch (e) {
     console.error('[getListings]', e)
     return []
@@ -336,7 +340,7 @@ export async function getProjects(): Promise<Project[]> {
     for (const p of all) {
       if (p.id && !seen.has(p.id)) seen.set(p.id, p)
     }
-    return Array.from(seen.values())
+    return Array.from(seen.values()).sort(newestFirst)
   } catch (e) {
     console.error('[getProjects]', e)
     return []
@@ -490,13 +494,14 @@ function mapAsset(row: SheetRow): AssetBank {
     status:        str(row['Status'] || row['STATUS'] || ''),
     sertifikat:    str(row['Sertifikat'] || ''),
     mapsUrl:       str(row['Gmaps_link'] || row['GMaps_Link'] || row['Maps_URL'] || row['Maps_Link'] || row['Google_Maps'] || ''),
+    createdAt:     str(row['Created_At'] || row['Tanggal_Input'] || ''),
   }
 }
 
 export async function getAssets(): Promise<AssetBank[]> {
   try {
     const rows = await fetchFromGAS<SheetRow[]>('getAssets', 120)
-    return rows.map(mapAsset).filter(a => a.judul || a.namaBank)
+    return rows.map(mapAsset).filter(a => a.judul || a.namaBank).sort(newestFirst)
   } catch (e) {
     console.error('[getAssets]', e)
     return []
