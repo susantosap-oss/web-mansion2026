@@ -47,7 +47,8 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (sent) {
     return (
       <button onClick={() => window.open(waHref, '_blank')}
-        className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
+        className="w-full text-center text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden"
+        style={{ paddingTop: '5px', paddingBottom: '5px' }}>
         WA Agen
       </button>
     )
@@ -56,7 +57,8 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (!show) {
     return (
       <button onClick={() => setShow(true)}
-        className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
+        className="w-full text-center text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden"
+        style={{ paddingTop: '5px', paddingBottom: '5px' }}>
         WA Agen
       </button>
     )
@@ -189,7 +191,7 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
             {listing.agentPhone  && <p className="text-gray-400 truncate" style={{ fontSize: '8px', lineHeight: 1.1 }}>{fmtPhone(listing.agentPhone)}</p>}
           </div>
           {/* WA button — fixed width */}
-          <div style={{ width: '90px', flexShrink: 0 }}>
+          <div style={{ width: '110px', flexShrink: 0 }}>
             <WaLeadButton
               waHref={wa}
               agentId={listing.agentId}
