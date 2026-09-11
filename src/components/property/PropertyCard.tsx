@@ -47,7 +47,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (sent) {
     return (
       <button onClick={() => window.open(waHref, '_blank')}
-        className="w-full text-center py-1 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
+        className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
         💬 WA Agen
       </button>
     )
@@ -56,7 +56,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (!show) {
     return (
       <button onClick={() => setShow(true)}
-        className="w-full text-center py-1 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
+        className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
         💬 WA Agen
       </button>
     )
@@ -184,9 +184,9 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
         <div className="flex items-center gap-2 border-t border-gray-100 pt-2">
           {/* Agent info */}
           <div className="flex-1 min-w-0">
-            {listing.agentName   && <p className="font-semibold text-primary-900 truncate" style={{ fontSize: '4px', lineHeight: 0.5 }}>{listing.agentName}</p>}
-            {listing.agentKantor && <p className="text-gray-500 truncate" style={{ fontSize: '2px', lineHeight: 0.35 }}>{listing.agentKantor}</p>}
-            {listing.agentPhone  && <p className="text-gray-400 truncate" style={{ fontSize: '2px', lineHeight: 0.35 }}>{fmtPhone(listing.agentPhone)}</p>}
+            {listing.agentName   && <p className="font-semibold text-primary-900 truncate" style={{ fontSize: '11px', lineHeight: 1.2 }}>{listing.agentName}</p>}
+            {listing.agentKantor && <p className="text-gray-500 truncate" style={{ fontSize: '8px', lineHeight: 1.1 }}>{listing.agentKantor}</p>}
+            {listing.agentPhone  && <p className="text-gray-400 truncate" style={{ fontSize: '8px', lineHeight: 1.1 }}>{fmtPhone(listing.agentPhone)}</p>}
           </div>
           {/* WA button — fixed width */}
           <div style={{ width: '76px', flexShrink: 0 }}>
