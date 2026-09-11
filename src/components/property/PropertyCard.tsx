@@ -112,10 +112,10 @@ function cleanTitle(title: string): string {
 function parseSpecsFromDesc(desc: string): { lt: number; lb: number; kt: number; km: number } {
   const n = (re: RegExp) => { const m = desc.match(re); return m ? parseInt(m[1], 10) : 0 }
   return {
-    lt: n(/LT[:\s]*(\d+)/i),
-    lb: n(/LB[:\s]*(\d+)/i),
-    kt: n(/(\d+(?:[+\-]\d+)?)\s*KT/i),
-    km: n(/(\d+(?:[+\-]\d+)?)\s*KM/i),
+    lt: n(/(?:LT|Luas\s*Tanah)\s*:?\s*(\d+)/i),
+    lb: n(/(?:LB|Luas\s*Bangunan)\s*:?\s*(\d+)/i),
+    kt: n(/(\d+(?:[+\-]\d+)?)\s*KT\b/i) || n(/(?:KT|Kamar\s*Tidur)\s*:?\s*(\d+)/i),
+    km: n(/(\d+(?:[+\-]\d+)?)\s*KM\b/i) || n(/(?:KM|Kamar\s*Mandi)\s*:?\s*(\d+)/i),
   }
 }
 
@@ -132,8 +132,66 @@ function fmtPhone(raw: string): string {
   return ['+62', a, b, c].filter(Boolean).join(' ')
 }
 
+// ── Featured Badge (klik untuk hapus, admin only) ──────────
+function FeaturedBadge({ listingId }: { listingId: string }) {
+  const [removed,  setRemoved]  = useState(false)
+  const [loading,  setLoading]  = useState(false)
+
+  const remove = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation()
+    if (loading) return
+    setLoading(true)
+    setRemoved(true)
+    try {
+      await fetch(`/api/listings/${listingId}/featured`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured: false }),
+      })
+    } catch { setRemoved(false) }
+    setLoading(false)
+  }
+
+  if (removed) return null
+  return (
+    <button onClick={remove} title="Hapus Unggulan"
+      className="badge rounded-full hover:opacity-70 transition-opacity"
+      style={{ background: '#0a2342', color: '#fff' }}>
+      {loading ? '...' : 'Featured'}
+    </button>
+  )
+}
+
+// ── Add Featured Button (hover, admin only, non-featured) ──
+function FeaturedAddButton({ listingId }: { listingId: string }) {
+  const [added,   setAdded]   = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const add = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation()
+    if (loading) return
+    setLoading(true)
+    setAdded(true)
+    try {
+      await fetch(`/api/listings/${listingId}/featured`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured: true }),
+      })
+    } catch { setAdded(false) }
+    setLoading(false)
+  }
+
+  if (added) return null
+  return (
+    <button onClick={add} title="Jadikan Unggulan"
+      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-white/90 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-opacity z-10"
+      style={{ fontSize: '14px' }}>
+      {loading ? '⏳' : '☆'}
+    </button>
+  )
+}
+
 // ── Listing Card ───────────────────────────────────────────
-export function ListingCard({ listing, className = '', priority = false }: { listing: Listing; className?: string; priority?: boolean }) {
+export function ListingCard({ listing, className = '', priority = false, isAdmin = false }: { listing: Listing; className?: string; priority?: boolean; isAdmin?: boolean }) {
   const wa = buildWALink(
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
@@ -150,25 +208,33 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
   ].filter(Boolean).join(' | ')
 
   return (
-    <div className={`card group property-card ${className}`}>
+    <div className={`card group property-card flex flex-col ${className}`}>
       {/* Image — klik ke detail */}
-      <Link href={`/listings/${listing.slug}`} className="block relative h-52 overflow-hidden">
+      <Link href={`/listings/${listing.slug}`} className="block relative h-52 overflow-hidden flex-shrink-0">
         {listing.coverImage ? (
           <Image src={listing.coverImage} alt={listing.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw" priority={priority}/>
         ) : (
           <div className="w-full h-full bg-primary-100 flex items-center justify-center"><span className="text-4xl">🏠</span></div>
         )}
-        <div className="absolute top-3 left-3 flex gap-2">
+        <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
           <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
-          {listing.featured && <span className="badge-new">⭐ Unggulan</span>}
+          {listing.featured && (
+            isAdmin
+              ? <FeaturedBadge listingId={listing.id} />
+              : <span className="badge rounded-full" style={{ background: '#0a2342', color: '#fff' }}>Featured</span>
+          )}
         </div>
+        {isAdmin && !listing.featured && <FeaturedAddButton listingId={listing.id} />}
       </Link>
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         {/* Lokasi + Tanggal */}
         <div className="flex justify-between items-center mb-1">
           <p className="text-xs text-gray-600 truncate mr-2">📍 {listing.location}, {listing.city}</p>
-          <p className="text-xs text-gray-400 whitespace-nowrap">{fmtDate(listing.createdAt)}</p>
+          <div className="flex flex-col items-end whitespace-nowrap">
+            <p className="text-xs text-gray-400">{fmtDate(listing.createdAt)}</p>
+            {(listing.kode || listing.id) && <p className="text-gray-300" style={{ fontSize: '9px' }}>#{listing.kode || listing.id}</p>}
+          </div>
         </div>
 
         {/* Harga */}
@@ -182,8 +248,8 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
         {/* Specs */}
         {specs && <p className="text-xs text-gray-600 mb-3">{specs}</p>}
 
-        {/* Agen + WA */}
-        <div className="flex items-center gap-2 border-t border-gray-100 pt-2">
+        {/* Agen + WA — selalu di bawah via mt-auto */}
+        <div className="flex items-center gap-2 border-t border-gray-100 pt-2 mt-auto">
           {/* Agent info */}
           <div className="flex-1 min-w-0">
             {listing.agentName   && <p className="font-semibold text-primary-900 truncate" style={{ fontSize: '11px', lineHeight: 1.2 }}>{listing.agentName}</p>}

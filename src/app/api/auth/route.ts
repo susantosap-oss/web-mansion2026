@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     const rawRole = agentData.role.toLowerCase().trim()
     let role: AuthUser['role'] = 'agent'
     if (rawRole === 'superadmin' || rawRole === 'principal') role = 'superadmin'
-    else if (rawRole === 'admin' || rawRole === 'business_manager') role = 'admin'
+    else if (rawRole === 'admin' || rawRole === 'business_manager' || rawRole === 'bm' || rawRole === 'businessmanager' || rawRole === 'business manager' || rawRole === 'manager') role = 'admin'
 
     const user: AuthUser = {
       id:      agentData.id,

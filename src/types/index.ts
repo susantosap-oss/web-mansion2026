@@ -10,7 +10,7 @@ export interface Project {
 }
 
 export interface Listing {
-  id: string; slug: string; title: string
+  id: string; kode: string; slug: string; title: string
   type: 'Sale' | 'Rent'
   propertyType: 'Rumah' | 'Apartemen' | 'Ruko' | 'Kavling' | 'Gedung' | 'Gudang'
   price: number; priceUnit: 'Jual' | 'Sewa/Bulan' | 'Sewa/Tahun'

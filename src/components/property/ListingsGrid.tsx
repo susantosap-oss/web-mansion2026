@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 const PER_PAGE = 15
 
-export default function ListingsGrid({ listings }: { listings: Listing[] }) {
+export default function ListingsGrid({ listings, isAdmin = false }: { listings: Listing[]; isAdmin?: boolean }) {
   const [page, setPage] = useState(1)
   const totalPages = Math.ceil(listings.length / PER_PAGE)
   const paginated  = listings.slice((page - 1) * PER_PAGE, page * PER_PAGE)
@@ -25,7 +25,7 @@ export default function ListingsGrid({ listings }: { listings: Listing[] }) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginated.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0 && page === 1}/>)}
+        {paginated.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0 && page === 1} isAdmin={isAdmin}/>)}
       </div>
       <Pagination page={page} totalPages={totalPages} onPageChange={p => setPage(p)}/>
     </>

@@ -106,6 +106,7 @@ function mapListing(row: SheetRow): Listing {
 
   return {
     id,
+    kode:          str(row['Kode_Listing']),
     slug:          makeSlug(judul, id),
     title:         judul,
     type:          transaksi,
@@ -315,7 +316,10 @@ export async function getListings(filter?: {
     if (filter?.propertyType) listings = listings.filter(l => l.propertyType === filter.propertyType)
     if (filter?.featured)     listings = listings.filter(l => l.featured)
 
-    return listings.sort(newestFirst)
+    return listings.sort((a, b) => {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1
+      return dateTs(b.createdAt) - dateTs(a.createdAt)
+    })
   } catch (e) {
     console.error('[getListings]', e)
     return []
@@ -342,7 +346,7 @@ export async function getProjects(): Promise<Project[]> {
     for (const p of all) {
       if (p.id && !seen.has(p.id)) seen.set(p.id, p)
     }
-    return Array.from(seen.values()).sort(newestFirst)
+    return Array.from(seen.values()).sort((a, b) => dateTs(b.createdAt) - dateTs(a.createdAt))
   } catch (e) {
     console.error('[getProjects]', e)
     return []
@@ -503,7 +507,7 @@ function mapAsset(row: SheetRow): AssetBank {
 export async function getAssets(): Promise<AssetBank[]> {
   try {
     const rows = await fetchFromGAS<SheetRow[]>('getAssets', 120)
-    return rows.map(mapAsset).filter(a => a.judul || a.namaBank).sort(newestFirst)
+    return rows.map(mapAsset).filter(a => a.judul || a.namaBank).sort((a, b) => dateTs(b.createdAt || '') - dateTs(a.createdAt || ''))
   } catch (e) {
     console.error('[getAssets]', e)
     return []

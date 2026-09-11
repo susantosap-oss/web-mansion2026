@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getListings } from '@/lib/sheets'
 import ListingsGrid from '@/components/property/ListingsGrid'
 import WhatsAppButton from '@/components/ui/WhatsAppButton'
+import { getSession } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,6 +65,9 @@ export default async function ListingsPage({
   searchParams: { type?: string; propertyType?: string; priceRange?: string }
 }) {
   const { type, propertyType, priceRange } = searchParams
+  let session = null
+  try { session = getSession() } catch {}
+  const isAdmin = session?.role === 'superadmin' || session?.role === 'admin'
   const allListings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
 
   const listings = priceRange === 'below'
@@ -169,7 +173,7 @@ export default async function ListingsPage({
             })}
           </div>
 
-          <ListingsGrid listings={listings}/>
+          <ListingsGrid listings={listings} isAdmin={isAdmin}/>
 
           {/* Daftar Harga Banner */}
           <div className="mt-12 flex justify-center">

@@ -34,7 +34,11 @@ function doGet(e) {
       case 'getListings':
         var listings = getSheet(SHEETS.LISTINGS)
         var active = listings.filter(function(r) {
-          var status = String(r['STATUS'] || r['Status'] || r['status'] || '').toLowerCase()
+          // Skip jika Tampilkan_di_Web = FALSE
+          var tampil = r['Tampilkan_di_Web']
+          if (tampil === false || String(tampil).toUpperCase() === 'FALSE') return false
+          // Filter status aktif
+          var status = String(r['Status_Listing'] || r['STATUS'] || r['Status'] || r['status'] || '').toLowerCase()
           return status === 'aktif' || status === 'active' || status === ''
         })
         return resp({ success: true, data: active, total: active.length })
@@ -157,6 +161,24 @@ function doGet(e) {
         // Terima via GET params (hindari masalah POST redirect body hilang)
         saveLead(e.parameter)
         return resp({ success: true, message: 'Lead berhasil disimpan' })
+
+      case 'setFeatured':
+        var ss5      = SpreadsheetApp.openById(SHEET_ID)
+        var fSheet   = ss5.getSheetByName(SHEETS.LISTINGS)
+        var fData    = fSheet.getDataRange().getValues()
+        var fHeaders = fData[0]
+        var fIdCol   = fHeaders.indexOf('ID')
+        var fFeatCol = fHeaders.indexOf('Featured')
+        if (fIdCol < 0 || fFeatCol < 0) return resp({ success: false, error: 'Kolom ID/Featured tidak ditemukan' })
+        var fTargetId  = String(e.parameter.listingId || '').trim()
+        var fNewVal    = e.parameter.featured === 'true' ? 'TRUE' : 'FALSE'
+        for (var fi = 1; fi < fData.length; fi++) {
+          if (String(fData[fi][fIdCol]).trim() === fTargetId) {
+            fSheet.getRange(fi + 1, fFeatCol + 1).setValue(fNewVal)
+            return resp({ success: true, message: 'Featured updated: ' + fTargetId })
+          }
+        }
+        return resp({ success: false, error: 'Listing tidak ditemukan: ' + fTargetId })
 
       case 'getAssets':
         var assets = getSheet(SHEETS.ASSETS)

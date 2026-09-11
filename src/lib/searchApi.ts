@@ -109,6 +109,7 @@ export function mapCrmToListing(r: CrmListing): Listing {
 
   return {
     id:           r.id,
+    kode:         '',
     slug:         makeSlug(r.judul, r.id),
     title:        r.judul  || 'Properti',
     type:         isRent ? 'Rent' : 'Sale',

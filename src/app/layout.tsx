@@ -5,6 +5,8 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ChunkErrorHandler from '@/components/ChunkErrorHandler'
+import ScreenshotLock from '@/components/ui/ScreenshotLock'
+import { getSession } from '@/lib/auth'
 
 const poppins = Poppins({
   subsets:  ['latin'],
@@ -96,6 +98,9 @@ const organizationSchema = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  let session = null
+  try { session = getSession() } catch { session = null }
+  const screenshotAllowed = session?.role === 'superadmin' || session?.role === 'admin'
   return (
     <html lang="id" className={poppins.variable}>
       <head>
@@ -120,6 +125,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           gtag('config', 'G-F0G6ZM1GHN', { send_page_view: true });
         `}</Script>
         <ChunkErrorHandler />
+        <ScreenshotLock allowed={screenshotAllowed} />
         <Navbar />
         <main className="min-h-screen">{children}</main>
         <Footer />
