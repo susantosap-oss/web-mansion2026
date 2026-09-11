@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { AssetBank } from '@/types'
 import { formatPrice } from '@/lib/sheets'
+import Pagination from '@/components/ui/Pagination'
 
 const FALLBACK_IMG: Record<string, string> = {
   'Rumah':     '/assets/Rumah.png',
@@ -113,7 +114,7 @@ function AssetCard({ asset }: { asset: AssetBank }) {
   )
 }
 
-const PER_PAGE = 24
+const PER_PAGE = 15
 
 const HARGA_RANGES = [
   { value: '',       label: 'Semua Harga' },
@@ -237,35 +238,7 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
             {paginated.map(a => <AssetCard key={a.id || a.judul} asset={a}/>)}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-10">
-              <button
-                onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                disabled={page === 1}
-                className="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                ← Prev
-              </button>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                const p = totalPages <= 7 ? i + 1
-                  : page <= 4 ? i + 1
-                  : page >= totalPages - 3 ? totalPages - 6 + i
-                  : page - 3 + i
-                return (
-                  <button key={p} onClick={() => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                    className={`w-9 h-9 text-sm font-semibold rounded-lg transition-colors ${page === p ? 'bg-primary-900 text-white' : 'border border-gray-200 hover:bg-gray-50 text-gray-700'}`}>
-                    {p}
-                  </button>
-                )
-              })}
-              <button
-                onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                disabled={page === totalPages}
-                className="px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                Next →
-              </button>
-            </div>
-          )}
+          <Pagination page={page} totalPages={totalPages} onPageChange={p => setPage(p)}/>
         </>
       ) : (
         <div className="text-center py-20">

@@ -2,12 +2,16 @@
 import { useState, useMemo } from 'react'
 import { Project } from '@/types'
 import { ProjectCard } from '@/components/property/PropertyCard'
+import Pagination from '@/components/ui/Pagination'
 
+const PER_PAGE = 15
 type PriceRange = 'semua' | 'below' | 'above'
 
 export default function ProjectsClient({ projects }: { projects: Project[] }) {
   const [activeCity, setActiveCity] = useState<string>('Semua')
   const [activePriceRange, setActivePriceRange] = useState<PriceRange>('semua')
+  const [page, setPage] = useState(1)
+  const resetPage = () => setPage(1)
 
   const cities = useMemo(() => {
     const set = new Set<string>()
@@ -26,6 +30,9 @@ export default function ProjectsClient({ projects }: { projects: Project[] }) {
     return cityFiltered
   }, [cityFiltered, activePriceRange])
 
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
   return (
     <>
       {/* City Tabs */}
@@ -34,7 +41,7 @@ export default function ProjectsClient({ projects }: { projects: Project[] }) {
           {cities.map(city => (
             <button
               key={city}
-              onClick={() => setActiveCity(city)}
+              onClick={() => { setActiveCity(city); resetPage() }}
               className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all whitespace-nowrap ${
                 activeCity === city
                   ? 'bg-primary-900 text-white border-primary-900'
@@ -63,7 +70,7 @@ export default function ProjectsClient({ projects }: { projects: Project[] }) {
         ] as [PriceRange, string, number][]).map(([value, label, count]) => (
           <button
             key={value}
-            onClick={() => setActivePriceRange(value)}
+            onClick={() => { setActivePriceRange(value); resetPage() }}
             className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all whitespace-nowrap ${
               activePriceRange === value
                 ? 'bg-gold text-primary-900 border-gold'
@@ -82,9 +89,12 @@ export default function ProjectsClient({ projects }: { projects: Project[] }) {
 
       {/* Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((p, i) => <ProjectCard key={p.id} project={p} priority={i === 0}/>)}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginated.map((p, i) => <ProjectCard key={p.id} project={p} priority={i === 0 && page === 1}/>)}
+          </div>
+          <Pagination page={page} totalPages={totalPages} onPageChange={p => setPage(p)}/>
+        </>
       ) : (
         <div className="text-center py-20 text-gray-400">
           <div className="text-6xl mb-4">🏗</div>

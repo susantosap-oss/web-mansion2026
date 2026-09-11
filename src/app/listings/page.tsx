@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getListings } from '@/lib/sheets'
-import { ListingCard } from '@/components/property/PropertyCard'
+import ListingsGrid from '@/components/property/ListingsGrid'
 import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
 export const dynamic = 'force-dynamic'
@@ -169,17 +169,7 @@ export default async function ListingsPage({
             })}
           </div>
 
-          {listings.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0}/>)}
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="font-display font-bold text-primary-900 text-xl mb-2">Properti tidak ditemukan</h3>
-              <Link href="/listings" className="btn-primary mt-4">Lihat Semua Listing</Link>
-            </div>
-          )}
+          <ListingsGrid listings={listings}/>
 
           {/* Daftar Harga Banner */}
           <div className="mt-12 flex justify-center">

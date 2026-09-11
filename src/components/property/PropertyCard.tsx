@@ -102,6 +102,24 @@ function fmtDate(raw: string): string {
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+function cleanTitle(title: string): string {
+  // Hapus suffix harga: " — Rp X" atau " - Rp X" di akhir judul
+  return title.replace(/\s*[—–-]+\s*Rp[\s\d.,]+(Jt|M|Miliar|Rb|K)?.*$/i, '').trim()
+}
+
+function fmtPhone(raw: string): string {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  const local = digits.startsWith('62') ? digits.slice(2)
+              : digits.startsWith('0')  ? digits.slice(1)
+              : digits
+  if (!local) return raw
+  const a = local.slice(0, 4)
+  const b = local.slice(4, 8)
+  const c = local.slice(8)
+  return ['+62', a, b, c].filter(Boolean).join(' ')
+}
+
 // ── Listing Card ───────────────────────────────────────────
 export function ListingCard({ listing, className = '', priority = false }: { listing: Listing; className?: string; priority?: boolean }) {
   const wa = buildWALink(
@@ -140,9 +158,9 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
         {/* Harga */}
         <p className="price-display mb-1">{formatPrice(listing.price)}</p>
 
-        {/* Judul — klik ke detail */}
+        {/* Judul — klik ke detail, harga distrip dari judul */}
         <Link href={`/listings/${listing.slug}`}>
-          <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors line-clamp-2 mb-2 leading-snug">{listing.title}</h3>
+          <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors line-clamp-2 mb-2 leading-snug">{cleanTitle(listing.title)}</h3>
         </Link>
 
         {/* Specs */}
@@ -150,10 +168,10 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
 
         {/* Agen + WA */}
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-          <div className="text-xs leading-snug min-w-0 mr-3">
-            {listing.agentName   && <p className="font-semibold text-primary-900 truncate">{listing.agentName}</p>}
-            {listing.agentKantor && <p className="text-gray-500 truncate">{listing.agentKantor}</p>}
-            {listing.agentPhone  && <p className="text-gray-400 truncate">{listing.agentPhone}</p>}
+          <div className="leading-none min-w-0 mr-3" style={{ fontSize: '8px', lineHeight: 1 }}>
+            {listing.agentName   && <p className="font-semibold text-primary-900 truncate mb-0.5">{listing.agentName}</p>}
+            {listing.agentKantor && <p className="text-gray-500 truncate mb-0.5">{listing.agentKantor}</p>}
+            {listing.agentPhone  && <p className="text-gray-400 truncate">{fmtPhone(listing.agentPhone)}</p>}
           </div>
           <WaLeadButton
             waHref={wa}
