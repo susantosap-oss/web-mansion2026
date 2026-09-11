@@ -47,7 +47,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (sent) {
     return (
       <button onClick={() => window.open(waHref, '_blank')}
-        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors whitespace-nowrap">
         💬 WA Agen
       </button>
     )
@@ -56,7 +56,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (!show) {
     return (
       <button onClick={() => setShow(true)}
-        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors whitespace-nowrap">
         💬 WA Agen
       </button>
     )
