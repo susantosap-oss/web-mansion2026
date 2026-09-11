@@ -536,8 +536,13 @@ function notifyRevalidate(action) {
       muteHttpExceptions: true,
     }
     var res = UrlFetchApp.fetch(NEXT_SITE_URL + '/api/revalidate', options)
-    Logger.log('[Revalidate] ' + action + ' → HTTP ' + res.getResponseCode())
-  } catch (e) { Logger.log('[Revalidate] Error: ' + e.message) }
+    var code = res.getResponseCode()
+    if (code !== 200) {
+      Logger.log('[Revalidate] ⚠️ ' + action + ' → HTTP ' + code + ' | body: ' + res.getContentText().substring(0, 200))
+    } else {
+      Logger.log('[Revalidate] ✅ ' + action + ' → HTTP ' + code)
+    }
+  } catch (e) { Logger.log('[Revalidate] ❌ Error: ' + e.message) }
 }
 
 // onEdit fires on EVERY cell edit — correct trigger for new listing entries from CRM
@@ -598,6 +603,10 @@ function createAllTriggers() {
   Logger.log('✅ Daily trigger → dailyRevalidate pukul 06.00 terpasang')
 
   Logger.log('🎉 Semua trigger aktif — tidak perlu redeploy manual lagi')
+
+  // Langsung revalidate web agar data segar setelah trigger dipasang
+  notifyRevalidate('all')
+  Logger.log('✅ Web revalidated setelah trigger dipasang')
 }
 
 // ── TEST (jalankan manual di GAS editor) ─────────────────
