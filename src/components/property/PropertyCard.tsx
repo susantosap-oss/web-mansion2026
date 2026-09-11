@@ -107,6 +107,16 @@ function cleanTitle(title: string): string {
   return title.replace(/\s*[—–-]+\s*Rp[\s\d.,]+(Jt|M|Miliar|Rb|K)?.*$/i, '').trim()
 }
 
+function parseSpecsFromDesc(desc: string): { lt: number; lb: number; kt: number; km: number } {
+  const n = (re: RegExp) => { const m = desc.match(re); return m ? parseInt(m[1], 10) : 0 }
+  return {
+    lt: n(/(?:LT|Luas\s*Tanah)\s*[:\s]\s*(\d+)/i),
+    lb: n(/(?:LB|Luas\s*Bangunan)\s*[:\s]\s*(\d+)/i),
+    kt: n(/(?:KT|Kamar\s*Tidur)\s*[:\s]\s*(\d+)/i),
+    km: n(/(?:KM|Kamar\s*Mandi)\s*[:\s]\s*(\d+)/i),
+  }
+}
+
 function fmtPhone(raw: string): string {
   if (!raw) return ''
   const digits = raw.replace(/\D/g, '')
@@ -126,11 +136,15 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
   )
+  const parsed = (listing.luasTanah === 0 && listing.luasBangunan === 0 &&
+                  listing.kamarTidur === 0 && listing.kamarMandi === 0)
+    ? parseSpecsFromDesc(listing.description)
+    : { lt: listing.luasTanah, lb: listing.luasBangunan, kt: listing.kamarTidur, km: listing.kamarMandi }
   const specs = [
-    listing.luasTanah    > 0 ? `LT: ${listing.luasTanah}m²`    : '',
-    listing.luasBangunan > 0 ? `LB: ${listing.luasBangunan}m²`  : '',
-    listing.kamarTidur   > 0 ? `KT: ${listing.kamarTidur}`      : '',
-    listing.kamarMandi   > 0 ? `KM: ${listing.kamarMandi}`      : '',
+    parsed.lt > 0 ? `LT: ${parsed.lt}m²` : '',
+    parsed.lb > 0 ? `LB: ${parsed.lb}m²` : '',
+    parsed.kt > 0 ? `KT: ${parsed.kt}`   : '',
+    parsed.km > 0 ? `KM: ${parsed.km}`   : '',
   ].filter(Boolean).join(' | ')
 
   return (
