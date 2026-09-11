@@ -168,9 +168,9 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
 
         {/* Agen + WA */}
         <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-          <div className="leading-none min-w-0 mr-3" style={{ fontSize: '8px', lineHeight: 1 }}>
-            {listing.agentName   && <p className="font-semibold text-primary-900 truncate mb-0.5">{listing.agentName}</p>}
-            {listing.agentKantor && <p className="text-gray-500 truncate mb-0.5">{listing.agentKantor}</p>}
+          <div className="min-w-0 mr-3" style={{ fontSize: '6px', lineHeight: 0.7 }}>
+            {listing.agentName   && <p className="font-semibold text-primary-900 truncate">{listing.agentName}</p>}
+            {listing.agentKantor && <p className="text-gray-500 truncate">{listing.agentKantor}</p>}
             {listing.agentPhone  && <p className="text-gray-400 truncate">{fmtPhone(listing.agentPhone)}</p>}
           </div>
           <WaLeadButton
