@@ -95,15 +95,30 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   )
 }
 
+function fmtDate(raw: string): string {
+  if (!raw) return ''
+  const d = new Date(raw)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
 // ── Listing Card ───────────────────────────────────────────
 export function ListingCard({ listing, className = '', priority = false }: { listing: Listing; className?: string; priority?: boolean }) {
   const wa = buildWALink(
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
   )
+  const specs = [
+    listing.luasTanah    > 0 ? `LT: ${listing.luasTanah}m²`    : '',
+    listing.luasBangunan > 0 ? `LB: ${listing.luasBangunan}m²`  : '',
+    listing.kamarTidur   > 0 ? `KT: ${listing.kamarTidur}`      : '',
+    listing.kamarMandi   > 0 ? `KM: ${listing.kamarMandi}`      : '',
+  ].filter(Boolean).join(' | ')
+
   return (
     <div className={`card group property-card ${className}`}>
-      <div className="relative h-52 overflow-hidden">
+      {/* Image — klik ke detail */}
+      <Link href={`/listings/${listing.slug}`} className="block relative h-52 overflow-hidden">
         {listing.coverImage ? (
           <Image src={listing.coverImage} alt={listing.title} fill className="object-cover property-image" sizes="(max-width: 768px) 100vw, 33vw" priority={priority}/>
         ) : (
@@ -113,21 +128,33 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
           <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
           {listing.featured && <span className="badge-new">⭐ Unggulan</span>}
         </div>
-      </div>
+      </Link>
+
       <div className="p-4">
-        <p className="text-xs text-gray-600 mb-1">📍 {listing.location}, {listing.city}</p>
+        {/* Lokasi + Tanggal */}
+        <div className="flex justify-between items-center mb-1">
+          <p className="text-xs text-gray-600 truncate mr-2">📍 {listing.location}, {listing.city}</p>
+          <p className="text-xs text-gray-400 whitespace-nowrap">{fmtDate(listing.createdAt)}</p>
+        </div>
+
+        {/* Harga */}
+        <p className="price-display mb-1">{formatPrice(listing.price)}</p>
+
+        {/* Judul — klik ke detail */}
         <Link href={`/listings/${listing.slug}`}>
           <h3 className="font-display font-semibold text-primary-900 hover:text-primary-700 transition-colors line-clamp-2 mb-2 leading-snug">{listing.title}</h3>
         </Link>
-        <p className="price-display mb-3">{formatPrice(listing.price)}</p>
-        <div className="flex gap-3 text-xs text-gray-600 border-t border-gray-100 pt-3 mb-3">
-          {listing.luasTanah > 0 && <span>🏠 {listing.luasTanah}m²</span>}
-          {listing.luasBangunan > 0 && <span>📐 {listing.luasBangunan}m²</span>}
-          {listing.kamarTidur > 0 && <span>🛏 {listing.kamarTidur}</span>}
-          {listing.kamarMandi > 0 && <span>🚿 {listing.kamarMandi}</span>}
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/listings/${listing.slug}`} aria-label={`Detail ${listing.title}`} className="flex-1 text-center py-2 text-sm font-semibold text-primary-900 border border-primary-200 rounded-lg hover:bg-primary-50 transition-colors">Detail</Link>
+
+        {/* Specs */}
+        {specs && <p className="text-xs text-gray-600 mb-3">{specs}</p>}
+
+        {/* Agen + WA */}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+          <div className="text-xs leading-snug min-w-0 mr-3">
+            {listing.agentName   && <p className="font-semibold text-primary-900 truncate">{listing.agentName}</p>}
+            {listing.agentKantor && <p className="text-gray-500 truncate">{listing.agentKantor}</p>}
+            {listing.agentPhone  && <p className="text-gray-400 truncate">{listing.agentPhone}</p>}
+          </div>
           <WaLeadButton
             waHref={wa}
             agentId={listing.agentId}

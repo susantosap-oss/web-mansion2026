@@ -141,7 +141,8 @@ function mapListing(row: SheetRow): Listing {
       }
       return ''
     })(),
-    agentPhone:    str(row['_agentPhone'] || ''), // diisi dari join dengan AGENTS
+    agentPhone:    str(row['_agentPhone']  || ''),
+    agentKantor:   str(row['_agentKantor'] || ''),
     agentPhoto:    str(row['_agentPhoto'] || ''),
     coOwners:      (row['_coOwners'] as unknown as { id: string; name: string; phone: string; photo: string }[]) || [],
     viewCount:     num(row['Views_Count']),
@@ -297,9 +298,10 @@ export async function getListings(filter?: {
         // Join data owner (agen utama)
         const agent = agentMap.get(str(row['Agen_ID']))
         if (agent) {
-          row['_agentPhone'] = str(agent['WhatsApp'] || agent['WA'] || agent['No_WA'] || agent['Telepon'] || '')
-          row['_agentPhoto'] = str(agent['Foto_URL'] || agent['Foto'] || agent['Photo'] || '')
-          row['_agentName']  = str(agent['Nama'] || '')
+          row['_agentPhone']  = str(agent['WhatsApp'] || agent['WA'] || agent['No_WA'] || agent['Telepon'] || '')
+          row['_agentPhoto']  = str(agent['Foto_URL'] || agent['Foto'] || agent['Photo'] || '')
+          row['_agentName']   = str(agent['Nama'] || '')
+          row['_agentKantor'] = str(agent['Nama_Kantor'] || '')
         }
         // Join co-owners
         const id = str(row['ID'])

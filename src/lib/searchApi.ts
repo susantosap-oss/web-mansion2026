@@ -136,6 +136,7 @@ export function mapCrmToListing(r: CrmListing): Listing {
     agentName:    '',
     agentPhone:   process.env.NEXT_PUBLIC_WA_OFFICE || '',
     agentPhoto:   '',
+    agentKantor:  '',
     coOwners:     [],
     viewCount:    r.views || 0,
     leadCount:    0,
