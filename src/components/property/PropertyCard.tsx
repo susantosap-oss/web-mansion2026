@@ -48,7 +48,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
     return (
       <button onClick={() => window.open(waHref, '_blank')}
         className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
-        💬 WA Agen
+        WA Agen
       </button>
     )
   }
@@ -57,7 +57,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
     return (
       <button onClick={() => setShow(true)}
         className="w-full text-center py-2 px-3 text-xs font-semibold text-white bg-[#0f7266] rounded-full hover:bg-[#0e6b5e] transition-colors whitespace-nowrap overflow-hidden">
-        💬 WA Agen
+        WA Agen
       </button>
     )
   }
@@ -189,7 +189,7 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
             {listing.agentPhone  && <p className="text-gray-400 truncate" style={{ fontSize: '8px', lineHeight: 1.1 }}>{fmtPhone(listing.agentPhone)}</p>}
           </div>
           {/* WA button — fixed width */}
-          <div style={{ width: '76px', flexShrink: 0 }}>
+          <div style={{ width: '90px', flexShrink: 0 }}>
             <WaLeadButton
               waHref={wa}
               agentId={listing.agentId}
