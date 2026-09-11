@@ -47,7 +47,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (sent) {
     return (
       <button onClick={() => window.open(waHref, '_blank')}
-        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
         💬 WA Agen
       </button>
     )
@@ -56,7 +56,7 @@ function WaLeadButton({ waHref, agentId, listingId, listingTitle, agentName, tip
   if (!show) {
     return (
       <button onClick={() => setShow(true)}
-        className="flex-1 text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
+        className="w-full text-center py-2 text-sm font-semibold text-white bg-[#0f7266] rounded-lg hover:bg-[#0e6b5e] transition-colors">
         💬 WA Agen
       </button>
     )
@@ -181,24 +181,28 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
         {specs && <p className="text-xs text-gray-600 mb-3">{specs}</p>}
 
         {/* Agen + WA */}
-        <div className="flex items-center justify-between border-t border-gray-100 pt-3">
-          <div className="min-w-0 mr-3" style={{ fontSize: '6px', lineHeight: 0.7 }}>
+        <div className="flex items-center gap-2 border-t border-gray-100 pt-2">
+          {/* Agent info — fixed height, tidak ikut konten atas */}
+          <div className="flex-1 min-w-0 overflow-hidden" style={{ fontSize: '4px', lineHeight: 0.5, height: '22px' }}>
             {listing.agentName   && <p className="font-semibold text-primary-900 truncate">{listing.agentName}</p>}
             {listing.agentKantor && <p className="text-gray-500 truncate">{listing.agentKantor}</p>}
             {listing.agentPhone  && <p className="text-gray-400 truncate">{fmtPhone(listing.agentPhone)}</p>}
           </div>
-          <WaLeadButton
-            waHref={wa}
-            agentId={listing.agentId}
-            listingId={listing.id}
-            listingTitle={listing.title}
-            agentName={listing.agentName || ''}
-            tipeProperti={listing.propertyType}
-            jenis={listing.type === 'Sale' ? 'Secondary' : 'Sewa'}
-            minatTipe={listing.type === 'Sale' ? 'Beli' : 'Sewa'}
-            lokasi={[listing.location, listing.city].filter(Boolean).join(', ')}
-            price={listing.price}
-          />
+          {/* WA button — fixed width */}
+          <div style={{ width: '76px', flexShrink: 0 }}>
+            <WaLeadButton
+              waHref={wa}
+              agentId={listing.agentId}
+              listingId={listing.id}
+              listingTitle={listing.title}
+              agentName={listing.agentName || ''}
+              tipeProperti={listing.propertyType}
+              jenis={listing.type === 'Sale' ? 'Secondary' : 'Sewa'}
+              minatTipe={listing.type === 'Sale' ? 'Beli' : 'Sewa'}
+              lokasi={[listing.location, listing.city].filter(Boolean).join(', ')}
+              price={listing.price}
+            />
+          </div>
         </div>
       </div>
     </div>
