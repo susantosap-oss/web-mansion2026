@@ -181,14 +181,14 @@ export function ListingCard({ listing, className = '', priority = false }: { lis
         {specs && <p className="text-xs text-gray-600 mb-3">{specs}</p>}
 
         {/* Agen + WA */}
-        <div className="flex items-center gap-2 border-t border-gray-100 pt-2">
+        <div className="flex items-start gap-2 border-t border-gray-100 pt-2">
           {/* Agent info */}
-          <div className="flex-1 min-w-0" style={{ fontSize: '4px', lineHeight: 0.5 }}>
-            {listing.agentName   && <p className="font-semibold text-primary-900 truncate">{listing.agentName}</p>}
-            {listing.agentKantor && <p className="text-gray-500 truncate">{listing.agentKantor}</p>}
-            {listing.agentPhone  && <p className="text-gray-400 truncate">{fmtPhone(listing.agentPhone)}</p>}
+          <div className="flex-1 min-w-0">
+            {listing.agentName   && <p className="font-semibold text-primary-900 truncate" style={{ fontSize: '4px', lineHeight: 0.5 }}>{listing.agentName}</p>}
+            {listing.agentKantor && <p className="text-gray-500 truncate" style={{ fontSize: '2px', lineHeight: 0.35 }}>{listing.agentKantor}</p>}
+            {listing.agentPhone  && <p className="text-gray-400 truncate" style={{ fontSize: '2px', lineHeight: 0.35 }}>{fmtPhone(listing.agentPhone)}</p>}
           </div>
-          {/* WA button — fixed width */}
+          {/* WA button — fixed width, rata atas sejajar nama agen */}
           <div style={{ width: '76px', flexShrink: 0 }}>
             <WaLeadButton
               waHref={wa}
