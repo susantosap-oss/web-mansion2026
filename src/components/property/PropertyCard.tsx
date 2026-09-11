@@ -110,10 +110,10 @@ function cleanTitle(title: string): string {
 function parseSpecsFromDesc(desc: string): { lt: number; lb: number; kt: number; km: number } {
   const n = (re: RegExp) => { const m = desc.match(re); return m ? parseInt(m[1], 10) : 0 }
   return {
-    lt: n(/(?:LT|Luas\s*Tanah)\s*[:\s]\s*(\d+)/i),
-    lb: n(/(?:LB|Luas\s*Bangunan)\s*[:\s]\s*(\d+)/i),
-    kt: n(/(?:KT|Kamar\s*Tidur)\s*[:\s]\s*(\d+)/i),
-    km: n(/(?:KM|Kamar\s*Mandi)\s*[:\s]\s*(\d+)/i),
+    lt: n(/LT[:\s]*(\d+)/i),
+    lb: n(/LB[:\s]*(\d+)/i),
+    kt: n(/(\d+(?:[+\-]\d+)?)\s*KT/i),
+    km: n(/(\d+(?:[+\-]\d+)?)\s*KM/i),
   }
 }
 
