@@ -132,61 +132,30 @@ function fmtPhone(raw: string): string {
   return ['+62', a, b, c].filter(Boolean).join(' ')
 }
 
-// ── Featured Badge (klik untuk hapus, admin only) ──────────
-function FeaturedBadge({ listingId, onRemove }: { listingId: string; onRemove: () => void }) {
-  const [loading, setLoading] = useState(false)
-
-  const remove = async (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation()
-    if (loading) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/listings/${listingId}/featured`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featured: false }),
-      })
-      if (res.ok) onRemove()
-    } finally { setLoading(false) }
-  }
-
-  return (
-    <button onClick={remove} title="Hapus Unggulan"
-      className="badge rounded-full hover:opacity-70 transition-opacity"
-      style={{ background: '#0a2342', color: '#fff' }}>
-      {loading ? '...' : 'Featured'}
-    </button>
-  )
-}
-
-// ── Add Featured Button (hover, admin only, non-featured) ──
-function FeaturedAddButton({ listingId, onAdd }: { listingId: string; onAdd: () => void }) {
-  const [loading, setLoading] = useState(false)
-
-  const add = async (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation()
-    if (loading) return
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/listings/${listingId}/featured`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featured: true }),
-      })
-      if (res.ok) onAdd()
-    } finally { setLoading(false) }
-  }
-
-  return (
-    <button onClick={add} title="Jadikan Unggulan"
-      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-white/90 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-opacity z-10"
-      style={{ fontSize: '14px' }}>
-      {loading ? '⏳' : '☆'}
-    </button>
-  )
-}
 
 // ── Listing Card ───────────────────────────────────────────
 export function ListingCard({ listing, className = '', priority = false, isAdmin = false }: { listing: Listing; className?: string; priority?: boolean; isAdmin?: boolean }) {
   const [isFeatured, setIsFeatured] = useState(listing.featured)
+  const [featLoading, setFeatLoading] = useState(false)
+
+  const toggleFeatured = async (e: React.MouseEvent, newVal: boolean) => {
+    e.preventDefault(); e.stopPropagation()
+    if (featLoading) return
+    setIsFeatured(newVal)        // optimistic
+    setFeatLoading(true)
+    try {
+      const res = await fetch(`/api/listings/${listing.id}/featured`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured: newVal }),
+      })
+      if (!res.ok) setIsFeatured(!newVal)  // revert jika gagal
+    } catch {
+      setIsFeatured(!newVal)               // revert jika network error
+    } finally {
+      setFeatLoading(false)
+    }
+  }
+
   const wa = buildWALink(
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
@@ -215,11 +184,21 @@ export function ListingCard({ listing, className = '', priority = false, isAdmin
           <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
           {isFeatured && (
             isAdmin
-              ? <FeaturedBadge listingId={listing.id} onRemove={() => setIsFeatured(false)} />
+              ? <button onClick={(e) => toggleFeatured(e, false)} title="Hapus Unggulan"
+                  className="badge rounded-full hover:opacity-70 transition-opacity"
+                  style={{ background: '#0a2342', color: '#fff' }}>
+                  {featLoading ? '...' : 'Featured'}
+                </button>
               : <span className="badge rounded-full" style={{ background: '#0a2342', color: '#fff' }}>Featured</span>
           )}
         </div>
-        {isAdmin && !isFeatured && <FeaturedAddButton listingId={listing.id} onAdd={() => setIsFeatured(true)} />}
+        {isAdmin && !isFeatured && (
+          <button onClick={(e) => toggleFeatured(e, true)} title="Jadikan Unggulan"
+            className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-white/90 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-opacity z-10"
+            style={{ fontSize: '14px' }}>
+            {featLoading ? '⏳' : '☆'}
+          </button>
+        )}
       </Link>
 
       <div className="p-4 flex flex-col flex-1">
