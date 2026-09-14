@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getListings, formatPrice } from '@/lib/sheets'
 import { findCleanURL } from '@/lib/cleanUrls'
+import { getSession } from '@/lib/auth'
 import { ListingCard } from '@/components/property/PropertyCard'
 import BackButton from '@/components/ui/BackButton'
 import FavButton from '@/components/ui/FavButton'
@@ -118,6 +119,10 @@ export default async function ListingDetailPage({ params }: Props) {
       city:         cleanURL.city,
     })
 
+    let session = null
+    try { session = getSession() } catch {}
+    const isAdmin = session?.role === 'superadmin' || session?.role === 'admin'
+
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type':    'ItemList',
@@ -168,7 +173,7 @@ export default async function ListingDetailPage({ params }: Props) {
             </div>
             {listings.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0}/>)}
+                {listings.map((l, i) => <ListingCard key={l.id} listing={l} priority={i === 0} isAdmin={isAdmin}/>)}
               </div>
             ) : (
               <div className="text-center py-20 text-gray-400">
