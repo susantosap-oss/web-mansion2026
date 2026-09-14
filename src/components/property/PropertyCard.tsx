@@ -133,25 +133,22 @@ function fmtPhone(raw: string): string {
 }
 
 // ── Featured Badge (klik untuk hapus, admin only) ──────────
-function FeaturedBadge({ listingId }: { listingId: string }) {
-  const [removed,  setRemoved]  = useState(false)
-  const [loading,  setLoading]  = useState(false)
+function FeaturedBadge({ listingId, onRemove }: { listingId: string; onRemove: () => void }) {
+  const [loading, setLoading] = useState(false)
 
   const remove = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
     if (loading) return
     setLoading(true)
-    setRemoved(true)
     try {
-      await fetch(`/api/listings/${listingId}/featured`, {
+      const res = await fetch(`/api/listings/${listingId}/featured`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ featured: false }),
       })
-    } catch { setRemoved(false) }
-    setLoading(false)
+      if (res.ok) onRemove()
+    } finally { setLoading(false) }
   }
 
-  if (removed) return null
   return (
     <button onClick={remove} title="Hapus Unggulan"
       className="badge rounded-full hover:opacity-70 transition-opacity"
@@ -162,25 +159,22 @@ function FeaturedBadge({ listingId }: { listingId: string }) {
 }
 
 // ── Add Featured Button (hover, admin only, non-featured) ──
-function FeaturedAddButton({ listingId }: { listingId: string }) {
-  const [added,   setAdded]   = useState(false)
+function FeaturedAddButton({ listingId, onAdd }: { listingId: string; onAdd: () => void }) {
   const [loading, setLoading] = useState(false)
 
   const add = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
     if (loading) return
     setLoading(true)
-    setAdded(true)
     try {
-      await fetch(`/api/listings/${listingId}/featured`, {
+      const res = await fetch(`/api/listings/${listingId}/featured`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ featured: true }),
       })
-    } catch { setAdded(false) }
-    setLoading(false)
+      if (res.ok) onAdd()
+    } finally { setLoading(false) }
   }
 
-  if (added) return null
   return (
     <button onClick={add} title="Jadikan Unggulan"
       className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 bg-white/90 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-md transition-opacity z-10"
@@ -192,6 +186,7 @@ function FeaturedAddButton({ listingId }: { listingId: string }) {
 
 // ── Listing Card ───────────────────────────────────────────
 export function ListingCard({ listing, className = '', priority = false, isAdmin = false }: { listing: Listing; className?: string; priority?: boolean; isAdmin?: boolean }) {
+  const [isFeatured, setIsFeatured] = useState(listing.featured)
   const wa = buildWALink(
     listing.agentPhone,
     `Halo ${listing.agentName}, saya tertarik dengan: ${listing.title}. Info lebih lanjut?`
@@ -218,13 +213,13 @@ export function ListingCard({ listing, className = '', priority = false, isAdmin
         )}
         <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
           <span className={listing.type === 'Sale' ? 'badge-sale' : 'badge-rent'}>{listing.type === 'Sale' ? 'Dijual' : 'Disewa'}</span>
-          {listing.featured && (
+          {isFeatured && (
             isAdmin
-              ? <FeaturedBadge listingId={listing.id} />
+              ? <FeaturedBadge listingId={listing.id} onRemove={() => setIsFeatured(false)} />
               : <span className="badge rounded-full" style={{ background: '#0a2342', color: '#fff' }}>Featured</span>
           )}
         </div>
-        {isAdmin && !listing.featured && <FeaturedAddButton listingId={listing.id} />}
+        {isAdmin && !isFeatured && <FeaturedAddButton listingId={listing.id} onAdd={() => setIsFeatured(true)} />}
       </Link>
 
       <div className="p-4 flex flex-col flex-1">
