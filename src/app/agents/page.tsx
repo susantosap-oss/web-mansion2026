@@ -8,17 +8,24 @@ export const dynamic = 'force-dynamic'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
-export const metadata: Metadata = {
-  title: 'Tim Agen Properti Surabaya | Mansion Realty',
-  description: 'Temui agen properti profesional dan bersertifikat BNSP dari Mansion Realty Surabaya. Siap membantu jual, beli, dan sewa properti di Surabaya & Sidoarjo.',
-  alternates: { canonical: `${BASE}/agents` },
-  robots: { index: true, follow: true },
-  openGraph: {
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { sort?: string }
+}): Promise<Metadata> {
+  const isFiltered = !!(searchParams.sort && searchParams.sort !== 'default')
+  return {
     title: 'Tim Agen Properti Surabaya | Mansion Realty',
-    description: 'Agen properti bersertifikat BNSP siap membantu Anda di Surabaya & Sidoarjo.',
-    url: `${BASE}/agents`,
-    type: 'website',
-  },
+    description: 'Temui agen properti profesional dan bersertifikat BNSP dari Mansion Realty Surabaya. Siap membantu jual, beli, dan sewa properti di Surabaya & Sidoarjo.',
+    alternates: { canonical: `${BASE}/agents` },
+    robots: { index: !isFiltered, follow: true },
+    openGraph: {
+      title: 'Tim Agen Properti Surabaya | Mansion Realty',
+      description: 'Agen properti bersertifikat BNSP siap membantu Anda di Surabaya & Sidoarjo.',
+      url: `${BASE}/agents`,
+      type: 'website',
+    },
+  }
 }
 
 interface Props {

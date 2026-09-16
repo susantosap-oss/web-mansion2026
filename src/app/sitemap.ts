@@ -6,13 +6,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
   const staticPages = [
-    { url: BASE,               priority: 1.0,  changeFrequency: 'daily'   as const },
-    { url: `${BASE}/listings`, priority: 0.9,  changeFrequency: 'daily'   as const },
-    { url: `${BASE}/projects`, priority: 0.9,  changeFrequency: 'weekly'  as const },
-    { url: `${BASE}/agents`,   priority: 0.7,  changeFrequency: 'weekly'  as const },
-    { url: `${BASE}/news`,     priority: 0.7,  changeFrequency: 'weekly'  as const },
-    { url: `${BASE}/calculator`,  priority: 0.6, changeFrequency: 'monthly' as const },
-    { url: `${BASE}/asset-bank`,  priority: 0.8, changeFrequency: 'weekly'  as const },
+    { url: BASE,                    priority: 1.0, changeFrequency: 'daily'   as const },
+    { url: `${BASE}/listings`,      priority: 0.9, changeFrequency: 'daily'   as const },
+    { url: `${BASE}/projects`,      priority: 0.9, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/agents`,        priority: 0.7, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/news`,          priority: 0.7, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/calculator`,    priority: 0.6, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/asset-bank`,    priority: 0.8, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/daftar-harga`,  priority: 0.7, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/titip-listing`, priority: 0.7, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/cari`,          priority: 0.6, changeFrequency: 'weekly'  as const },
+    { url: `${BASE}/about`,         priority: 0.5, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/contact`,       priority: 0.5, changeFrequency: 'monthly' as const },
+    { url: `${BASE}/career`,        priority: 0.5, changeFrequency: 'monthly' as const },
   ]
 
   try {
@@ -80,7 +86,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'weekly' as const,
       }))
 
-    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages]
+    const daftarHargaCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'daftar-harga' && c.active)
+      .map(c => ({
+        url:             `${BASE}/daftar-harga/${c.slug}`,
+        priority:        0.7,
+        changeFrequency: 'weekly' as const,
+      }))
+
+    const titipListingCleanURLPages = cleanURLs
+      .filter(c => c.pathPrefix === 'titip-listing' && c.active)
+      .map(c => ({
+        url:             `${BASE}/titip-listing/${c.slug}`,
+        priority:        0.6,
+        changeFrequency: 'monthly' as const,
+      }))
+
+    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages, ...daftarHargaCleanURLPages, ...titipListingCleanURLPages]
   } catch {
     return staticPages
   }

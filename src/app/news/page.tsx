@@ -6,10 +6,18 @@ export const dynamic = 'force-dynamic'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
-export const metadata: Metadata = {
-  title: 'Berita Properti | Mansion Realty',
-  description: 'Tips, berita pasar, dan informasi properti terkini dari Mansion Realty Surabaya.',
-  alternates: { canonical: `${BASE}/news` },
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { category?: string; q?: string }
+}): Promise<Metadata> {
+  const isFiltered = !!(searchParams.category?.trim() || searchParams.q?.trim())
+  return {
+    title: 'Berita Properti | Mansion Realty',
+    description: 'Tips, berita pasar, dan informasi properti terkini dari Mansion Realty Surabaya.',
+    alternates: { canonical: `${BASE}/news` },
+    robots: { index: !isFiltered, follow: true },
+  }
 }
 
 function formatDate(ts: string): string {
