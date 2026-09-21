@@ -8,16 +8,25 @@ export const dynamic = 'force-dynamic'
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
-export const metadata: Metadata = {
-  title: 'Cari Properti — Rumah, Ruko, Tanah di Surabaya | Mansion Realty',
-  description: 'Temukan properti impian Anda di Surabaya dan sekitarnya. Filter berdasarkan tipe, harga, lokasi, kamar tidur, dan luas. Ribuan listing dari agen terpercaya Mansion Realty.',
-  alternates: { canonical: `${BASE}/cari` },
-  openGraph: {
-    title: 'Cari Properti — Mansion Realty',
-    description: 'Search engine properti terlengkap. Filter harga, lokasi, tipe, dan spesifikasi.',
-    url: `${BASE}/cari`,
-    type: 'website',
-  },
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>
+}): Promise<Metadata> {
+  // Noindex any /cari?* URL — search result pages are not worth indexing individually.
+  const hasFilter = Object.keys(searchParams).length > 0
+  return {
+    title: 'Cari Properti — Rumah, Ruko, Tanah di Surabaya | Mansion Realty',
+    description: 'Temukan properti impian Anda di Surabaya dan sekitarnya. Filter berdasarkan tipe, harga, lokasi, kamar tidur, dan luas. Ribuan listing dari agen terpercaya Mansion Realty.',
+    alternates: { canonical: `${BASE}/cari` },
+    robots: { index: !hasFilter, follow: true },
+    openGraph: {
+      title: 'Cari Properti — Mansion Realty',
+      description: 'Search engine properti terlengkap. Filter harga, lokasi, tipe, dan spesifikasi.',
+      url: `${BASE}/cari`,
+      type: 'website',
+    },
+  }
 }
 
 // Fetch filter options server-side (cached 5 menit)

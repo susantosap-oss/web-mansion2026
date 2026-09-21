@@ -21,9 +21,11 @@ const PROP_TYPE_LABELS: Record<string, string> = {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { type?: string; propertyType?: string; priceRange?: string }
+  searchParams: Record<string, string | string[] | undefined>
 }): Promise<Metadata> {
-  const { type, propertyType, priceRange } = searchParams
+  const type        = searchParams.type        as string | undefined
+  const propertyType = searchParams.propertyType as string | undefined
+  const priceRange  = searchParams.priceRange  as string | undefined
   const allListings = await getListings({ type: type as 'Sale' | 'Rent', propertyType })
   const count = priceRange === 'below'
     ? allListings.filter(l => l.price < 1_000_000_000).length
@@ -48,7 +50,8 @@ export async function generateMetadata({
   // Specific category targeting is handled by cleanURL pages (/listings/jual-rumah-surabaya).
   const canonical = `${BASE}/listings`
 
-  const hasFilter = !!(type || propertyType || priceRange)
+  // Noindex ANY URL that carries query params — catches ?q=, ?type=, ?priceRange= etc.
+  const hasFilter = Object.keys(searchParams).length > 0
 
   return {
     title,
