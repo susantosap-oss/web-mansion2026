@@ -5,6 +5,7 @@ import KprSettings from './KprSettings'
 import CleanURLsManager from './CleanURLsManager'
 import GA4Analytics from './GA4Analytics'
 import KomisiSettings from './KomisiSettings'
+import GASManager from './GASManager'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,7 +15,7 @@ import { markdownToHtml } from '@/lib/markdownToHtml'
 
 interface Props { user: AuthUser; stats?: { listings: number; agents: number; news: number; leads: number } }
 
-type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring' | 'cleanurls' | 'trends' | 'analytics' | 'komisi'
+type Tab = 'overview' | 'news' | 'logo' | 'settings' | 'kpr' | 'content' | 'scoring' | 'cleanurls' | 'trends' | 'analytics' | 'komisi' | 'gas'
 
 export default function AdminDashboardClient({ user, stats }: Props) {
   const router = useRouter()
@@ -325,6 +326,7 @@ export default function AdminDashboardClient({ user, stats }: Props) {
     { id: 'trends'    as Tab, icon: '📈', label: 'Google Trends',   roles: ['superadmin'] },
     { id: 'analytics' as Tab, icon: '📊', label: 'GA4 Analytics',   roles: ['superadmin'] },
     { id: 'komisi'    as Tab, icon: '💰', label: 'Komisi Mansion',  roles: ['superadmin'] },
+    { id: 'gas'       as Tab, icon: '⚡', label: 'GAS Control',      roles: ['superadmin'] },
   ]).filter(m => m.roles.includes(user.role))
 
   return (
@@ -721,6 +723,9 @@ export default function AdminDashboardClient({ user, stats }: Props) {
 
         {/* ── KOMISI MANSION ── */}
         {tab === 'komisi' && user.role === 'superadmin' && <KomisiSettings />}
+
+        {/* ── GAS CONTROL CENTER ── */}
+        {tab === 'gas' && user.role === 'superadmin' && <GASManager />}
 
         {/* ── KPR SETTINGS (ORIGINAL) ── */}
         {tab === 'kpr' && <KprSettings />}

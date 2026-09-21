@@ -199,6 +199,29 @@ function doGet(e) {
         var headers = sht.getRange(1, 1, 1, sht.getLastColumn()).getValues()[0]
         return resp({ success: true, sheet: sheetName, headers: headers })
 
+      case 'getTriggerStatus':
+        var activeTriggers = ScriptApp.getProjectTriggers()
+        var triggerInfo = activeTriggers.map(function(t) {
+          return {
+            handler: t.getHandlerFunction(),
+            source:  t.getTriggerSource().toString(),
+            id:      t.getUniqueId(),
+          }
+        })
+        return resp({
+          success:  true,
+          count:    activeTriggers.length,
+          triggers: triggerInfo,
+          healthy:  activeTriggers.length >= 2,
+        })
+
+      case 'reinitTriggers':
+        createAllTriggers()
+        return resp({
+          success: true,
+          message: 'Triggers berhasil di-reinit. onEdit + daily aktif.',
+        })
+
       default:
         return resp({ success: false, error: 'Unknown action: ' + action })
     }
