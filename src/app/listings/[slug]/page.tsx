@@ -11,7 +11,9 @@ import FavButton from '@/components/ui/FavButton'
 import ImageGallery from '@/components/property/ImageGallery'
 import ListingDetailClient from './ListingDetailClient'
 
-export const dynamic = 'force-dynamic'
+// ISR: halaman dikache 5 mnt, saat GAS down Next.js sajikan versi terakhir yang valid
+export const revalidate = 300
+export const dynamicParams = true
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 

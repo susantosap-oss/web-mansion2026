@@ -1,5 +1,5 @@
 import { Project, Listing, Agent, News, AssetBank, SheetRow, AgentScoreWeights, DEFAULT_SCORE_WEIGHTS } from '@/types'
-import { getCached, setCached } from '@/lib/gasCache'
+import { getCached, setCached, getStaleCached } from '@/lib/gasCache'
 
 const GAS_URL    = process.env.NEXT_PUBLIC_GAS_API_URL!
 const GAS_SECRET = process.env.GAS_API_SECRET || ''
@@ -19,21 +19,35 @@ async function fetchFromGAS<T>(action: string, ttl = 300): Promise<T> {
   url.searchParams.set('action', action)
   url.searchParams.set('secret', GAS_SECRET)
 
-  const res = await fetch(url.toString(), { next: { revalidate: ttl, tags: [`gas:${action}`] } })
-  if (!res.ok) throw new Error(`GAS error: ${res.status}`)
+  try {
+    const res = await fetch(url.toString(), {
+      cache: 'no-store',
+      next: { revalidate: ttl, tags: [`gas:${action}`] },
+    })
 
-  const text = await res.text()
-  // GAS yang "Access Denied" mengembalikan HTML, bukan JSON
-  if (text.trimStart().startsWith('<')) {
-    console.error(`[GAS] Access Denied — deployment tidak aktif atau akses dicabut. Action: ${action}`)
-    throw new Error('GAS_ACCESS_DENIED')
+    if (!res.ok) throw new Error(`GAS HTTP ${res.status}`)
+
+    const text = await res.text()
+    if (text.trimStart().startsWith('<')) {
+      throw new Error('GAS_ACCESS_DENIED')
+    }
+
+    const json = JSON.parse(text)
+    if (!json.success) throw new Error(json.error || 'GAS returned error')
+
+    setCached(cacheKey, json.data as T, ttl)
+    return json.data as T
+  } catch (e) {
+    // Fallback ke stale data agar halaman tetap menampilkan konten ke Googlebot
+    const stale = getStaleCached<T>(cacheKey)
+    if (stale !== null) {
+      console.warn(`[GAS] ${action} gagal (${e}), menggunakan stale data`)
+      setCached(cacheKey, stale, Math.min(ttl, 120)) // cache stale max 2 mnt
+      return stale
+    }
+    console.error(`[GAS] ${action} gagal tanpa stale data: ${e}`)
+    throw e
   }
-
-  const json = JSON.parse(text)
-  if (!json.success) throw new Error(json.error || 'GAS returned error')
-
-  setCached(cacheKey, json.data as T, ttl)
-  return json.data as T
 }
 
 // ── Helper ────────────────────────────────────────────────
