@@ -35,7 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const listings = await getListings()
   const listing  = listings.find(l => l.slug === slug || l.id === slug)
-  if (!listing) return { title: 'Listing Tidak Ditemukan', robots: { index: false, follow: false } }
+  if (!listing) {
+    // Only noindex when getListings returned data — the slug truly doesn't exist.
+    // Empty array most likely means GAS is down; don't punish the URL with noindex.
+    if (listings.length > 0) return { title: 'Listing Tidak Ditemukan', robots: { index: false, follow: false } }
+    return { title: 'Properti | Mansion Realty', alternates: { canonical: `${BASE}/listings/${slug}` } }
+  }
 
   const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
   const title      = `${listing.title} — Mansion Realty`

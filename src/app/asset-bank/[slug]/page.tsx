@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { getAssets } from '@/lib/sheets'
-import { findCleanURLByPrefix } from '@/lib/cleanUrls'
+import { getCleanURLs } from '@/lib/cleanUrls'
 import AssetBankClient from '../AssetBankClient'
 import WhatsAppButton from '@/components/ui/WhatsAppButton'
 
@@ -12,10 +12,13 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 interface Props { params: { slug: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const slug     = decodeURIComponent(params.slug)
-  const cleanURL = await findCleanURLByPrefix('asset-bank', slug)
-  if (!cleanURL) return { title: 'Tidak Ditemukan', robots: { index: false, follow: false } }
-
+  const slug    = decodeURIComponent(params.slug)
+  const allURLs = await getCleanURLs()
+  const cleanURL = allURLs.find(c => c.pathPrefix === 'asset-bank' && c.slug === slug && c.active)
+  if (!cleanURL) {
+    if (allURLs.length > 0) return { title: 'Tidak Ditemukan', robots: { index: false, follow: false } }
+    return { title: 'Asset Bank | Mansion Realty', alternates: { canonical: `${BASE}/asset-bank/${slug}` } }
+  }
   return {
     title:       cleanURL.title,
     description: cleanURL.description,
@@ -25,8 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AssetBankSlugPage({ params }: Props) {
-  const slug     = decodeURIComponent(params.slug)
-  const cleanURL = await findCleanURLByPrefix('asset-bank', slug)
+  const slug    = decodeURIComponent(params.slug)
+  const allURLs = await getCleanURLs()
+  const cleanURL = allURLs.find(c => c.pathPrefix === 'asset-bank' && c.slug === slug && c.active)
   if (!cleanURL) notFound()
 
   const allAssets = await getAssets()

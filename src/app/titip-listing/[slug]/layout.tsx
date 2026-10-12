@@ -9,7 +9,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const cleanURL = allURLs.find(c => c.pathPrefix === 'titip-listing' && c.slug === slug && c.active)
 
   if (!cleanURL) {
-    return { robots: { index: false, follow: false } }
+    // Only noindex when config returned data — this slug truly isn't configured.
+    // Empty allURLs most likely means Sheets API is down; don't punish the URL.
+    if (allURLs.length > 0) return { robots: { index: false, follow: false } }
+    return {}
   }
 
   return {

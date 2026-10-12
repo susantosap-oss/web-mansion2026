@@ -15,7 +15,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug    = decodeURIComponent(params.slug)
   const allURLs = await getCleanURLs()
   const cleanURL = allURLs.find(c => c.pathPrefix === 'daftar-harga' && c.slug === slug && c.active)
-  if (!cleanURL) return { title: 'Daftar Harga | Mansion Realty', robots: { index: false, follow: false } }
+  if (!cleanURL) {
+    if (allURLs.length > 0) return { title: 'Daftar Harga | Mansion Realty', robots: { index: false, follow: false } }
+    return { title: 'Daftar Harga | Mansion Realty', alternates: { canonical: `${BASE}/daftar-harga/${slug}` } }
+  }
   return {
     title:       cleanURL.title,
     description: cleanURL.description,
