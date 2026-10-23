@@ -145,7 +145,7 @@ export default function AssetBankClient({ assets }: { assets: AssetBank[] }) {
   // Opsi unik untuk setiap filter
   const kotaList  = useMemo(() => [...new Set(assets.map(a => a.kota).filter(Boolean))].sort(), [assets])
   const bankList  = useMemo(() => [...new Set(assets.map(a => a.namaBank).filter(Boolean))].sort(), [assets])
-  const jenisList: AssetBank['jenisAsset'][] = ['Lelang', 'AYDA', 'Lainnya']
+  const jenisList: AssetBank['jenisAsset'][] = ['Lelang', 'AYDA']
 
   const filtered = useMemo(() => assets.filter(a => {
     if (filterKota  && a.kota       !== filterKota)  return false

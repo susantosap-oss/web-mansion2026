@@ -470,11 +470,18 @@ export async function getNews(limit?: number): Promise<News[]> {
 function mapAsset(row: SheetRow): AssetBank {
   // Jenis asset: baca labelAsset dari Source_Data JSON
   let labelAsset = str(row[''] || '')  // kolom tanpa header = labelAsset
+  // Kolom tanpa header kadang berisi JSON array nama kolom, bukan label → abaikan
+  if (labelAsset.startsWith('[')) labelAsset = ''
   if (!labelAsset) {
     try {
       const sd = JSON.parse(str(row['Source_Data'] || '{}'))
       labelAsset = str(sd.labelAsset || '')
     } catch { /* skip */ }
+  }
+  // Fallback: prefix Kode_Asset (AST-CS-… / AST-LL-… / AST-AY-…)
+  if (!labelAsset) {
+    const prefix = str(row['Kode_Asset'] || '').split('-')[1] || ''
+    labelAsset = prefix === 'CS' ? 'Cessie' : prefix === 'LL' ? 'Lelang' : prefix === 'AY' ? 'AYDA' : ''
   }
   const labelLower = labelAsset.toLowerCase()
   const jenis: AssetBank['jenisAsset'] =
