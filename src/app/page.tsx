@@ -105,7 +105,7 @@ export default async function HomePage() {
               <div>
                 <div className="divider-gold mb-3"/>
                 <h2 className="section-title">Aset Bank</h2>
-                <p className="section-subtitle">Properti Lelang &amp; Cessie/AYDA dari berbagai bank</p>
+                <p className="section-subtitle">Properti Lelang &amp; AYDA dari berbagai bank</p>
               </div>
               <Link href="/asset-bank" className="btn-outline text-sm">Lihat Semua Aset →</Link>
             </div>

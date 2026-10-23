@@ -134,9 +134,9 @@ function buildAutoSEO(prefix: CleanURL['pathPrefix'], form: Omit<FormState, 'pat
     case 'asset-bank': {
       const slug  = `asset-bank-${locSlug}`
       const label = `Aset Bank ${locText}`
-      const h1    = `Aset Bank Lelang & Cessie/AYDA ${locText}`
-      const title = `Aset Bank ${locText} — Lelang & Cessie/AYDA | Mansion Realty`
-      const desc  = `Daftar asset bank lelang dan Cessie/AYDA ${locText}. Properti hasil lelang bank dengan harga limit resmi. Konsultasi gratis bersama agen Mansion Realty.`
+      const h1    = `Aset Bank Lelang & AYDA ${locText}`
+      const title = `Aset Bank ${locText} — Lelang & AYDA | Mansion Realty`
+      const desc  = `Daftar asset bank lelang dan AYDA ${locText}. Properti hasil lelang bank dengan harga limit resmi. Konsultasi gratis bersama agen Mansion Realty.`
       return { slug, label, h1, title, description: desc }
     }
   }

@@ -521,7 +521,8 @@ function mapAsset(row: SheetRow): AssetBank {
 export async function getAssets(): Promise<AssetBank[]> {
   try {
     const rows = await fetchFromGAS<SheetRow[]>('getAssets', 120)
-    return rows.map(mapAsset).filter(a => a.judul || a.namaBank).sort((a, b) => dateTs(b.createdAt || '') - dateTs(a.createdAt || ''))
+    // Cessie di-takedown: tidak ditampilkan di web
+    return rows.map(mapAsset).filter(a => (a.judul || a.namaBank) && a.jenisAsset !== 'Cessie').sort((a, b) => dateTs(b.createdAt || '') - dateTs(a.createdAt || ''))
   } catch (e) {
     console.error('[getAssets]', e)
     return []
