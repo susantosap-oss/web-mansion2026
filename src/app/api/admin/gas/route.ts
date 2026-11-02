@@ -33,30 +33,19 @@ export async function GET() {
   try {
     const res = await fetch(`${GAS_URL}?secret=${GAS_SECRET}&action=getTriggerStatus`, {
       cache: 'no-store',
-      redirect: 'manual',
     })
 
-    // Redirect = GAS deployment butuh Google sign-in
-    if (res.status >= 300 && res.status < 400) {
+    const txt = await res.text()
+
+    // Jika response adalah HTML = GAS butuh autentikasi (Who has access bukan "Anyone")
+    if (txt.trimStart().startsWith('<')) {
       return NextResponse.json({
         success: false,
-        error: `GAS deployment redirect ke Google sign-in (HTTP ${res.status}). Buka GAS Editor → Manage deployments → Edit → pastikan "Who has access: Anyone" (bukan "Anyone with Google Account").`,
+        error: `GAS mengembalikan HTML (HTTP ${res.status}) — buka GAS Editor → Manage deployments → Edit → pastikan "Execute as: Me" + "Who has access: Anyone" → Deploy ulang.`,
       })
     }
 
-    const ct = res.headers.get('content-type') || ''
-    if (!ct.includes('json') && !ct.includes('text/plain')) {
-      const txt = await res.text()
-      const isHtml = txt.trimStart().startsWith('<')
-      return NextResponse.json({
-        success: false,
-        error: isHtml
-          ? `GAS mengembalikan halaman HTML (HTTP ${res.status}) — deployment butuh re-authorize. Buka GAS Editor → Deploy → Manage deployments → Edit → pastikan "Execute as: Me" + "Who has access: Anyone" → Deploy ulang.`
-          : `GAS response tidak valid (HTTP ${res.status}): ${txt.substring(0, 150)}`,
-      })
-    }
-
-    const data = await res.json()
+    const data = JSON.parse(txt)
     return NextResponse.json(data)
   } catch (e) {
     return NextResponse.json({ success: false, error: String(e) })
@@ -79,20 +68,12 @@ export async function POST(req: Request) {
     try {
       const gasRes = await fetch(`${GAS_URL}?secret=${GAS_SECRET}&action=reinitTriggers`, {
         cache: 'no-store',
-        redirect: 'manual',
       })
-      if (gasRes.status >= 300 && gasRes.status < 400) {
-        gasResult = { success: false, error: `GAS redirect ke sign-in (HTTP ${gasRes.status}) — deployment butuh re-authorize di GAS Editor.` }
+      const txt = await gasRes.text()
+      if (txt.trimStart().startsWith('<')) {
+        gasResult = { success: false, error: `GAS mengembalikan HTML — buka GAS Editor → Manage deployments → Edit → "Execute as: Me" + "Who has access: Anyone" → Deploy.` }
       } else {
-        const ct = gasRes.headers.get('content-type') || ''
-        if (!ct.includes('json') && !ct.includes('text/plain')) {
-          const txt = await gasRes.text()
-          gasResult = { success: false, error: txt.trimStart().startsWith('<')
-            ? `GAS mengembalikan HTML — buka GAS Editor → Manage deployments → Edit → "Execute as: Me" + "Who has access: Anyone" → Deploy.`
-            : `GAS response tidak valid: ${txt.substring(0, 150)}` }
-        } else {
-          gasResult = await gasRes.json()
-        }
+        gasResult = JSON.parse(txt)
       }
     } catch (e) {
       gasResult = { success: false, error: String(e) }
