@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next'
 import { getListings, getProjects, getAgents, getNews } from '@/lib/sheets'
 import { getCleanURLs } from '@/lib/cleanUrls'
 
+export const dynamic = 'force-dynamic'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
@@ -119,7 +121,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...projectsCleanURLPages, ...agentPages, ...agentsCleanURLPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages, ...daftarHargaCleanURLPages, ...titipListingCleanURLPages]
-  } catch {
+  } catch (e) {
+    console.error('[sitemap] gagal fetch data dinamis, fallback ke static pages:', e)
     return staticPages
   }
 }

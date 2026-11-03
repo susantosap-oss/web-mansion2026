@@ -186,8 +186,24 @@ function mapProject(row: SheetRow): Project {
     province:    '',
     priceMin:    num(row['Harga_Mulai']),
     priceMax:    num(row['Harga_Mulai']),
-    type:        (str(row['Tipe_Properti']) as Project['type']) || 'Perumahan',
-    status:      (str(row['Status']) as Project['status']) || 'Aktif',
+    type:        ((): Project['type'] => {
+      const t = str(row['Tipe_Properti']).trim().toLowerCase()
+      if (t === 'rumah')      return 'Rumah'
+      if (t === 'perumahan')  return 'Perumahan'
+      if (t === 'apartemen' || t === 'apartment') return 'Apartemen'
+      if (t === 'ruko')       return 'Ruko'
+      if (t === 'kavling')    return 'Kavling'
+      if (t === 'gudang')     return 'Gudang'
+      if (t === 'komersial')  return 'Komersial'
+      return (str(row['Tipe_Properti']) as Project['type']) || 'Perumahan'
+    })(),
+    status:      ((): Project['status'] => {
+      const s = str(row['Status']).toLowerCase()
+      if (s === 'aktif' || s === 'active') return 'Aktif'
+      if (s.includes('sold') || s === 'terjual') return 'Sold Out'
+      if (s.includes('coming')) return 'Coming Soon'
+      return 'Aktif'
+    })(),
     description: str(row['Deskripsi']),
     coverImage:  str(row['Foto_1_URL']),
     images:      [str(row['Foto_1_URL']), str(row['Foto_2_URL']), str(row['Foto_3_URL']), str(row['Foto_4_URL'])].filter(s => s.startsWith('http')),

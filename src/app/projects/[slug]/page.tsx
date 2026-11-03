@@ -60,10 +60,20 @@ export default async function ProjectDetailPage({ params }: Props) {
   const cleanURL = await findCleanURLByPrefix('projects', slug)
   if (cleanURL) {
     const allProjects = await getProjects()
+    const normalizeType = (t = '') => {
+      const l = t.toLowerCase().trim()
+      if (l === 'rumah' || l === 'perumahan') return 'rumah'
+      return l
+    }
     const filtered = allProjects.filter(p => {
-      const matchType = !cleanURL.propertyType || p.type === cleanURL.propertyType
-      const matchCity = !cleanURL.city || p.city === cleanURL.city
-      return matchType && matchCity && p.status === 'Aktif'
+      const matchType = !cleanURL.propertyType ||
+        normalizeType(p.type) === normalizeType(cleanURL.propertyType)
+      const cityQ = (cleanURL.city || '').toLowerCase()
+      const matchCity = !cityQ ||
+        p.city.toLowerCase() === cityQ ||
+        (p.location || '').toLowerCase().includes(cityQ)
+      const matchStatus = p.status.toLowerCase() === 'aktif'
+      return matchType && matchCity && matchStatus
     })
 
     const jsonLd = {
