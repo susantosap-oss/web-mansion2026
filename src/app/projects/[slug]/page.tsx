@@ -5,8 +5,10 @@ import Image from 'next/image'
 import ImageGallery from '@/components/property/ImageGallery'
 import { getProjects, getAgents, formatPrice, computeAgentScore } from '@/lib/sheets'
 import { getScoreWeights } from '@/lib/serverSheets'
+import { findCleanURLByPrefix } from '@/lib/cleanUrls'
 import BackButton from '@/components/ui/BackButton'
 import ProjectDetailClient from './ProjectDetailClient'
+import { ProjectCard } from '@/components/property/PropertyCard'
 
 export const dynamic = 'force-dynamic'
 interface Props { params: { slug: string } }
@@ -15,6 +17,17 @@ const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const slug = decodeURIComponent(params.slug)
+
+  const cleanURL = await findCleanURLByPrefix('projects', slug)
+  if (cleanURL) {
+    return {
+      title:       cleanURL.title,
+      description: cleanURL.description,
+      alternates:  { canonical: `${BASE}/projects/${slug}` },
+      openGraph:   { title: cleanURL.title, description: cleanURL.description, url: `${BASE}/projects/${slug}`, type: 'website' },
+    }
+  }
+
   const projects = await getProjects()
   const project = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) return { title: 'Proyek Tidak Ditemukan' }
@@ -41,7 +54,86 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
-  const slug     = decodeURIComponent(params.slug)
+  const slug = decodeURIComponent(params.slug)
+
+  // ── CleanURL: halaman daftar proyek ──────────────────────
+  const cleanURL = await findCleanURLByPrefix('projects', slug)
+  if (cleanURL) {
+    const allProjects = await getProjects()
+    const filtered = allProjects.filter(p => {
+      const matchType = !cleanURL.propertyType || p.type === cleanURL.propertyType
+      const matchCity = !cleanURL.city || p.city === cleanURL.city
+      return matchType && matchCity && p.status === 'Aktif'
+    })
+
+    const jsonLd = {
+      '@context':    'https://schema.org',
+      '@type':       'ItemList',
+      name:          cleanURL.h1,
+      numberOfItems: filtered.length,
+      url:           `${BASE}/projects/${slug}`,
+      itemListElement: filtered.slice(0, 20).map((p, i) => ({
+        '@type':   'ListItem',
+        position:  i + 1,
+        item: {
+          '@type':       'RealEstateListing',
+          name:          p.name,
+          url:           `${BASE}/projects/${p.slug}`,
+          image:         p.coverImage || undefined,
+          offers:        { '@type': 'Offer', priceCurrency: 'IDR', price: p.priceMin },
+          address:       { '@type': 'PostalAddress', addressLocality: p.city, addressCountry: 'ID' },
+        },
+      })),
+    }
+
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type':    'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda',      item: BASE },
+        { '@type': 'ListItem', position: 2, name: 'Proyek',       item: `${BASE}/projects` },
+        { '@type': 'ListItem', position: 3, name: cleanURL.label, item: `${BASE}/projects/${slug}` },
+      ],
+    }
+
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}/>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}/>
+        <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
+          <div className="section-wrapper">
+            <nav className="text-sm text-gray-400 mb-6 flex items-center gap-2">
+              <Link href="/" className="hover:text-primary-900">Beranda</Link>
+              <span>/</span>
+              <Link href="/projects" className="hover:text-primary-900">Proyek</Link>
+              <span>/</span>
+              <span className="text-primary-900 font-medium">{cleanURL.label}</span>
+            </nav>
+            <div className="mb-8">
+              <div className="divider-gold mb-3"/>
+              <h1 className="section-title">{cleanURL.h1}</h1>
+              <p className="text-gray-500 mt-2">{filtered.length} proyek ditemukan</p>
+            </div>
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filtered.map((p, i) => (
+                  <ProjectCard key={p.id} project={p} priority={i === 0}/>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <div className="text-5xl mb-4">🏗️</div>
+                <p>Belum ada proyek untuk kategori ini.</p>
+                <Link href="/projects" className="btn-primary mt-6">Lihat Semua Proyek</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Detail proyek ─────────────────────────────────────────
   const [projects, allAgents, weights] = await Promise.all([getProjects(), getAgents(), getScoreWeights()])
   const project  = projects.find(p => p.slug === slug || p.id === slug)
   if (!project) notFound()

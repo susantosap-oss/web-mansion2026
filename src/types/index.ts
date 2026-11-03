@@ -99,6 +99,7 @@ export interface CleanURL {
   filterType?: 'Sale' | 'Rent'
   propertyType?: string
   city?: string
+  newsCategory?: string
   title: string
   description: string
   h1: string

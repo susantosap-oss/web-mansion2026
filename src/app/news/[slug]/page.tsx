@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getNews } from '@/lib/sheets'
-import { findCleanURLByPrefix } from '@/lib/cleanUrls'
+import { findCleanURLByPrefix, newsCategoryOf } from '@/lib/cleanUrls'
 import { markdownToHtml } from '@/lib/markdownToHtml'
 import BackButton from '@/components/ui/BackButton'
 import RelatedProperties from '@/components/property/RelatedProperties'
@@ -61,15 +61,7 @@ export default async function NewsDetailPage({ params }: Props) {
   // ── CleanURL: halaman kategori berita ─────────────────────
   const cleanURL = await findCleanURLByPrefix('news', slug)
   if (cleanURL) {
-    const CATEGORY_SLUG_MAP: Record<string, string> = {
-      'berita-properti': 'Berita Properti',
-      'tips-trik':       'Tips & Trik',
-      'regulasi':        'Regulasi',
-      'kpr-pembiayaan':  'KPR & Pembiayaan',
-      'investasi':       'Investasi',
-      'aset-lelang':     'Aset Lelang',
-    }
-    const targetCategory = CATEGORY_SLUG_MAP[slug]
+    const targetCategory = newsCategoryOf(cleanURL)
     const allNews = await getNews()
     const filtered = targetCategory
       ? allNews.filter(n => n.category === targetCategory)

@@ -41,6 +41,10 @@ function toSlug(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, '-')
 }
 
+function prefixOf(u: CleanURL): CleanURL['pathPrefix'] {
+  return u.pathPrefix ?? 'listings'
+}
+
 // ── Auto-SEO per pathPrefix ───────────────────────────────
 interface AutoSEO { slug: string; label: string; h1: string; title: string; description: string }
 
@@ -139,6 +143,9 @@ function buildAutoSEO(prefix: CleanURL['pathPrefix'], form: Omit<FormState, 'pat
       const desc  = `Daftar asset bank lelang dan AYDA ${locText}. Properti hasil lelang bank dengan harga limit resmi. Konsultasi gratis bersama agen Mansion Realty.`
       return { slug, label, h1, title, description: desc }
     }
+
+    default:
+      return { slug: '', label: '', h1: '', title: '', description: '' }
   }
 }
 
@@ -242,16 +249,20 @@ export default function CleanURLsManager() {
     if (!form.slug || !form.title || !form.description || !form.h1 || !form.label) {
       notify('❌ Isi semua field wajib'); return
     }
+    const { newsCategory: nc, ...cleanBase } = form
+    const entry: Omit<CleanURL, 'id'> = {
+      ...cleanBase,
+      ...(form.pathPrefix === 'news' && nc?.trim() ? { newsCategory: nc.trim() } : {}),
+    }
     let list: CleanURL[]
-    const { newsCategory, ...cleanForm } = form
     if (editing) {
-      list = urls.map(u => u.id === editing ? { ...cleanForm, id: editing } : u)
+      list = urls.map(u => u.id === editing ? { ...entry, id: editing } : u)
       setEditing(null)
     } else {
-      if (urls.some(u => u.slug === form.slug && u.pathPrefix === form.pathPrefix)) {
+      if (urls.some(u => u.slug === form.slug && prefixOf(u) === form.pathPrefix)) {
         notify('❌ Slug + path prefix sudah ada'); return
       }
-      list = [...urls, { ...cleanForm, id: crypto.randomUUID() }]
+      list = [...urls, { ...entry, id: crypto.randomUUID() }]
     }
     save(list)
     setForm({ ...EMPTY_FORM })
@@ -261,7 +272,9 @@ export default function CleanURLsManager() {
   function startEdit(u: CleanURL) {
     setEditing(u.id)
     const { id, ...rest } = u
-    setForm({ ...rest, newsCategory: EMPTY_FORM.newsCategory })
+    const slugCatMap = Object.fromEntries(NEWS_CATEGORIES.map(c => [toSlug(c), c]))
+    const guessedCat = slugCatMap[u.slug] || EMPTY_FORM.newsCategory
+    setForm({ ...rest, pathPrefix: prefixOf(u), newsCategory: u.newsCategory || guessedCat })
     setTouched({ slug: true, label: true, h1: true, title: true, description: true })
   }
 
@@ -270,7 +283,7 @@ export default function CleanURLsManager() {
   function remove(id: string) { if (!confirm('Hapus clean URL ini?')) return; save(urls.filter(u => u.id !== id)) }
 
   const preview     = autoSEO(form)
-  const curPrefix   = PATH_PREFIXES.find(p => p.value === form.pathPrefix)!
+  const curPrefix   = PATH_PREFIXES.find(p => p.value === form.pathPrefix) ?? PATH_PREFIXES[0]
   const liveSlug    = touched.slug ? form.slug : preview.slug
   const showFilters = form.pathPrefix === 'listings' || form.pathPrefix === 'projects' || form.pathPrefix === 'titip-listing' || form.pathPrefix === 'calculator'
 
