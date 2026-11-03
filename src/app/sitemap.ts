@@ -55,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const listingCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'listings' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'listings' && c.active)
       .map(c => ({
         url:             `${BASE}/listings/${c.slug}`,
         priority:        0.8,
@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const newsCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'news' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'news' && c.active)
       .map(c => ({
         url:             `${BASE}/news/${c.slug}`,
         priority:        0.6,
@@ -71,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const calculatorCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'calculator' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'calculator' && c.active)
       .map(c => ({
         url:             `${BASE}/calculator/${c.slug}`,
         priority:        0.7,
@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const assetBankCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'asset-bank' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'asset-bank' && c.active)
       .map(c => ({
         url:             `${BASE}/asset-bank/${c.slug}`,
         priority:        0.8,
@@ -87,7 +87,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const daftarHargaCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'daftar-harga' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'daftar-harga' && c.active)
       .map(c => ({
         url:             `${BASE}/daftar-harga/${c.slug}`,
         priority:        0.7,
@@ -95,14 +95,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }))
 
     const titipListingCleanURLPages = cleanURLs
-      .filter(c => c.pathPrefix === 'titip-listing' && c.active)
+      .filter(c => (c.pathPrefix ?? 'listings') === 'titip-listing' && c.active)
       .map(c => ({
         url:             `${BASE}/titip-listing/${c.slug}`,
         priority:        0.6,
         changeFrequency: 'monthly' as const,
       }))
 
-    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...agentPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages, ...daftarHargaCleanURLPages, ...titipListingCleanURLPages]
+    const projectsCleanURLPages = cleanURLs
+      .filter(c => (c.pathPrefix ?? 'listings') === 'projects' && c.active)
+      .map(c => ({
+        url:             `${BASE}/projects/${c.slug}`,
+        priority:        0.8,
+        changeFrequency: 'weekly' as const,
+      }))
+
+    const agentsCleanURLPages = cleanURLs
+      .filter(c => (c.pathPrefix ?? 'listings') === 'agents' && c.active)
+      .map(c => ({
+        url:             `${BASE}/agents/${c.slug}`,
+        priority:        0.7,
+        changeFrequency: 'weekly' as const,
+      }))
+
+    return [...staticPages, ...listingPages, ...listingCleanURLPages, ...projectPages, ...projectsCleanURLPages, ...agentPages, ...agentsCleanURLPages, ...newsPages, ...newsCleanURLPages, ...calculatorCleanURLPages, ...assetBankCleanURLPages, ...daftarHargaCleanURLPages, ...titipListingCleanURLPages]
   } catch {
     return staticPages
   }

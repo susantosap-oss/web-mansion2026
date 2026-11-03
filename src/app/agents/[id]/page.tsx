@@ -2,11 +2,13 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getAgentById, getListings, formatPrice, computeAgentScore } from '@/lib/sheets'
+import { getAgentById, getListings, getAgents, formatPrice, computeAgentScore } from '@/lib/sheets'
 import { getScoreWeights } from '@/lib/serverSheets'
+import { findCleanURLByPrefix } from '@/lib/cleanUrls'
 import { ListingCard } from '@/components/property/PropertyCard'
 import BackButton from '@/components/ui/BackButton'
 import AgentProfileClient from './AgentProfileClient'
+import AgentCard from '../AgentCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,11 +22,25 @@ function roleLabel(role: string | undefined): string {
   return 'Agen'
 }
 
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const id = decodeURIComponent(params.id)
+
+  const cleanURL = await findCleanURLByPrefix('agents', id)
+  if (cleanURL) {
+    return {
+      title:       cleanURL.title,
+      description: cleanURL.description,
+      alternates:  { canonical: `${BASE}/agents/${id}` },
+      openGraph:   { title: cleanURL.title, description: cleanURL.description, url: `${BASE}/agents/${id}`, type: 'website' },
+    }
+  }
+
   const agent = await getAgentById(params.id)
   if (!agent) return { title: 'Agen Tidak Ditemukan' }
 
-  const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+  const siteUrl    = BASE
   const title      = `${agent.name} — Agen Properti Mansion Realty ${agent.city || 'Surabaya'}`
   const description = `${agent.name}, ${roleLabel(agent.role)} properti profesional di ${agent.city || 'Surabaya'} dengan ${agent.totalListings} listing aktif dan ${agent.totalDeals} deal terlaksana. Hubungi sekarang!`
 
@@ -49,6 +65,87 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AgentProfilePage({ params }: Props) {
+  const id = decodeURIComponent(params.id)
+
+  // ── CleanURL: halaman daftar agen per kota ────────────────
+  const cleanURL = await findCleanURLByPrefix('agents', id)
+  if (cleanURL) {
+    const [allAgents, weights] = await Promise.all([getAgents(), getScoreWeights()])
+    const filtered = cleanURL.city
+      ? allAgents.filter(a => a.city && a.city.toLowerCase() === cleanURL.city!.toLowerCase())
+      : allAgents
+
+    const waKantor = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '628219880889'}?text=${encodeURIComponent('Halo, saya ingin konsultasi properti.')}`
+
+    const jsonLd = {
+      '@context':    'https://schema.org',
+      '@type':       'ItemList',
+      name:          cleanURL.h1,
+      numberOfItems: filtered.length,
+      url:           `${BASE}/agents/${id}`,
+      itemListElement: filtered.slice(0, 20).map((a, i) => ({
+        '@type':   'ListItem',
+        position:  i + 1,
+        item: {
+          '@type':    'Person',
+          name:       a.name,
+          url:        `${BASE}/agents/${a.id}`,
+          image:      a.photo || undefined,
+          jobTitle:   `${roleLabel(a.role)} Properti`,
+          worksFor:   { '@type': 'Organization', name: 'Mansion Realty' },
+          address:    { '@type': 'PostalAddress', addressLocality: a.city || 'Surabaya', addressCountry: 'ID' },
+        },
+      })),
+    }
+
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type':    'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Beranda',      item: BASE },
+        { '@type': 'ListItem', position: 2, name: 'Agen',         item: `${BASE}/agents` },
+        { '@type': 'ListItem', position: 3, name: cleanURL.label, item: `${BASE}/agents/${id}` },
+      ],
+    }
+
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}/>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}/>
+        <div className="pt-24 pb-16 bg-gray-50 min-h-screen">
+          <div className="section-wrapper">
+            <nav className="text-sm text-gray-400 mb-6 flex items-center gap-2">
+              <Link href="/" className="hover:text-primary-900">Beranda</Link>
+              <span>/</span>
+              <Link href="/agents" className="hover:text-primary-900">Agen</Link>
+              <span>/</span>
+              <span className="text-primary-900 font-medium">{cleanURL.label}</span>
+            </nav>
+            <div className="mb-8">
+              <div className="divider-gold mb-3"/>
+              <h1 className="section-title">{cleanURL.h1}</h1>
+              <p className="text-gray-500 mt-2">{filtered.length} agen ditemukan</p>
+            </div>
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                {filtered.map((agent, idx) => (
+                  <AgentCard key={agent.id} agent={agent} idx={idx} sort="default" waKantor={waKantor}/>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-gray-400">
+                <div className="text-5xl mb-4">👤</div>
+                <p>Belum ada agen untuk kota ini.</p>
+                <Link href="/agents" className="btn-primary mt-6">Lihat Semua Agen</Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  // ── Profil agen individual ────────────────────────────────
   const [agent, allListings, weights] = await Promise.all([
     getAgentById(params.id),
     getListings(),
@@ -64,7 +161,7 @@ export default async function AgentProfilePage({ params }: Props) {
       && l.status === 'Aktif'
     )
 
-  const siteUrl   = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
+  const siteUrl   = BASE
   const agentUrl  = `${siteUrl}/agents/${agent.id}`
   const waKantor  = `https://wa.me/${process.env.NEXT_PUBLIC_WA_OFFICE || '628219880889'}?text=${encodeURIComponent(`Halo, saya ingin terhubung dengan agen ${agent.name}.`)}`
   const score     = computeAgentScore(agent, weights)
