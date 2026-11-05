@@ -10,7 +10,9 @@ import BackButton from '@/components/ui/BackButton'
 import AgentProfileClient from './AgentProfileClient'
 import AgentCard from '../AgentCard'
 
-export const dynamic = 'force-dynamic'
+// ISR: cache 5 mnt, fallback ke versi terakhir saat GAS down
+export const revalidate = 300
+export const dynamicParams = true
 
 interface Props { params: { id: string } }
 

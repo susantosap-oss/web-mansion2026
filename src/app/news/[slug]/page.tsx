@@ -8,7 +8,9 @@ import { markdownToHtml } from '@/lib/markdownToHtml'
 import BackButton from '@/components/ui/BackButton'
 import RelatedProperties from '@/components/property/RelatedProperties'
 
-export const dynamic = 'force-dynamic'
+// ISR: cache 5 mnt, fallback ke versi terakhir saat GAS down
+export const revalidate = 300
+export const dynamicParams = true
 interface Props { params: { slug: string } }
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mansionpro.id'
